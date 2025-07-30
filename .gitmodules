@@ -1,6 +1,0 @@
-[submodule "pantheon-agents"]
-	path = pantheon-agents
-	url = https://github.com/aristoteleo/pantheon-agents
-[submodule "pantheon-single-cell"]
-	path = pantheon-single-cell
-	url = https://github.com/aristoteleo/pantheon-single-cell
