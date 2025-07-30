@@ -1,15 +1,15 @@
 {
-  "name": "@google/gemini-cli",
-  "version": "0.1.15",
-  "description": "Gemini CLI",
+  "name": "@aristoteleo/pantheon-cli",
+  "version": "0.0.1",
+  "description": "Pantheon CLI",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/google-gemini/gemini-cli.git"
+    "url": "git+https://github.com/aristoteleo/pantheon-cli.git"
   },
   "type": "module",
   "main": "dist/index.js",
   "bin": {
-    "gemini": "dist/index.js"
+    "pantheon": "dist/index.js"
   },
   "scripts": {
     "build": "node ../../scripts/build_package.js",

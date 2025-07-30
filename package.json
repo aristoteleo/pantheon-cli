@@ -1,6 +1,6 @@
 {
-  "name": "@google/gemini-cli",
-  "version": "0.1.15",
+  "name": "@aristoteleo/pantheon-cli",
+  "version": "0.0.1",
   "engines": {
     "node": ">=20.0.0"
   },
@@ -11,10 +11,10 @@
   "private": "true",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/google-gemini/gemini-cli.git"
+    "url": "git+https://github.com/aristoteleo/pantheon-cli.git"
   },
   "config": {
-    "sandboxImageUri": "us-docker.pkg.dev/gemini-code-dev/gemini-cli/sandbox:0.1.15"
+    "sandboxImageUri": "us-docker.pkg.dev/gemini-code-dev/gemini-cli/sandbox:0.0.1"
   },
   "scripts": {
     "start": "node scripts/start.js",

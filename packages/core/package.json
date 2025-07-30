@@ -1,10 +1,10 @@
 {
   "name": "@google/gemini-cli-core",
-  "version": "0.1.15",
-  "description": "Gemini CLI Core",
+  "version": "0.0.1",
+  "description": "Pantheon CLI Core",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/google-gemini/gemini-cli.git"
+    "url": "git+https://github.com/aristoteleo/pantheon-cli.git"
   },
   "type": "module",
   "main": "dist/index.js",

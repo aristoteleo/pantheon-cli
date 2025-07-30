@@ -31,7 +31,7 @@ function updateWorkspacePath(context: vscode.ExtensionContext) {
 }
 
 export async function activate(context: vscode.ExtensionContext) {
-  logger = vscode.window.createOutputChannel('Gemini CLI IDE Companion');
+  logger = vscode.window.createOutputChannel('Pantheon CLI IDE Companion');
   log = createLogger(context, logger);
   log('Extension activated');
 
@@ -49,11 +49,11 @@ export async function activate(context: vscode.ExtensionContext) {
     vscode.workspace.onDidChangeWorkspaceFolders(() => {
       updateWorkspacePath(context);
     }),
-    vscode.commands.registerCommand('gemini-cli.runGeminiCLI', () => {
-      const geminiCmd = 'gemini';
-      const terminal = vscode.window.createTerminal(`Gemini CLI`);
+    vscode.commands.registerCommand('pantheon-cli.runPantheonCLI', () => {
+      const pantheonCmd = 'pantheon';
+      const terminal = vscode.window.createTerminal(`Pantheon CLI`);
       terminal.show();
-      terminal.sendText(geminiCmd);
+      terminal.sendText(pantheonCmd);
     }),
   );
 }

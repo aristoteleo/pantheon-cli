@@ -1,13 +1,13 @@
 {
-  "name": "gemini-cli-vscode-ide-companion",
-  "displayName": "Gemini CLI Companion",
-  "description": "Enable Gemini CLI with direct access to your VS Code workspace.",
-  "version": "0.1.15",
-  "publisher": "google",
+  "name": "pantheon-cli-vscode-ide-companion",
+  "displayName": "Pantheon CLI Companion",
+  "description": "Enable Pantheon CLI with direct access to your VS Code workspace.",
+  "version": "0.0.1",
+  "publisher": "aristoteleo",
   "icon": "assets/icon.png",
   "repository": {
     "type": "git",
-    "url": "https://github.com/google-gemini/gemini-cli.git",
+    "url": "https://github.com/aristoteleo/pantheon-cli.git",
     "directory": "packages/vscode-ide-companion"
   },
   "engines": {
@@ -19,10 +19,10 @@
     "AI"
   ],
   "keywords": [
-    "gemini-cli",
-    "gemini cli",
-    "gemini",
-    "gemini code",
+    "pantheon-cli",
+    "pantheon cli",
+    "pantheon",
+    "pantheon code",
     "cli",
     "ide integration",
     "ide companion"
@@ -33,8 +33,8 @@
   "contributes": {
     "commands": [
       {
-        "command": "gemini-cli.runGeminiCLI",
-        "title": "Gemini CLI: Run"
+        "command": "pantheon-cli.runPantheonCLI",
+        "title": "Pantheon CLI: Run"
       }
     ]
   },

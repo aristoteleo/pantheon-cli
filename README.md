@@ -1,25 +1,10 @@
-# Gemini CLI
+# Pantheon CLI
 
-[![Gemini CLI CI](https://github.com/google-gemini/gemini-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/google-gemini/gemini-cli/actions/workflows/ci.yml)
-
-![Gemini CLI Screenshot](./docs/assets/gemini-screenshot.png)
-
-This repository contains the Gemini CLI, a command-line AI workflow tool that connects to your
-tools, understands your code and accelerates your workflows.
-
-With the Gemini CLI you can:
-
-- Query and edit large codebases in and beyond Gemini's 1M token context window.
-- Generate new apps from PDFs or sketches, using Gemini's multimodal capabilities.
-- Automate operational tasks, like querying pull requests or handling complex rebases.
-- Use tools and MCP servers to connect new capabilities, including [media generation with Imagen,
-  Veo or Lyria](https://github.com/GoogleCloudPlatform/vertex-ai-creative-studio/tree/main/experiments/mcp-genmedia)
-- Ground your queries with the [Google Search](https://ai.google.dev/gemini-api/docs/grounding)
-  tool, built into Gemini.
+<img width="1256" height="300" alt="Image" src="https://private-user-images.githubusercontent.com/46667721/472695511-ab7a5b43-0531-4870-a8a2-93f6709fb67b.png?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NTM5MDc2MzksIm5iZiI6MTc1MzkwNzMzOSwicGF0aCI6Ii80NjY2NzcyMS80NzI2OTU1MTEtYWI3YTViNDMtMDUzMS00ODcwLWE4YTItOTNmNjcwOWZiNjdiLnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNTA3MzAlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjUwNzMwVDIwMjg1OVomWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPTM5MzU1NTAzNTBkMDZmNmQ1ZmM4NDgxMWUxNzYyZWMzYTFlNDcwMDU2NzUyZWQ1ZjNmYzUyNTkyZDFiMjU3NGQmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.duSGtnaa7ONSzdNvRoqd-h6x5j4AFM1UQ9S7do5Vk-8" />
 
 ## Quickstart
 
-You have two options to install Gemini CLI.
+You have two options to install Pantheon CLI.
 
 ### With Node
 
@@ -27,42 +12,22 @@ You have two options to install Gemini CLI.
 2. **Run the CLI:** Execute the following command in your terminal:
 
    ```bash
-   npx https://github.com/google-gemini/gemini-cli
-   ```
-
-   Or install it with:
-
-   ```bash
-   npm install -g @google/gemini-cli
+   npm run build
    ```
 
    Then, run the CLI from anywhere:
 
    ```bash
-   gemini
+   npm run start
    ```
 
-### With Homebrew
-
-1. **Prerequisites:** Ensure you have [Homebrew](https://brew.sh/) installed.
-2. **Install the CLI** Execute the following command in your terminal:
-
-   ```bash
-   brew install gemini-cli
-   ```
-
-   Then, run the CLI from anywhere:
-
-   ```bash
-   gemini
-   ```
 
 ### Common Configuration steps
 
 3. **Pick a color theme**
 4. **Authenticate:** When prompted, sign in with your personal Google account. This will grant you up to 60 model requests per minute and 1,000 model requests per day using Gemini.
 
-You are now ready to use the Gemini CLI!
+You are now ready to use the Pantheon CLI!
 
 ### Use a Gemini API key:
 
@@ -93,119 +58,7 @@ The Vertex AI API provides a [free tier](https://cloud.google.com/vertex-ai/gene
 
 For other authentication methods, including Google Workspace accounts, see the [authentication](./docs/cli/authentication.md) guide.
 
-## Examples
 
-Once the CLI is running, you can start interacting with Gemini from your shell.
+## Acknowledgments
 
-You can start a project from a new directory:
-
-```sh
-cd new-project/
-gemini
-> Write me a Gemini Discord bot that answers questions using a FAQ.md file I will provide
-```
-
-Or work with an existing project:
-
-```sh
-git clone https://github.com/google-gemini/gemini-cli
-cd gemini-cli
-gemini
-> Give me a summary of all of the changes that went in yesterday
-```
-
-### Next steps
-
-- Learn how to [contribute to or build from the source](./CONTRIBUTING.md).
-- Explore the available **[CLI Commands](./docs/cli/commands.md)**.
-- If you encounter any issues, review the **[troubleshooting guide](./docs/troubleshooting.md)**.
-- For more comprehensive documentation, see the [full documentation](./docs/index.md).
-- Take a look at some [popular tasks](#popular-tasks) for more inspiration.
-- Check out our **[Official Roadmap](./ROADMAP.md)**
-
-### Troubleshooting
-
-Head over to the [troubleshooting guide](docs/troubleshooting.md) if you're
-having issues.
-
-## Popular tasks
-
-### Explore a new codebase
-
-Start by `cd`ing into an existing or newly-cloned repository and running `gemini`.
-
-```text
-> Describe the main pieces of this system's architecture.
-```
-
-```text
-> What security mechanisms are in place?
-```
-
-```text
-> Provide a step-by-step dev onboarding doc for developers new to the codebase.
-```
-
-```text
-> Summarize this codebase and highlight the most interesting patterns or techniques I could learn from.
-```
-
-```text
-> Identify potential areas for improvement or refactoring in this codebase, highlighting parts that appear fragile, complex, or hard to maintain.
-```
-
-```text
-> Which parts of this codebase might be challenging to scale or debug?
-```
-
-```text
-> Generate a README section for the [module name] module explaining what it does and how to use it.
-```
-
-```text
-> What kind of error handling and logging strategies does the project use?
-```
-
-```text
-> Which tools, libraries, and dependencies are used in this project?
-```
-
-### Work with your existing code
-
-```text
-> Implement a first draft for GitHub issue #123.
-```
-
-```text
-> Help me migrate this codebase to the latest version of Java. Start with a plan.
-```
-
-### Automate your workflows
-
-Use MCP servers to integrate your local system tools with your enterprise collaboration suite.
-
-```text
-> Make me a slide deck showing the git history from the last 7 days, grouped by feature and team member.
-```
-
-```text
-> Make a full-screen web app for a wall display to show our most interacted-with GitHub issues.
-```
-
-### Interact with your system
-
-```text
-> Convert all the images in this directory to png, and rename them to use dates from the exif data.
-```
-
-```text
-> Organize my PDF invoices by month of expenditure.
-```
-
-### Uninstall
-
-Head over to the [Uninstall](docs/Uninstall.md) guide for uninstallation instructions.
-
-## Terms of Service and Privacy Notice
-
-For details on the terms of service and privacy notice applicable to your use of Gemini CLI, see the [Terms of Service and Privacy Notice](./docs/tos-privacy.md).
+This project is based on [Google Gemini CLI](https://github.com/google-gemini/gemini-cli). We acknowledge and appreciate the excellent work of the Gemini CLI team. Our main contribution focuses on parser-level adaptations to better support Qwen-Coder models.
