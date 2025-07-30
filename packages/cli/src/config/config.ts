@@ -65,10 +65,10 @@ export interface CliArgs {
 
 export async function parseArguments(): Promise<CliArgs> {
   const yargsInstance = yargs(hideBin(process.argv))
-    .scriptName('gemini')
+    .scriptName('pantheon-cli')
     .usage(
       '$0 [options]',
-      'Gemini CLI - Launch an interactive CLI, use -p/--prompt for non-interactive mode',
+      'Pantheon CLI - Multi-agent bioinformatics CLI with RAG-powered code generation',
     )
     .option('model', {
       alias: 'm',
