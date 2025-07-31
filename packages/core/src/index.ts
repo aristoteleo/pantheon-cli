@@ -27,7 +27,7 @@ export * from './code_assist/types.js';
 // Export agent system
 export * from './agents/index.js';
 
-// Export RAG system  
+// Export RAG system
 export * from './rag/index.js';
 
 // Export utilities

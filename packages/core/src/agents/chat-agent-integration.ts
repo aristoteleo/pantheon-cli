@@ -1,17 +1,24 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { agentService } from './agent-service.js';
+import { AgentDefinition } from './agent-loader.js';
 
 export interface ChatIntegrationResult {
   shouldContinueWithNormalChat: boolean;
   agentResponse?: string;
   functionCall?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export class ChatAgentIntegration {
   async processUserInput(input: string): Promise<ChatIntegrationResult> {
     try {
       const result = await agentService.processQuery(input);
-      
+
       if (result.agent) {
         // Found a matching agent
         return {
@@ -20,8 +27,8 @@ export class ChatAgentIntegration {
           metadata: {
             agent_name: result.agent.name,
             agent_model: result.agent.model,
-            source_path: result.agent.source_path
-          }
+            source_path: result.agent.source_path,
+          },
         };
       } else if (result.handler && result.fallback) {
         // Found a function mapping
@@ -31,26 +38,29 @@ export class ChatAgentIntegration {
           functionCall: result.handler,
           metadata: {
             intent_handler: result.handler,
-            description: result.description
-          }
+            description: result.description,
+          },
         };
       }
-      
+
       // No match found, continue with normal chat
       return {
-        shouldContinueWithNormalChat: true
+        shouldContinueWithNormalChat: true,
       };
     } catch (error) {
       console.error('Error in agent integration:', error);
       return {
-        shouldContinueWithNormalChat: true
+        shouldContinueWithNormalChat: true,
       };
     }
   }
 
   async getAgentSuggestions(): Promise<string[]> {
     const agents = await agentService.getAvailableAgents();
-    return agents.map((agent: any) => `${agent.name}: ${agent.instructions.substring(0, 100)}...`);
+    return agents.map(
+      (agent: AgentDefinition) =>
+        `${agent.name}: ${agent.instructions.substring(0, 100)}...`,
+    );
   }
 }
 

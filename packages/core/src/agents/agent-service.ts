@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { agentRegistry, AgentDefinition } from './agent-loader.js';
 import { existsSync } from 'fs';
 import { join } from 'path';
@@ -13,14 +19,18 @@ export class AgentService {
       join(process.cwd(), 'pantheon-single-cell'),
       join(process.cwd(), 'pantheon-agents'),
       // Also scan any existing agent directories
-      join(process.cwd(), 'packages/core/src/agents')
+      join(process.cwd(), 'packages/core/src/agents'),
     ];
 
     // Filter to only existing folders
-    const existingFolders = referenceFolders.filter(folder => existsSync(folder));
-    
+    const existingFolders = referenceFolders.filter((folder) =>
+      existsSync(folder),
+    );
+
     if (existingFolders.length > 0) {
-      console.log(`Initializing agent registry with folders: ${existingFolders.join(', ')}`);
+      console.log(
+        `Initializing agent registry with folders: ${existingFolders.join(', ')}`,
+      );
       await agentRegistry.initialize(existingFolders);
       console.log(`Registered ${agentRegistry.getAllAgents().length} agents`);
     }
@@ -37,14 +47,14 @@ export class AgentService {
     await this.initialize();
 
     const match = agentRegistry.matchIntent(query);
-    
+
     if (match.agent) {
       return { agent: match.agent };
     } else if (match.handler) {
-      return { 
-        handler: match.handler, 
+      return {
+        handler: match.handler,
         description: match.description,
-        fallback: true 
+        fallback: true,
       };
     }
 

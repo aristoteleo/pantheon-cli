@@ -1,3 +1,9 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { existsSync, readdirSync, statSync } from 'fs';
 import { join, extname } from 'path';
 import { spawn } from 'child_process';
@@ -31,33 +37,33 @@ export class AgentRegistry {
       {
         pattern: /normalize.*counts?\.h5ad/i,
         handler: 'scanpy.pp.normalize_total',
-        description: 'Normalize single-cell RNA-seq counts'
+        description: 'Normalize single-cell RNA-seq counts',
       },
       {
         pattern: /log.*transform/i,
         handler: 'scanpy.pp.log1p',
-        description: 'Log transform expression data'
+        description: 'Log transform expression data',
       },
       {
         pattern: /map.*reads?.*to.*(hg38|mm10|genome)/i,
         handler: 'star_aligner',
-        description: 'Map sequencing reads to reference genome'
+        description: 'Map sequencing reads to reference genome',
       },
       {
         pattern: /cluster.*cells?/i,
         handler: 'scanpy.tl.leiden',
-        description: 'Cluster single cells'
+        description: 'Cluster single cells',
       },
       {
         pattern: /find.*marker.*genes?/i,
         handler: 'scanpy.tl.rank_genes_groups',
-        description: 'Find marker genes for clusters'
+        description: 'Find marker genes for clusters',
       },
       {
         pattern: /umap.*visualization/i,
         handler: 'scanpy.tl.umap',
-        description: 'Generate UMAP visualization'
-      }
+        description: 'Generate UMAP visualization',
+      },
     ];
   }
 
@@ -75,11 +81,11 @@ export class AgentRegistry {
 
   private async scanAgentFolder(folderPath: string) {
     const files = readdirSync(folderPath);
-    
+
     for (const file of files) {
       const filePath = join(folderPath, file);
       const stat = statSync(filePath);
-      
+
       if (stat.isDirectory()) {
         await this.scanAgentFolder(filePath);
       } else if (extname(file) === '.py') {
@@ -90,7 +96,9 @@ export class AgentRegistry {
 
   private async extractPythonAgents(filePath: string): Promise<void> {
     return new Promise((resolve, reject) => {
-      const process = spawn('python3', ['-c', `
+      const process = spawn('python3', [
+        '-c',
+        `
 import ast
 import sys
 import os
@@ -126,7 +134,9 @@ if __name__ == "__main__":
     agents = extract_agent_info(file_path)
     import json
     print(json.dumps(agents))
-      `, filePath]);
+      `,
+        filePath,
+      ]);
 
       let stdout = '';
       let stderr = '';
@@ -176,11 +186,20 @@ if __name__ == "__main__":
     return Array.from(this.agents.values());
   }
 
-  matchIntent(query: string): { agent?: AgentDefinition; handler?: string; description?: string } {
+  matchIntent(query: string): {
+    agent?: AgentDefinition;
+    handler?: string;
+    description?: string;
+  } {
     // First try to match registered agents by name or instructions
     for (const agent of this.agents.values()) {
-      if (query.toLowerCase().includes(agent.name.toLowerCase()) ||
-          (agent.instructions && query.toLowerCase().includes(agent.instructions.toLowerCase().substring(0, 50)))) {
+      if (
+        query.toLowerCase().includes(agent.name.toLowerCase()) ||
+        (agent.instructions &&
+          query
+            .toLowerCase()
+            .includes(agent.instructions.toLowerCase().substring(0, 50)))
+      ) {
         return { agent };
       }
     }
@@ -188,9 +207,9 @@ if __name__ == "__main__":
     // Then try intent mappings
     for (const mapping of this.intentMappings) {
       if (mapping.pattern.test(query)) {
-        return { 
-          handler: mapping.handler, 
-          description: mapping.description 
+        return {
+          handler: mapping.handler,
+          description: mapping.description,
         };
       }
     }
