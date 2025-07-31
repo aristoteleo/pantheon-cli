@@ -21,7 +21,6 @@ You have two options to install Pantheon CLI.
    npm run start
    ```
 
-
 ### Common Configuration steps
 
 3. **Pick a color theme**
@@ -65,6 +64,7 @@ Pantheon CLI now includes a powerful multi-agent architecture that automatically
 ### Available Commands
 
 #### Agent Management
+
 ```bash
 # List all available agents
 pantheon-cli agents
@@ -74,6 +74,7 @@ pantheon-cli agents --verbose
 ```
 
 #### Natural Language Processing
+
 ```bash
 # Examples of natural language commands that map to functions
 pantheon-cli "Normalize counts.h5ad"
@@ -84,6 +85,7 @@ pantheon-cli "Find marker genes"
 ```
 
 #### RAG Knowledge Base Management
+
 ```bash
 # Update RAG knowledge base with notebook content
 pantheon-cli update-rag --notebook-dirs tutorials/experiments docs/ipynb
@@ -95,6 +97,7 @@ pantheon-cli update-rag --notebook-dirs dir1 dir2 dir3
 ### Agent Discovery
 
 The system automatically scans the following locations for agent definitions:
+
 - `pantheon-single-cell/` - Single-cell analysis agents
 - `pantheon-agents/` - General-purpose multi-agent framework
 - `packages/core/src/agents/` - Built-in agents
@@ -105,18 +108,19 @@ Agents are discovered by scanning Python files for `Agent(...)` class instantiat
 
 When no specific agent matches a query, the system falls back to intent-based function mapping:
 
-| Intent Pattern | Function Handler | Description |
-|---|---|---|
-| `normalize.*counts?\.h5ad` | `scanpy.pp.normalize_total` | Normalize single-cell RNA-seq counts |
-| `log.*transform` | `scanpy.pp.log1p` | Log transform expression data |
-| `map.*reads?.*to.*(hg38\|mm10\|genome)` | `star_aligner` | Map sequencing reads to reference genome |
-| `cluster.*cells?` | `scanpy.tl.leiden` | Cluster single cells |
-| `find.*marker.*genes?` | `scanpy.tl.rank_genes_groups` | Find marker genes for clusters |
-| `umap.*visualization` | `scanpy.tl.umap` | Generate UMAP visualization |
+| Intent Pattern                          | Function Handler              | Description                              |
+| --------------------------------------- | ----------------------------- | ---------------------------------------- |
+| `normalize.*counts?\.h5ad`              | `scanpy.pp.normalize_total`   | Normalize single-cell RNA-seq counts     |
+| `log.*transform`                        | `scanpy.pp.log1p`             | Log transform expression data            |
+| `map.*reads?.*to.*(hg38\|mm10\|genome)` | `star_aligner`                | Map sequencing reads to reference genome |
+| `cluster.*cells?`                       | `scanpy.tl.leiden`            | Cluster single cells                     |
+| `find.*marker.*genes?`                  | `scanpy.tl.rank_genes_groups` | Find marker genes for clusters           |
+| `umap.*visualization`                   | `scanpy.tl.umap`              | Generate UMAP visualization              |
 
 ### Runtime Behavior
 
 The agent system is designed to work even after reference folders are removed:
+
 1. Agent definitions are scanned and cached at build/initialization time
 2. Only metadata is stored, not the full agent implementations
 3. Reference folders can be safely deleted after the initial scan
