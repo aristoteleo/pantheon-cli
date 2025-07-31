@@ -1,16 +1,22 @@
+/**
+ * @license
+ * Copyright 2025 Google LLC
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { readdirSync, statSync, readFileSync } from 'fs';
 import { join, extname } from 'path';
 
 export interface NotebookCell {
   cell_type: 'code' | 'markdown';
   source: string[];
-  metadata?: Record<string, any>;
-  outputs?: any[];
+  metadata?: Record<string, unknown>;
+  outputs?: unknown[];
 }
 
 export interface NotebookData {
   cells: NotebookCell[];
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface RagSnippet {
@@ -25,7 +31,11 @@ export interface RagSnippet {
 }
 
 export interface RagClient {
-  indexSnippet(id: string, content: string, metadata: Record<string, any>): Promise<void>;
+  indexSnippet(
+    id: string,
+    content: string,
+    metadata: Record<string, any>,
+  ): Promise<void>;
 }
 
 export class NotebookRagUpdater {
@@ -33,7 +43,7 @@ export class NotebookRagUpdater {
 
   async updateFromDirectories(directories: string[]): Promise<void> {
     const notebooks = this.findNotebooks(directories);
-    
+
     for (const notebookPath of notebooks) {
       await this.processNotebook(notebookPath);
     }
@@ -41,22 +51,22 @@ export class NotebookRagUpdater {
 
   private findNotebooks(directories: string[]): string[] {
     const notebooks: string[] = [];
-    
+
     for (const dir of directories) {
       this.collectNotebooks(dir, notebooks);
     }
-    
+
     return notebooks;
   }
 
   private collectNotebooks(directory: string, notebooks: string[]) {
     try {
       const files = readdirSync(directory);
-      
+
       for (const file of files) {
         const filePath = join(directory, file);
         const stat = statSync(filePath);
-        
+
         if (stat.isDirectory()) {
           this.collectNotebooks(filePath, notebooks);
         } else if (extname(file) === '.ipynb') {
@@ -72,15 +82,15 @@ export class NotebookRagUpdater {
     try {
       const content = readFileSync(notebookPath, 'utf8');
       const notebook: NotebookData = JSON.parse(content);
-      
+
       const filename = notebookPath.split('/').pop() || 'unknown.ipynb';
-      
+
       for (let i = 0; i < notebook.cells.length; i++) {
         const cell = notebook.cells[i];
-        const cellContent = Array.isArray(cell.source) 
-          ? cell.source.join('') 
+        const cellContent = Array.isArray(cell.source)
+          ? cell.source.join('')
           : cell.source;
-        
+
         if (cellContent.trim()) {
           const snippet: RagSnippet = {
             id: `${notebookPath}:${i}`,
@@ -89,19 +99,21 @@ export class NotebookRagUpdater {
               filename,
               cell_index: i,
               cell_type: cell.cell_type,
-              notebook_path: notebookPath
-            }
+              notebook_path: notebookPath,
+            },
           };
-          
+
           await this.ragClient.indexSnippet(
             snippet.id,
             snippet.content,
-            snippet.metadata
+            snippet.metadata,
           );
         }
       }
-      
-      console.log(`Processed notebook: ${filename} (${notebook.cells.length} cells)`);
+
+      console.log(
+        `Processed notebook: ${filename} (${notebook.cells.length} cells)`,
+      );
     } catch (error) {
       console.error(`Error processing notebook ${notebookPath}:`, error);
     }
@@ -109,14 +121,24 @@ export class NotebookRagUpdater {
 }
 
 export class MockRagClient implements RagClient {
-  private snippets: Map<string, { content: string; metadata: Record<string, any> }> = new Map();
+  private snippets: Map<
+    string,
+    { content: string; metadata: Record<string, any> }
+  > = new Map();
 
-  async indexSnippet(id: string, content: string, metadata: Record<string, any>): Promise<void> {
+  async indexSnippet(
+    id: string,
+    content: string,
+    metadata: Record<string, any>,
+  ): Promise<void> {
     this.snippets.set(id, { content, metadata });
     console.log(`Indexed snippet: ${id} (${content.length} chars)`);
   }
 
-  getSnippets(): Map<string, { content: string; metadata: Record<string, any> }> {
+  getSnippets(): Map<
+    string,
+    { content: string; metadata: Record<string, any> }
+  > {
     return this.snippets;
   }
 
