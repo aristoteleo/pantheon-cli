@@ -8,7 +8,8 @@
 
 <div align="center">
 
-***We're not just building another CLI tool. We're defining how scientists will interact with data in the AI era.***
+***We're not just building another CLI tool.  
+We're defining how scientists will interact with data in the AI era.***
 
 </div>
 
