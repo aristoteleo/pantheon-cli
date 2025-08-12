@@ -2,13 +2,8 @@
 
 <!-- Banner -->
 <p align="center">
-  <img src="assets/pantheon_banner_tri_with_sub_dark.svg#gh-dark-mode-only" width="600" alt="Pantheon ASCII (dark)" />
-  <img src="assets/pantheon_banner_tri_with_sub_light.svg#gh-light-mode-only" width="600" alt="Pantheon ASCII (light)" />
-</p>
-
-<p align="center">
-  <img src="assets/pantheon_cli_output_dark.svg#gh-dark-mode-only" width="600" alt="Pantheon CLI output (dark)" />
-  <img src="assets/pantheon_cli_output_light.svg#gh-light-mode-only" width="600" alt="Pantheon CLI output (light)" />
+  <img src="assets/pantheon_banner_tri_dark.svg#gh-dark-mode-only" alt="Pantheon ASCII (dark)" />
+  <img src="assets/pantheon_banner_tri_light.svg#gh-light-mode-only" alt="Pantheon ASCII (light)" />
 </p>
 
 
