@@ -15,7 +15,6 @@
 <div align="center">
 
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)]()
 [![AI-Native](https://img.shields.io/badge/AI-Native-purple.svg)]()
 
