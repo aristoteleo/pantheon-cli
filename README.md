@@ -2,15 +2,15 @@
 
 <!-- Banner -->
 <p align="center">
-  <img src="assets/pantheon_ascii_gradient.svg#gh-dark-mode-only" width="900" alt="Pantheon ASCII (dark)" />
-  <img src="assets/pantheon_ascii_gradient_light.svg#gh-light-mode-only" width="900" alt="Pantheon ASCII (light)" />
+  <img src="assets/pantheon_ascii_gradient.svg#gh-dark-mode-only" width="600" alt="Pantheon ASCII (dark)" />
+  <img src="assets/pantheon_ascii_gradient_light.svg#gh-light-mode-only" width="600" alt="Pantheon ASCII (light)" />
 </p>
 
-<p>
-  <!-- CLI 输出块 -->
-  <img src="assets/pantheon_cli_output_dark.svg#gh-dark-mode-only" width="980" alt="Pantheon CLI output (dark)" />
-  <img src="assets/pantheon_cli_output_light.svg#gh-light-mode-only" width="980" alt="Pantheon CLI output (light)" />
+<p align="center">
+  <img src="assets/pantheon_cli_output_dark.svg#gh-dark-mode-only" width="600" alt="Pantheon CLI output (dark)" />
+  <img src="assets/pantheon_cli_output_light.svg#gh-light-mode-only" width="600" alt="Pantheon CLI output (light)" />
 </p>
+
 
 
 
