@@ -39,24 +39,35 @@ class ReplUI:
         self.conversation_history = []
 
     async def print_greeting(self):
+        self.console.print("[purple]Aristotle™[/purple]")
         await print_banner(self.console)
+        self.console.print()
         self.console.print(
-            "[bold]Welcome to the Pantheon CLI![/bold]\n" +
-            "The First AI+ Assistant for Science!\n"
+            "[bold italic]We're not just building another CLI tool.[/bold italic]\n" +
+            "[bold italic purple]We're redefining how scientists interact with data in the AI era.[/bold italic purple]"
         )
+        self.console.print()
         
         # Agent info in a compact format
-        self.console.print("[bold]Model:[/bold]")
+        self.console.print("[dim][bold blue]-- MODEL ------------------------------------------------------------[/bold blue][/dim]")
+        self.console.print()
         agent_info = f"  - [bright_blue]{self.agent.name}[/bright_blue]"
         if hasattr(self.agent, 'models') and self.agent.models:
             model = self.agent.models[0] if isinstance(self.agent.models, list) else self.agent.models
-            agent_info += f" [dim]•[/dim] [yellow]{model}[/yellow]"
-        
+            agent_info = f"[dim]  • [bold]{model}[/bold][/dim]"
         self.console.print(agent_info)
-        self.console.print("[dim]Type your message, '/exit' to quit, or '/help' for commands[/dim]")
-        
-        self.console.print("[dim]'/model' for available models, '/api-key' for API keys[/dim]")
+
+        self.console.print()
+        self.console.print("[dim][bold blue]-- HELP -------------------------------------------------------------[/bold blue][/dim]")
+        self.console.print()
+        self.console.print("[dim]  • [bold purple]/exit   [/bold purple] to quit[/dim]")
+        self.console.print("[dim]  • [bold purple]/help   [/bold purple] for commands[/dim]")
+
+        self.console.print("[dim]  • [bold purple]/model  [/bold purple] for available models[/dim]")
+        self.console.print("[dim]  • [bold purple]/api-key[/bold purple] for API keys[/dim]")
         if READLINE_AVAILABLE:
+            self.console.print()
+            self.console.print("[dim][bold blue]-- CONTROL ----------------------------------------------------------[/bold blue][/dim]")
             self.console.print()
             self.console.print("[dim]Use ↑/↓ arrows for command history[/dim]")
         self.console.print()
@@ -94,51 +105,53 @@ class ReplUI:
 
     def _print_help(self):
         """Print available commands"""
-        self.console.print("\n[bold]Commands:[/bold]")
-        self.console.print("[dim]/help[/dim] - Show this help")
-        self.console.print("[dim]/status[/dim] - Session info")
-        self.console.print("[dim]/history[/dim] - Show command history")
-        self.console.print("[dim]/tokens[/dim] - Token usage analysis")  
-        self.console.print("[dim]/save[/dim] - Save conversation to markdown file")
-        self.console.print("[dim]/clear[/dim] - Clear screen")
-        self.console.print("[dim]/atac init[/dim] - ATAC-seq analysis helper 🧬")
-        self.console.print("[dim]/exit[/dim] - Exit cleanly")
-        self.console.print("[dim]Ctrl+C[/dim] - Cancel current operation")
+        #self.console.print("\n[bold]Commands:[/bold]")
+        self.console.print("[dim][bold blue]-- BASIC ------------------------------------------------------------[/bold blue][/dim]")
+        self.console.print()
+        self.console.print("[dim][bold purple]/help    [/bold purple][/dim] - Show this help")
+        self.console.print("[dim][bold purple]/status  [/bold purple][/dim] - Session info")
+        self.console.print("[dim][bold purple]/history [/bold purple][/dim] - Show command history")
+        self.console.print("[dim][bold purple]/tokens  [/bold purple][/dim] - Token usage analysis")  
+        self.console.print("[dim][bold purple]/save    [/bold purple][/dim] - Save conversation to markdown file")
+        self.console.print("[dim][bold purple]/clear   [/bold purple][/dim] - Clear screen")
+        self.console.print("[dim][bold purple]/bio     [/bold purple][/dim] - Bioinformatics analysis helper 🧬")
+        self.console.print("[dim][bold purple]/exit    [/bold purple][/dim] - Exit cleanly")
+        self.console.print("[dim]Ctrl+C   [/dim] - Cancel current operation")
         self.console.print("[dim]Ctrl+C x2[/dim] - Force exit (within 2 seconds)")
+        self.console.print()
         
         # Check if model/API key management is available
         if hasattr(self.agent, '_model_manager') or hasattr(self.agent, '_api_key_manager'):
-            self.console.print("\n[bold]Model & API Management:[/bold]")
+            #self.console.print("\n[bold]Model & API Management:[/bold]")
+            self.console.print("[dim][bold blue]-- MODEL & API ------------------------------------------------------[/bold blue][/dim]")
+            self.console.print()
             if hasattr(self.agent, '_model_manager'):
-                self.console.print("[dim]/model list[/dim] - List available models")
-                self.console.print("[dim]/model current[/dim] - Show current model")  
-                self.console.print("[dim]/model <id>[/dim] - Switch to model")
+                self.console.print("[dim][bold purple]/model[/bold purple] list              [/dim] - List available models")
+                self.console.print("[dim][bold purple]/model[/bold purple] current           [/dim] - Show current model")  
+                self.console.print("[dim][bold purple]/model[/bold purple] <id>              [/dim] - Switch to model")
             if hasattr(self.agent, '_api_key_manager'):
-                self.console.print("[dim]/api-key list[/dim] - Show API key status")
-                self.console.print("[dim]/api-key <provider> <key>[/dim] - Set API key")
+                self.console.print("[dim][bold purple]/api-key[/bold purple] list            [/dim] - Show API key status")
+                self.console.print("[dim][bold purple]/api-key[/bold purple] <provider> <key>[/dim] - Set API key")
+            self.console.print()
         
         if READLINE_AVAILABLE:
-            self.console.print("\n[bold]Navigation:[/bold]")
-            self.console.print("[dim]↑/↓[/dim] - Browse command history")
-        
-        self.console.print("\n[bold]Examples:[/bold]")
-        self.console.print("[dim]analyze single cell data[/dim]")
-        self.console.print("[dim]run quality control[/dim]")
-        self.console.print("[dim]create UMAP plot[/dim]")
-        if self.python_enabled:
-            self.console.print("[dim]write python script to calculate statistics[/dim]")
-        if hasattr(self.agent, '_model_manager'):
-            self.console.print("[dim]/model gpt-4o[/dim] - Switch to GPT-4o")
-            self.console.print("[dim]/api-key openai sk-...[/dim] - Set OpenAI key")
+            #self.console.print("\n[bold]Navigation:[/bold]")
+            self.console.print("[dim][bold blue]-- NAVIGATION -------------------------------------------------------[/bold blue][/dim]")
+            self.console.print()
+            self.console.print("[dim][bold purple]↑/↓[/bold purple] - Browse command history")
         self.console.print()
+        
     
     def _print_history(self):
         """Print recent command history"""
+        self.console.print()
+        self.console.print("[dim][bold blue]-- HISTORY ---------------------------------------------------------------[/bold blue][/dim]")
+        self.console.print()
         if not self.command_history:
-            self.console.print("\n[dim]No command history yet[/dim]\n")
+            self.console.print("[dim]No command history yet[/dim]\n")
             return
             
-        self.console.print(f"\n[bold]Command History[/bold] [dim]({len(self.command_history)} commands)[/dim]")
+        self.console.print(f"[bold purple]Command History[/bold purple] [dim]({len(self.command_history)} commands)[/dim]")
         
         # Show last 10 commands
         recent = self.command_history[-10:]
@@ -151,17 +164,22 @@ class ReplUI:
     def _print_token_analysis(self):
         """Print detailed token usage analysis"""
         total_tokens = self.total_input_tokens + self.total_output_tokens
-        
+        #self.console.print(f"\n[bold]Token Analysis[/bold]")
+        self.console.print()
+        self.console.print("[dim][bold blue]-- TOKENS -----------------------------------------------------------[/bold blue][/dim]")
+        self.console.print()
+
         if total_tokens == 0:
             self.console.print("\n[dim]No token usage data yet[/dim]\n")
             return
         
-        self.console.print(f"\n[bold]Token Analysis[/bold]")
+        
         
         # Basic stats
-        self.console.print(f"[dim]Total:[/dim] {self._format_token_count(total_tokens)} tokens")
-        self.console.print(f"[dim]  • Input:[/dim] {self._format_token_count(self.total_input_tokens)} ({self.total_input_tokens/total_tokens*100:.1f}%)")
-        self.console.print(f"[dim]  • Output:[/dim] {self._format_token_count(self.total_output_tokens)} ({self.total_output_tokens/total_tokens*100:.1f}%)")
+        self.console.print(f"[dim]  • Total:[/dim] {self._format_token_count(total_tokens)} tokens")
+        self.console.print(f"[dim]  • Input: [/dim] {self._format_token_count(self.total_input_tokens)} ({self.total_input_tokens/total_tokens*100:.1f}%)")
+        self.console.print(f"[dim]  • Output: [/dim] {self._format_token_count(self.total_output_tokens)} ({self.total_output_tokens/total_tokens*100:.1f}%)")
+        self.console.print()
         
         # Efficiency metrics
         if self.message_count > 0:
@@ -169,21 +187,25 @@ class ReplUI:
             avg_input = self.total_input_tokens / self.message_count
             avg_output = self.total_output_tokens / self.message_count
             
-            self.console.print(f"\n[bold]Per Message Average:[/bold]")
-            self.console.print(f"[dim]Total:[/dim] {self._format_token_count(int(avg_total))}")
-            self.console.print(f"[dim]Input:[/dim] {self._format_token_count(int(avg_input))}")
-            self.console.print(f"[dim]Output:[/dim] {self._format_token_count(int(avg_output))}")
-        
+            #self.console.print(f"\n[bold]Per Message Average:[/bold]")
+            self.console.print("[dim][bold blue]-- PER MSG/AVG ------------------------------------------------------[/bold blue][/dim]")
+            self.console.print()
+            self.console.print(f"[dim]  • Total:[/dim] {self._format_token_count(int(avg_total))}")
+            self.console.print(f"[dim]  • Input:[/dim] {self._format_token_count(int(avg_input))}")
+            self.console.print(f"[dim]  • Output:[/dim] {self._format_token_count(int(avg_output))}")
+            self.console.print()
         # Usage recommendations
-        self.console.print(f"\n[bold]Tips:[/bold]")
+        #self.console.print(f"\n[bold]Tips:[/bold]")
+        self.console.print("[dim][bold blue]-- TIPS --------------------------------------------------------------[/bold blue][/dim]")
+        self.console.print()
         if avg_input > 1000:
-            self.console.print("[dim]• Consider shorter prompts to reduce input tokens[/dim]")
+            self.console.print("[dim]  • Consider shorter prompts to reduce input tokens[/dim]")
         if self.total_output_tokens / max(1, self.total_input_tokens) > 3:
-            self.console.print("[dim]• High output ratio - responses are verbose[/dim]")
+            self.console.print("[dim]  • High output ratio - responses are verbose[/dim]")
         if self.message_count > 5 and avg_total < 100:
-            self.console.print("[dim]• Efficient usage - good token management[/dim]")
+            self.console.print("[dim]  • Efficient usage - good token management[/dim]")
         elif avg_total > 2000:
-            self.console.print("[dim]• High token usage - consider optimizing prompts[/dim]")
+            self.console.print("[dim]  • High token usage - consider optimizing prompts[/dim]")
         
         self.console.print()
         
@@ -192,26 +214,33 @@ class ReplUI:
         session_duration = datetime.now() - self.session_start
         duration_mins = int(session_duration.total_seconds() / 60)
         
-        self.console.print(f"\n[bold]Session Status:[/bold]")
-        self.console.print(f"[dim]• Agent:[/dim] {self.agent.name}")
+        #self.console.print(f"\n[bold]Session Status:[/bold]")
+        self.console.print()
+        self.console.print("[dim][bold blue]-- STATUS -----------------------------------------------------------[/bold blue][/dim]")
+        self.console.print()
+        self.console.print(f"[dim]• Agent:    [/dim] {self.agent.name}")
         if hasattr(self.agent, 'models') and self.agent.models:
             model = self.agent.models[0] if isinstance(self.agent.models, list) else self.agent.models
-            self.console.print(f"[dim]• Model:[/dim] {model}")
-        self.console.print(f"[dim]Messages:[/dim] {self.message_count}")
-        self.console.print(f"[dim]Duration:[/dim] {duration_mins}m")
-        self.console.print(f"[dim]History:[/dim] {len(self.command_history)} commands")
+            self.console.print(f"[dim]• Model:    [/dim] {model}")
+        self.console.print(f"[dim]• Messages: [/dim] {self.message_count}")
+        self.console.print(f"[dim]• Duration: [/dim] {duration_mins}m")
+        self.console.print(f"[dim]• History:  [/dim] {len(self.command_history)} commands")
+        self.console.print()
         
         # Token usage statistics
         total_tokens = self.total_input_tokens + self.total_output_tokens
         if total_tokens > 0:
-            self.console.print(f"[dim]Tokens:[/dim] {self._format_token_count(total_tokens)} total")
-            self.console.print(f"[dim]  • Input:[/dim] {self._format_token_count(self.total_input_tokens)}")
-            self.console.print(f"[dim]  • Output:[/dim] {self._format_token_count(self.total_output_tokens)}")
+            self.console.print("[dim][bold blue]-- TOKENS -----------------------------------------------------------[/bold blue][/dim]")
+            self.console.print()
+            self.console.print(f"[dim]  • Total:  [/dim] {self._format_token_count(total_tokens)}")
+            self.console.print(f"[dim]  • Input:  [/dim] {self._format_token_count(self.total_input_tokens)}")
+            self.console.print(f"[dim]  • Output: [/dim] {self._format_token_count(self.total_output_tokens)}")
             
             # Show efficiency metrics
             if self.message_count > 0:
                 avg_tokens_per_msg = total_tokens / self.message_count
                 self.console.print(f"[dim]  • Avg/msg:[/dim] {self._format_token_count(int(avg_tokens_per_msg))}")
+            self.console.print()
         
         if READLINE_AVAILABLE:
             self.console.print(f"[dim]Input:[/dim] readline (with history)")

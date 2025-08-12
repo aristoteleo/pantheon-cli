@@ -47,6 +47,7 @@ class Repl(ReplUI):
         self.tool_calls_active = False
         self.session_start = datetime.now()
         self.message_count = 0
+        self.python_enabled = False
         
         # Token statistics
         self.total_input_tokens = 0
