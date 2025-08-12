@@ -2,37 +2,15 @@
 
 <!-- Banner -->
 <p align="center">
-  <img src="assets/pantheon_ascii_gradient.svg" width="900" alt="Pantheon ASCII" />
+  <img src="assets/pantheon_ascii_gradient.svg#gh-dark-mode-only" width="900" alt="Pantheon ASCII (dark)" />
+  <img src="assets/pantheon_ascii_gradient_light.svg#gh-light-mode-only" width="900" alt="Pantheon ASCII (light)" />
 </p>
 
-<!-- Subtitle -->
 <p>
-  <span style="color:#93c5fd;font-weight:700;">Welcome to the Pantheon CLI!</span><br>
-  <span style="color:#cbd5e1;">The First AI+ Assistant for Science!</span>
+  <!-- CLI 输出块 -->
+  <img src="assets/pantheon_cli_output_dark.svg#gh-dark-mode-only" width="980" alt="Pantheon CLI output (dark)" />
+  <img src="assets/pantheon_cli_output_light.svg#gh-light-mode-only" width="980" alt="Pantheon CLI output (light)" />
 </p>
-
-<!-- Model -->
-<p>
-  <span style="color:#7ee787;font-weight:700;">Model:</span><br>
-  &nbsp;&nbsp;- <a href="#" style="color:#60a5fa;text-decoration:none;">general_bot</a> • <span style="color:#facc15;">gpt-5-mini</span>
-</p>
-
-<!-- Help lines -->
-<p style="color:#8b949e;">
-  Type your message, <code>'/exit'</code> to quit, or <code>'/help'</code> for commands<br>
-  <code>'/model'</code> for available models, <code>'/api-key'</code> for API keys
-</p>
-
-<p style="color:#a1a1aa;">
-  Use ↑/↓ arrows for command history<br>
-  Enter your message (press Enter twice to finish)
-</p>
-
-<!-- Slogan -->
-<p align="center">
-  We're not just building another CLI tool. We're defining how scientists will interact with data in the AI era.
-</p>
-
 
 
 
