@@ -6,7 +6,7 @@ from rich.console import Console
 from rich.prompt import Prompt
 
 from pantheon.team import Team
-from pantheon.utils.misc import print_agent, print_agent_message
+from ..utils.display import print_agent, print_agent_message
 
 
 class Repl:

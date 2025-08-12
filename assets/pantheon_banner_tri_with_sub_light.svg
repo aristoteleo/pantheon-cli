@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="624" height="141" viewBox="0 0 624 141">
+  <defs>
+    <!-- User's color reference: blue -> purple -> #FFC0CB -->
+    <linearGradient id="txtgrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="blue"/>
+      <stop offset="50%"  stop-color="purple"/>
+      <stop offset="100%" stop-color="#FFC0CB"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="624" height="141" fill="#ffffff" rx="12" ry="12"/>
+  <text x="18" y="32" xml:space="preserve" style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size:14px; fill:url(#txtgrad); white-space:pre;">██████   █████  ███    ██ ████████ ██   ██ ███████  ██████  ███    ██ </text><text x="18" y="47" xml:space="preserve" style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size:14px; fill:url(#txtgrad); white-space:pre;">██   ██ ██   ██ ████   ██    ██    ██   ██ ██      ██    ██ ████   ██ </text><text x="18" y="62" xml:space="preserve" style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size:14px; fill:url(#txtgrad); white-space:pre;">██████  ███████ ██ ██  ██    ██    ███████ █████   ██    ██ ██ ██  ██ </text><text x="18" y="77" xml:space="preserve" style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size:14px; fill:url(#txtgrad); white-space:pre;">██      ██   ██ ██  ██ ██    ██    ██   ██ ██      ██    ██ ██  ██ ██ </text><text x="18" y="92" xml:space="preserve" style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size:14px; fill:url(#txtgrad); white-space:pre;">██      ██   ██ ██   ████    ██    ██   ██ ███████  ██████  ██   ████ </text><text x="18" y="107" xml:space="preserve" style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size:14px; fill:#374151; white-space:pre;">Welcome to the Pantheon CLI!</text><text x="18" y="122" xml:space="preserve" style="font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace; font-size:14px; fill:#374151; white-space:pre;">The First AI+ Assistant for Science!</text>
+</svg>

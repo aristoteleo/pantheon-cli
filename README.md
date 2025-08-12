@@ -2,8 +2,8 @@
 
 <!-- Banner -->
 <p align="center">
-  <img src="assets/pantheon_ascii_gradient.svg#gh-dark-mode-only" width="600" alt="Pantheon ASCII (dark)" />
-  <img src="assets/pantheon_ascii_gradient_light.svg#gh-light-mode-only" width="600" alt="Pantheon ASCII (light)" />
+  <img src="assets/pantheon_banner_tri_with_sub_dark.svg#gh-dark-mode-only" width="600" alt="Pantheon ASCII (dark)" />
+  <img src="assets/pantheon_banner_tri_with_sub_light.svg#gh-light-mode-only" width="600" alt="Pantheon ASCII (light)" />
 </p>
 
 <p align="center">

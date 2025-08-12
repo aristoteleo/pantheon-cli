@@ -22,7 +22,7 @@ except ImportError:
 
 from pantheon.agent import Agent
 from pantheon.remote.agent import RemoteAgent
-from pantheon.utils.misc import print_agent_message, print_agent, print_banner, print_agent_message_modern_style
+from ..utils.display import print_agent_message, print_agent, print_banner, print_agent_message_modern_style
 
 
 
