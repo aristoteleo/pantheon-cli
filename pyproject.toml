@@ -1,0 +1,35 @@
+[project]
+name = "pantheon-cli-new"
+description = "Command Line Interface for Pantheon - A framework for building distributed evolvable multi-agent systems."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "pantheon-agents>=0.5.0",
+    "pantheon-toolsets>=0.5.0",
+    "fire>=0.7.0",
+    "rich>=13.9.4",
+    "rich-pyfiglet",
+    "hypha_rpc",
+    "pandas",
+]
+dynamic = ["version"]
+
+[project.scripts]
+pantheon-cli = "pantheon_cli:cli_main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+pythonpath = ["."]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.4",
+    "pytest-asyncio>=0.25.0",
+]
+
+[tool.setuptools]
+packages = {find = {}}
+
+[tool.setuptools.dynamic]
+version = {attr = "pantheon_cli.__version__"}
