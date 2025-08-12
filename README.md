@@ -33,7 +33,6 @@ pantheon-cli
 
 # Now you can seamlessly mix natural language, Python, R, and Julia:
 > Analyze single-cell data using Seurat, then create a Python visualization
-> 加载PBMC数据，用R做预处理，然后用Python画UMAP图
 > Load my_data.csv, run differential equations in Julia, plot with R
 > Solve optimization problem with Julia, visualize results in Python
 ```
