@@ -6,17 +6,20 @@
   <img src="assets/pantheon_banner_tri_light.svg#gh-light-mode-only" alt="Pantheon ASCII (light)" />
 </p>
 
+<div align="center">
 
+***We're not just building another CLI tool. We're defining how scientists will interact with data in the AI era.***
 
+</div>
 
-## Features
+<div align="center">
 
-- **Paradigm Shift**: The first CLI that truly integrates natural language with programming languages (Python, R, Julia), enabling scientists to think and analyze without switching contexts.
-- **Open Source**: The first Python-Based CLI.
-- **Science-First**: Purpose-built for scientific workflows with comprehensive genomics pipelines, not a generic tool trying to do everything
-- **Distributed by Design**: Built on enterprise-grade distributed architecture, not a monolithic application that breaks at scale  
-- **AI-Native**: Every component is designed from the ground up for AI interaction, not traditional software with AI bolted on
-- **Future-Proof**: MCP protocol support and extensible architecture means it grows with the ecosystem, not against it
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)]()
+[![AI-Native](https://img.shields.io/badge/AI-Native-purple.svg)]()
+
+</div>
 
 
 ## Quick Start
