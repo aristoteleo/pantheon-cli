@@ -46,6 +46,8 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio atac upstream ./data      # Run upstream ATAC analysis[/dim]")
         self.console.print("[dim]  /bio scatac init               # Initialize scATAC-seq project[/dim]")
         self.console.print("[dim]  /bio scatac upstream ./data    # Run cellranger-atac analysis[/dim]")
+        self.console.print("[dim]  /bio scrna init                # Initialize scRNA-seq project[/dim]")
+        self.console.print("[dim]  /bio scrna load_data ./data    # Load and analyze scRNA-seq data[/dim]")
         self.console.print("[dim]  /bio rnaseq init               # Initialize RNA-seq project (when available)[/dim]")
         self.console.print("")
     
@@ -71,6 +73,10 @@ class BioCommandHandler:
         # Handle scATAC commands with special logic
         if tool_name == "scatac":
             return self._handle_scatac_command(parts)
+        
+        # Handle scRNA commands with special logic
+        if tool_name == "scrna":
+            return self._handle_scrna_command(parts)
         
         # Generic handler for other tools
         if len(parts) > 2:
@@ -146,7 +152,7 @@ Response format (single line):
                 return None
                 
             try:
-                from pantheon.cli.prompt.atac_bulk_upstream import generate_atac_analysis_message
+                from ..cli.prompt.atac_bulk_upstream import generate_atac_analysis_message
                 
                 folder_path = parts[3]
                 self.console.print(f"\n[bold cyan]🧬 Starting ATAC-seq Analysis[/bold cyan]")
@@ -250,7 +256,7 @@ Response format (single line):
                 return None
             
             try:
-                from pantheon.cli.prompt.atac_sc_upstream import generate_scatac_analysis_message
+                from ..cli.prompt.atac_sc_upstream import generate_scatac_analysis_message
                 
                 folder_path = parts[3]
                 self.console.print(f"\n[bold cyan]🧬 Starting scATAC-seq Analysis[/bold cyan]")
@@ -294,6 +300,150 @@ Response format (single line):
                 return f"bio_scatac_{command} {params}"
             else:
                 return f"bio_scatac_{command}"
+    
+    def _handle_scrna_command(self, parts) -> str:
+        """Handle scRNA-specific commands with special logic"""
+        
+        if len(parts) == 2:
+            # Just /bio scrna - show scRNA help
+            self.console.print("\n[bold]🧬 Single-cell RNA-seq Analysis Helper[/bold]")
+            self.console.print("[dim]/bio scrna init[/dim] - Initialize scRNA-seq analysis project")
+            self.console.print("[dim]/bio scrna load_data <file>[/dim] - Load and inspect scRNA-seq data")
+            self.console.print("[dim]/bio scrna qc <file>[/dim] - Run quality control analysis")
+            self.console.print("[dim]/bio scrna preprocess <file>[/dim] - Run preprocessing and normalization")
+            self.console.print("[dim]/bio scrna annotate <file>[/dim] - Perform cell type annotation")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio scrna init                        # Initialize scRNA project[/dim]")
+            self.console.print("[dim]  /bio scrna load_data ./data.h5ad       # Load and inspect H5AD file[/dim]")
+            self.console.print("[dim]  /bio scrna qc ./data.h5ad             # Run quality control[/dim]")
+            self.console.print("[dim]  /bio scrna preprocess ./data.h5ad     # Normalize and preprocess[/dim]")
+            self.console.print("[dim]  /bio scrna annotate ./data.h5ad       # Annotate cell types[/dim]")
+            self.console.print()
+            return None
+        
+        command = parts[2]
+        
+        if command == "init":
+            # Enter scRNA mode - simple mode activation
+            self.console.print("\n[bold cyan]🧬 Initializing scRNA-seq Project[/bold cyan]")
+            
+            # Clear all existing todos when entering scRNA mode
+            clear_message = """
+scRNA INIT MODE — STRICT
+
+Goal: ONLY clear TodoList and report the new status. Do NOT create or execute anything.
+
+Allowed tools (whitelist):
+  - clear_all_todos()
+  - show_todos()
+
+Hard bans (do NOT call under any circumstance in init):
+  - add_todo(), mark_task_done(), execute_current_task()
+  - any scrna.* analysis tools
+
+Steps:
+  1) clear_all_todos()
+  2) todos = show_todos()
+
+Response format (single line):
+  scRNA init ready • todos={len(todos)}
+"""
+            
+            self.console.print("[dim]Clearing existing todos and preparing scRNA environment...[/dim]")
+            self.console.print("[dim]Ready for single-cell RNA-seq analysis assistance...[/dim]")
+            self.console.print("[dim]scRNA-seq mode activated. You can now use scRNA tools directly.[/dim]")
+            self.console.print()
+            self.console.print("[dim]The command structure is now clean:[/dim]")
+            self.console.print("[dim]  - /bio scrna init - Enter scRNA mode (simple prompt loading)[/dim]")
+            self.console.print("[dim]  - /bio scrna load_data <file> - Load and analyze scRNA data[/dim]")
+            self.console.print("[dim]  - /bio scrna qc <file> - Run quality control analysis[/dim]")
+            self.console.print()
+            
+            return clear_message
+        
+        elif command == "load_data":
+            # Handle data loading and inspection
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio scrna load_data <file_path>[/dim]")
+                self.console.print("[dim]Example: /bio scrna load_data ./data.h5ad[/dim]")
+                return None
+            
+            try:
+                from ..cli.prompt.scrna_analysis import generate_scrna_analysis_message
+                
+                file_path = parts[3]
+                self.console.print(f"\n[bold cyan]🧬 Starting scRNA-seq Data Analysis[/bold cyan]")
+                self.console.print(f"[dim]Target file: {file_path}[/dim]")
+                self.console.print("[dim]Will load and inspect scRNA-seq data with omicverse integration...[/dim]")
+                self.console.print("[dim]Preparing comprehensive analysis pipeline...[/dim]\n")
+                
+                # Generate the analysis message with file path
+                scrna_message = generate_scrna_analysis_message(folder_path=file_path)
+                
+                self.console.print("[dim]Sending scRNA-seq analysis request...[/dim]\n")
+                
+                return scrna_message
+                
+            except ImportError as e:
+                self.console.print(f"[red]Error: scRNA module not available: {e}[/red]")
+                return None
+            except Exception as e:
+                self.console.print(f"[red]Error preparing scRNA analysis: {str(e)}[/red]")
+                return None
+        
+        elif command in ["qc", "quality_control"]:
+            # Handle quality control
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio scrna qc <file_path>[/dim]")
+                self.console.print("[dim]Example: /bio scrna qc ./data.h5ad[/dim]")
+                return None
+            
+            file_path = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Running scRNA-seq Quality Control[/bold cyan]")
+            self.console.print(f"[dim]Data file: {file_path}[/dim]")
+            self.console.print("[dim]Performing quality control with omicverse...[/dim]")
+            
+            return f"scrna_run_quality_control {file_path}"
+        
+        elif command in ["preprocess", "preprocessing"]:
+            # Handle preprocessing
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio scrna preprocess <file_path>[/dim]")
+                self.console.print("[dim]Example: /bio scrna preprocess ./data.h5ad[/dim]")
+                return None
+            
+            file_path = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Running scRNA-seq Preprocessing[/bold cyan]")
+            self.console.print(f"[dim]Data file: {file_path}[/dim]")
+            self.console.print("[dim]Normalizing and preprocessing with omicverse...[/dim]")
+            
+            return f"scrna_run_preprocessing {file_path}"
+        
+        elif command in ["annotate", "annotation", "cell_type"]:
+            # Handle cell type annotation
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio scrna annotate <file_path>[/dim]")
+                self.console.print("[dim]Example: /bio scrna annotate ./data.h5ad[/dim]")
+                return None
+            
+            file_path = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Running Cell Type Annotation[/bold cyan]")
+            self.console.print(f"[dim]Data file: {file_path}[/dim]")
+            self.console.print("[dim]Performing cell type annotation with omicverse + CellOntologyMapper...[/dim]")
+            
+            return f"scrna_run_cell_type_annotation {file_path}"
+        
+        else:
+            # Handle other scRNA commands generically
+            params = " ".join(parts[3:]) if len(parts) > 3 else ""
+            if params:
+                return f"bio_scrna_{command} {params}"
+            else:
+                return f"bio_scrna_{command}"
     
     async def handle_deprecated_atac_command(self, command: str) -> str:
         """
@@ -365,6 +515,15 @@ BIO_COMMAND_MAP = {
     'atac_call_peaks_macs2': 'bio_atac_call_peaks_macs2',
     'atac_generate_atac_qc_report': 'bio_atac_generate_atac_qc_report',
     
+    # scRNA-seq commands  
+    'scrna_init': 'bio_scrna_init',
+    'scrna_load_data': 'bio_scrna_load_data',
+    'scrna_run_quality_control': 'bio_scrna_run_quality_control',
+    'scrna_run_preprocessing': 'bio_scrna_run_preprocessing', 
+    'scrna_run_pca': 'bio_scrna_run_pca',
+    'scrna_run_clustering': 'bio_scrna_run_clustering',
+    'scrna_run_cell_type_annotation': 'bio_scrna_run_cell_type_annotation',
+    
     # RNA-seq commands (for future use)
     'rnaseq_init': 'bio_rnaseq_init',
     'rnaseq_align_reads': 'bio_rnaseq_align_reads',
@@ -392,6 +551,13 @@ def get_bio_command_suggestions() -> list:
         '/bio atac upstream',
         '/bio atac check_dependencies',
         '/bio atac setup_genome_resources',
+        '/bio scatac init',
+        '/bio scatac upstream',
+        '/bio scrna init',
+        '/bio scrna load_data',
+        '/bio scrna qc',
+        '/bio scrna preprocess',
+        '/bio scrna annotate',
         '/bio rnaseq init',  # Future
         '/bio chipseq init',  # Future
     ]
