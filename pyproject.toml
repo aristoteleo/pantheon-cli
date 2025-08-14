@@ -1,11 +1,11 @@
 [project]
-name = "pantheon-cli-new"
+name = "pantheon-cli"
 description = "Command Line Interface for Pantheon - A framework for building distributed evolvable multi-agent systems."
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "pantheon-agents>=0.5.0",
-    "pantheon-toolsets>=0.5.0",
+    "pantheon-agents",
+    "pantheon-toolsets",
     "fire>=0.7.0",
     "rich>=13.9.4",
     "rich-pyfiglet",

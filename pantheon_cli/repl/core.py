@@ -159,6 +159,42 @@ class Repl(ReplUI):
                     f.write(self.command_history[-1] + '\n')
         except Exception:
             pass  # Silently ignore history save errors
+    
+    async def _execute_direct_bash(self, command: str):
+        """Execute bash command directly without LLM analysis"""
+        import subprocess
+        import shlex
+        
+        try:
+            self.console.print(f"[dim]Executing:[/dim] {command}")
+            
+            # Use subprocess to execute the command
+            process = subprocess.Popen(
+                command,
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                universal_newlines=True
+            )
+            
+            # Get output
+            stdout, stderr = process.communicate()
+            
+            # Print output
+            if stdout:
+                self.console.print(stdout.strip())
+            if stderr:
+                self.console.print(f"[red]{stderr.strip()}[/red]")
+            
+            # Show return code if non-zero
+            if process.returncode != 0:
+                self.console.print(f"[yellow]Exit code: {process.returncode}[/yellow]")
+                
+        except Exception as e:
+            self.console.print(f"[red]Error executing command: {str(e)}[/red]")
+        
+        self.console.print()  # Add spacing
             
     def _add_to_history(self, command: str):
         """Add command to history"""
@@ -263,33 +299,43 @@ class Repl(ReplUI):
                 self.add_to_conversation("user", current_message)
             
             # Handle special commands FIRST (before sending to API)
-            cmd = current_message.lower().strip()
+            cmd = current_message.strip()
             
-            if cmd in ["exit", "quit", "q", "/exit", "/quit", "/q"]:
+            # Handle direct bash commands with ! prefix
+            if cmd.startswith("!"):
+                bash_command = cmd[1:].strip()  # Remove the ! prefix
+                if bash_command:
+                    await self._execute_direct_bash(bash_command)
+                current_message = None  # Reset to get new input
+                continue
+            
+            cmd_lower = cmd.lower()
+            
+            if cmd_lower in ["exit", "quit", "q", "/exit", "/quit", "/q"]:
                 self._print_session_summary()
                 break
-            elif cmd in ["help", "/help"]:
+            elif cmd_lower in ["help", "/help"]:
                 self._print_help()
                 current_message = None  # Reset to get new input
                 continue
-            elif cmd in ["status", "/status"]:
+            elif cmd_lower in ["status", "/status"]:
                 self._print_status()
                 current_message = None  # Reset to get new input
                 continue
-            elif cmd in ["clear", "/clear"]:
+            elif cmd_lower in ["clear", "/clear"]:
                 self.console.clear()
                 await self.print_greeting()
                 current_message = None  # Reset to get new input
                 continue
-            elif cmd in ["history", "/history"]:
+            elif cmd_lower in ["history", "/history"]:
                 self._print_history()
                 current_message = None  # Reset to get new input
                 continue
-            elif cmd in ["tokens", "/tokens"]:
+            elif cmd_lower in ["tokens", "/tokens"]:
                 self._print_token_analysis()
                 current_message = None  # Reset to get new input
                 continue
-            elif cmd in ["/save"] or current_message.strip().startswith("/save"):
+            elif cmd_lower in ["/save"] or current_message.strip().lower().startswith("/save"):
                 self._handle_save_command(current_message.strip())
                 current_message = None  # Reset to get new input
                 continue
