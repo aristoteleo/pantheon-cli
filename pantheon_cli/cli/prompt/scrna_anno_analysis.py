@@ -44,13 +44,12 @@ IF current is EMPTY, create these todos ONCE:
 6. "Apply batch correction if needed"
 7. "Run clustering analysis"
 8. "Ask user for data context (tissue/condition)"
-9. "Generate context-specific cell types and markers"
-10. "Calculate AUCell scores for cell type markers"
-11. "Analyze cluster-celltype associations"
-12. "Find cluster-specific marker genes"
-13. "Integrate AUCell + markers for final cell type annotation"
-14. "Conduct downstream analysis"
-15. "Generate analysis report"
+9. "Generate context-specific cell types and markers from description"
+10. "Find cluster-specific marker genes from data"
+11. "Calculate AUCell scores for cell type markers"
+12. "Annotate cell type with LLM"
+13. "Conduct downstream analysis"
+14. "Generate analysis report"
 
 PHASE 2 — ADAPTIVE EXECUTION WORKFLOW
 
@@ -112,29 +111,29 @@ print("✅ Data inspection complete")
 ```
 
 🏷️ STEP 2 - QUALITY CONTROL:
-Use unified workflow: `scrna.run_workflow(workflow_type="qc", output_dir=results_dir)`
+Call toolset function: scrna.run_workflow(workflow_type="qc")
 
 🏷️ STEP 3 - PREPROCESSING:
-Use unified workflow: `scrna.run_workflow(workflow_type="preprocessing", output_dir=results_dir)`
+Call toolset function: scrna.run_workflow(workflow_type="preprocessing")
 
 🏷️ STEP 4 - PCA:
-Use unified workflow: `scrna.run_workflow(workflow_type="pca", output_dir=results_dir)`
+Call toolset function: scrna.run_workflow(workflow_type="pca")
 
 🏷️ STEP 5 - BATCH CORRECTION (if needed):
 ```python
 # Check if batch correction is needed
 if 'batch' in adata.obs.columns:
     print("\\n🔧 Batch key detected - applying batch correction...")
-    # Batch correction would go here - currently handled by preprocessing workflow
 else:
     print("\\n✅ No batch correction needed")
 ```
+Call toolset function: scrna.run_workflow(workflow_type="batch_correction")
 
 🏷️ STEP 6 - CLUSTERING:
-Use unified workflow: `scrna.run_workflow(workflow_type="clustering", output_dir=results_dir)`
+Call toolset function: scrna.run_workflow(workflow_type="clustering")
 
 🏷️ STEP 7 - VISUALIZATION:
-Use unified workflow: `scrna.run_workflow(workflow_type="visualization", output_dir=results_dir)`
+Call toolset function: scrna.run_workflow(workflow_type="umap")
 
 🏷️ STEP 8 - DATA CONTEXT COLLECTION:
 ```python
@@ -146,70 +145,17 @@ print(f"Data context recorded: {{user_data_context}}")
 adata.uns['user_data_context'] = user_data_context
 ```
 
-🏷️ STEP 9 - AUCELL CELL TYPE SCORING:
-Use unified workflow: `scrna.run_workflow(workflow_type="aucell", output_dir=results_dir)`
+🏷️ STEP 9 - Marker from description:
+Call toolset function: scrna.run_workflow(workflow_type="marker_from_desc",description=user_data_context)
 
-🏷️ STEP 10 - CLUSTER-CELLTYPE ASSOCIATIONS:
-```python
-print("\\n🔍 Analyzing cluster-celltype associations...")
+🏷️ STEP 10 - Marker from data:
+Call toolset function: scrna.run_workflow(workflow_type="marker_from_data")
 
-# Find AUCell columns
-celltype_columns = [col for col in adata.obs.columns if 'AUCell' in col]
+🏷️ STEP 11 - AUCELL CELL TYPE SCORING:
+Call toolset function: scrna.run_workflow(workflow_type="aucell")
 
-if celltype_columns:
-    # Calculate mean AUCell scores per cluster for each cell type
-    cluster_celltype_scores = dict()
-    
-    for cluster in adata.obs['leiden'].cat.categories:
-        cluster_scores = dict()
-        for celltype_col in celltype_columns:
-            mean_score = adata.obs[adata.obs['leiden'] == cluster][celltype_col].mean()
-            cluster_scores[celltype_col] = mean_score
-        cluster_celltype_scores[cluster] = cluster_scores
-    
-    # Find best cell type for each cluster
-    cluster_annotations = dict()
-    for cluster, scores in cluster_celltype_scores.items():
-        if scores:
-            best_celltype_col = max(scores.items(), key=lambda x: x[1])[0]
-            best_score = scores[best_celltype_col]
-            
-            # Extract cell type name from column name
-            best_celltype = best_celltype_col.replace('_AUCell', '').replace('AUCell_', '')
-            
-            cluster_annotations[cluster] = best_celltype
-            print(f"Cluster {{cluster}} -> {{best_celltype}} (score: {{round(best_score, 3)}})")
-    
-    # Store preliminary annotations
-    adata.uns['preliminary_cluster_annotations'] = cluster_annotations
-    print("\\n✅ Preliminary cluster annotations completed")
-else:
-    print("⚠️ No AUCell columns found - run AUCell scoring first")
-```
-
-🏷️ STEP 11 - EXTRACT CLUSTER MARKERS:
-Use modular approach: `scrna.extract_markers(method="omicverse", log2fc_min=1.0, pval_cutoff=0.05, top_n=10)`
-
-🏷️ STEP 12 - INTERACTIVE LLM-POWERED CLUSTER ANNOTATION:
-```python
-print("\\n🤖 Starting interactive LLM-powered cluster annotation workflow...")
-
-# Get user data context if not already set
-user_data_context = adata.uns.get('user_data_context', '')
-if not user_data_context:
-    user_data_context = input("\\n📝 **DATA CONTEXT:** Please briefly describe your data (tissue, condition, experiment): ").strip()
-    adata.uns['user_data_context'] = user_data_context
-
-# Launch comprehensive annotation workflow using modular toolset functions
-annotation_workflow = scrna.llm_anno(
-    cluster_id="all_clusters", 
-    user_context=user_data_context,
-    confidence_threshold=0.7
-)
-
-print("\\n🎯 Comprehensive cluster annotation workflow initiated")
-print("💬 Follow the interactive prompts for each cluster annotation")
-```
+🏷️ STEP 12 - ANNOTATION:
+Call toolset function: scrna.run_workflow(workflow_type="llm_anno",description=user_data_context)
 
 🏷️ STEP 13 - DOWNSTREAM ANALYSIS:
 ```python
@@ -227,27 +173,6 @@ report_generation = scrna.generate_report(
 print("✅ Downstream analysis and reporting complete")
 ```
 
-🏷️ STEP 14 - FINAL DATA EXPORT:
-```python
-print("\\n💾 Final data export...")
-
-# Save final annotated dataset
-final_export = scrna.sc_save(save_type="adata", output_dir=results_dir)
-
-print("\\n🎉 **ANALYSIS PIPELINE COMPLETE**")
-print(f"📁 **Results saved to:** {{results_dir}}")
-print("📊 **Pipeline summary:**")
-print("1. ✅ Data loading and inspection")
-print("2. ✅ Quality control with omicverse")
-print("3. ✅ Preprocessing and normalization")
-print("4. ✅ PCA and dimensionality reduction")
-print("5. ✅ Clustering analysis")
-print("6. ✅ Visualization generation")
-print("7. ✅ AUCell cell type scoring")
-print("8. ✅ Interactive LLM-powered annotation")
-print("9. ✅ Comprehensive reporting")
-print("10. ✅ Final data export")
-```
 
 🔧 **AVAILABLE TOOLSET FUNCTIONS:**
 
@@ -256,17 +181,8 @@ print("10. ✅ Final data export")
 - `scrna.run_workflow(workflow_type="preprocessing")` - Preprocessing with omicverse
 - `scrna.run_workflow(workflow_type="pca")` - PCA with omicverse
 - `scrna.run_workflow(workflow_type="clustering")` - Clustering analysis
-- `scrna.run_workflow(workflow_type="visualization")` - Generate plots
+- `scrna.run_workflow(workflow_type="umap")` - Calculate UMAP
 - `scrna.run_workflow(workflow_type="aucell")` - AUCell scoring
-
-**SPECIALIZED FUNCTIONS:**
-- `scrna.load_and_inspect_data()` - Data loading and inspection
-- `scrna.extract_markers()` - Extract cluster markers
-- `scrna.analyze_aucell()` - Analyze AUCell for specific clusters
-- `scrna.prepare_evidence()` - Prepare annotation evidence
-- `scrna.llm_anno()` - Interactive LLM annotation workflow
-- `scrna.sc_save()` - Save analysis results
-- `scrna.generate_report()` - Generate comprehensive reports
 
 **EXECUTION STRATEGY:**
 1. Load data and create project structure
@@ -294,21 +210,20 @@ You have access to comprehensive scRNA-seq and TODO management tools:
 🧬 COMPLETE scRNA-seq TOOLSET:
 
 **UNIFIED WORKFLOW ENGINE:**
-- scrna.run_workflow(workflow_type="qc") - Complete quality control workflow
-- scrna.run_workflow(workflow_type="preprocessing") - Normalization and preprocessing
-- scrna.run_workflow(workflow_type="pca") - Principal component analysis
-- scrna.run_workflow(workflow_type="clustering") - Clustering with UMAP and Leiden
-- scrna.run_workflow(workflow_type="visualization") - Generate visualizations
-- scrna.run_workflow(workflow_type="aucell") - AUCell cell type scoring
+- `scrna.run_workflow(workflow_type="qc")` - Quality control with omicverse
+- `scrna.run_workflow(workflow_type="preprocessing")` - Preprocessing with omicverse
+- `scrna.run_workflow(workflow_type="pca")` - PCA with omicverse
+- `scrna.run_workflow(workflow_type="clustering")` - Clustering analysis
+- `scrna.run_workflow(workflow_type="umap")` - Calculate UMAP
+- `scrna.run_workflow(workflow_type="aucell")` - AUCell scoring
 
-**SPECIALIZED FUNCTIONS:**
-- scrna.load_and_inspect_data() - Load and inspect scRNA-seq data
-- scrna.extract_markers() - Cluster-specific marker gene extraction  
-- scrna.analyze_aucell() - AUCell analysis for specific clusters
-- scrna.prepare_evidence() - Prepare annotation evidence summaries
-- scrna.llm_anno() - Interactive LLM annotation workflow
-- scrna.sc_save() - Save analysis results
-- scrna.generate_report() - Generate comprehensive reports
+**EXECUTION STRATEGY:**
+1. Load data and create project structure
+2. Execute todos in sequence using appropriate workflow functions
+3. Use modular functions for specialized analysis steps
+4. Leverage omicverse integration with scanpy fallbacks
+5. Interactive LLM annotation for expert cell type assignment
+6. Comprehensive result saving and reporting
 
 **GUIDANCE:**
 - scrna.suggest_next_step() - Smart recommendations
