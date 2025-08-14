@@ -116,6 +116,7 @@ class ReplUI:
         self.console.print("[dim][bold purple]/clear   [/bold purple][/dim] - Clear screen")
         self.console.print("[dim][bold purple]/bio     [/bold purple][/dim] - Bioinformatics analysis helper 🧬")
         self.console.print("[dim][bold purple]!<cmd>   [/bold purple][/dim] - Execute bash command directly (no LLM)")
+        self.console.print("[dim][bold purple]%<code>  [/bold purple][/dim] - Execute Python code directly (no LLM)")
         self.console.print("[dim][bold purple]/exit    [/bold purple][/dim] - Exit cleanly")
         self.console.print("[dim]Ctrl+C   [/dim] - Cancel current operation")
         self.console.print("[dim]Ctrl+C x2[/dim] - Force exit (within 2 seconds)")
@@ -371,10 +372,10 @@ class ReplUI:
             lines = code.split('\n')
             
             # Create the box
-            self.console.print("╭" + "─" * 79 + "╮")
-            title_padding = " " * (79 - len(header_title) - 4)
+            self.console.print("╭" + "─" * 77 + "╮")
+            title_padding = " " * (77 - len(header_title) - 4)
             self.console.print(f"│ [bold]{header_title}[/bold]{title_padding}   │")
-            self.console.print("│ ╭" + "─" * 75 + "╮ │")
+            self.console.print("│ ╭" + "─" * 73 + "╮ │")
 
             # Limit display lines (show first 10 + last 10 if > 20 lines)
             max_display_lines = 20
@@ -389,12 +390,12 @@ class ReplUI:
             
             for line in display_lines:
                 # Truncate long lines and pad short ones
-                display_line = line[:75] if len(line) <= 75 else line[:72] + "..."
-                padded_line = display_line.ljust(75)
-                self.console.print(f"│ │ {padded_line[:71]}   │ │")
+                display_line = line[:73] if len(line) <= 73 else line[:70] + "..."
+                padded_line = display_line.ljust(73)
+                self.console.print(f"│ │ {padded_line[:71-2]}   │ │")
             
-            self.console.print("│ ╰" + "─" * 75 + "╯ │")
-            self.console.print("╰" + "─" * 79 + "╯")
+            self.console.print("│ ╰" + "─" * 73 + "╯ │")
+            self.console.print("╰" + "─" * 77 + "╯")
             
         elif tool_name in ["run_command", "run_command_in_shell"] and args and 'command' in args:
             # Shell command execution

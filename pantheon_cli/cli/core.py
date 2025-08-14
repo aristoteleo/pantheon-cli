@@ -513,6 +513,9 @@ async def main(
     agent._model_manager = model_manager
     agent._api_key_manager = api_key_manager
     
+    # Attach python_toolset for direct execution via % command
+    agent._python_toolset = python_toolset
+    
     # Add toolsets to agent
     agent.toolset(shell_toolset)
     agent.toolset(python_toolset)

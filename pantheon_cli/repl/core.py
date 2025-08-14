@@ -195,6 +195,81 @@ class Repl(ReplUI):
             self.console.print(f"[red]Error executing command: {str(e)}[/red]")
         
         self.console.print()  # Add spacing
+    
+    async def _execute_direct_python(self, code: str):
+        """Execute Python code directly using the Python toolset"""
+        try:
+            # Use the python_toolset attached to the agent
+            if hasattr(self.agent, '_python_toolset') and self.agent._python_toolset:
+                python_toolset = self.agent._python_toolset
+            else:
+                # Fallback: try to find the run_python_code function
+                if hasattr(self.agent, 'functions'):
+                    python_func = self.agent.functions.get('run_python_code')
+                    if python_func:
+                        result = await python_func(code=code, skip_validation=True)
+                        if result and isinstance(result, dict):
+                            # Extract and display relevant parts
+                            if result.get('stdout'):
+                                self.console.print(result['stdout'])
+                            if result.get('stderr'):
+                                self.console.print(f"[red]{result['stderr']}[/red]")
+                            if result.get('result') is not None:
+                                self.console.print(str(result['result']))
+                        elif result:
+                            self.console.print(result)
+                        self.console.print()
+                        return
+                
+                self.console.print("[red]Python interpreter not available. Please ensure it's loaded.[/red]")
+                return
+            
+            # Display execution info
+            if len(code) > 100:
+                # For multi-line code, show first line
+                first_line = code.split('\n')[0][:50]
+                self.console.print(f"[dim]Executing Python: {first_line}...[/dim]")
+            else:
+                self.console.print(f"[dim]Executing Python: {code}[/dim]")
+            
+            # Execute the Python code using the toolset directly with Agent's memory.id as client_id
+            # This ensures the same Python interpreter instance is used as the Agent
+            client_id = self.agent.memory.id if hasattr(self.agent, 'memory') else "default"
+            result = await python_toolset.run_python_code(
+                code=code,
+                skip_validation=True,  # Skip validation for direct execution
+                context_variables={"client_id": client_id}
+            )
+            
+            # Process and display the result
+            if result:
+                if isinstance(result, dict):
+                    # Handle structured result from the toolset
+                    stdout = result.get('stdout', '').strip()
+                    stderr = result.get('stderr', '').strip()
+                    exec_result = result.get('result')
+                    
+                    # Display output in a clean way
+                    if stdout:
+                        self.console.print(stdout)
+                    if stderr:
+                        self.console.print(f"[red]{stderr}[/red]")
+                    if exec_result is not None and str(exec_result).strip() and str(exec_result) != "None":
+                        self.console.print(str(exec_result))
+                    
+                    # If nothing was printed, show a subtle success indicator
+                    if not stdout and not stderr and (exec_result is None or str(exec_result) == "None"):
+                        self.console.print("[dim]✓ Code executed successfully[/dim]")
+                else:
+                    # Handle plain text result
+                    self.console.print(result)
+            
+        except Exception as e:
+            self.console.print(f"[red]Error executing Python code: {str(e)}[/red]")
+            import traceback
+            self.console.print(f"[dim]{traceback.format_exc()}[/dim]")
+        
+        self.console.print()  # Add spacing
             
     def _add_to_history(self, command: str):
         """Add command to history"""
@@ -306,6 +381,22 @@ class Repl(ReplUI):
                 bash_command = cmd[1:].strip()  # Remove the ! prefix
                 if bash_command:
                     await self._execute_direct_bash(bash_command)
+                current_message = None  # Reset to get new input
+                continue
+            
+            # Handle direct Python code with % prefix
+            if cmd.startswith("%"):
+                python_code = cmd[1:].strip()  # Remove the % prefix
+                if python_code:
+                    await self._execute_direct_python(python_code)
+                current_message = None  # Reset to get new input
+                continue
+            
+            # Handle direct R code with > prefix
+            if cmd.startswith(">"):
+                r_code = cmd[1:].strip()  # Remove the > prefix
+                if r_code:
+                    await self._execute_direct_r(r_code)
                 current_message = None  # Reset to get new input
                 continue
             
