@@ -20,6 +20,7 @@ from pantheon.toolsets.code_validator import CodeValidatorToolSet
 from pantheon.toolsets.generator import GeneratorToolSet
 from pantheon.agent import Agent
 from rich.console import Console
+from rich.logging import RichHandler
 
 # Import management modules
 from .manager.api_key_manager import APIKeyManager
@@ -390,10 +391,15 @@ async def main(
         ext_dir: Directory containing external toolsets (default: ./ext_toolsets)
     """
     console = Console()
-    def custom_sink(message):
-        console.print(message, end="")
+    class LoguruRichHandler(RichHandler):
+        def emit(self, record):
+            extra = getattr(record, "extra", {})
+            if "rich" in extra:
+                console.print(extra["rich"])
+            else:
+                console.print(record.msg)
 
-    logger.configure(handlers=[{"sink":custom_sink, "format":"{message}", "level":"INFO"}])
+    logger.configure(handlers=[{"sink":LoguruRichHandler(), "format":"{message}", "level":"INFO"}])
     logger.disable("executor.engine")
 
     # Initialize managers locally
@@ -430,15 +436,12 @@ async def main(
     key_available, key_message = api_key_manager.check_api_key_for_model(model_manager.current_model)
     key_status_icon = "✅" if key_available else "⚠️"
     
-    #print(f"Starting Pantheon CLI with model: {model_manager.current_model}")
-    #print(f"{key_status_icon} {key_message}")
     if not key_available:
         from .manager.api_key_manager import PROVIDER_API_KEYS, PROVIDER_NAMES
         required_key = PROVIDER_API_KEYS.get(model_manager.current_model)
         if required_key:
             provider_cmd = required_key.lower().replace('_api_key', '')
             print(f"Set your API key: /api-key {provider_cmd} <your-key>")
-    #print(f"Commands: '/model list' | '/api-key list' | '/help'")
     
 
     if not disable_ext:

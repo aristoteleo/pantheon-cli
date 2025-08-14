@@ -37,12 +37,6 @@ class Repl:
             )
 
     async def run(self, message: str | dict | None = None):
-        import logging
-        logging.getLogger().setLevel(logging.WARNING)
-        import loguru
-        loguru.logger.remove()
-        loguru.logger.add(sys.stdout, level="WARNING")
-
         await self.team.async_setup()
         await self.print_greeting()
         await asyncio.sleep(0.1)
