@@ -690,7 +690,7 @@ print("\\n🧬 Generating tissue-specific cell types with biological expertise..
 # IMPORTANT: Generate cell types based on actual biological knowledge of the tissue/context
 # This replaces hardcoded PBMC examples with context-aware generation
 
-expected_cell_types = dict()
+
 
 # Generate context-specific cell types with proper biological markers
 print("Please wait while I generate appropriate cell types for your specific context...")
@@ -699,7 +699,7 @@ print("This will include the most relevant cell types and their established mark
 # The following should be generated based on the actual user context:
 # For now, using comprehensive immune cell panel as example
 # In real implementation, this should be dynamically generated
-
+expected_cell_types = dict()
 expected_cell_types['T_cells_CD4_naive'] = ['CD4', 'IL7R', 'CCR7', 'LEF1', 'TCF7']
 expected_cell_types['T_cells_CD4_memory'] = ['CD4', 'IL7R', 'CD44', 'CD69']
 expected_cell_types['T_cells_CD8_naive'] = ['CD8A', 'CD8B', 'CCR7', 'LEF1', 'TCF7']

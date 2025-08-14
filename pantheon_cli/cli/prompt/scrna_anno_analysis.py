@@ -26,6 +26,7 @@ def generate_scrna_analysis_message(folder_path: Optional[str] = None) -> str:
 - **Error recovery**: If code fails, analyze error and generate corrected code!
 - **Use help()**: Always call `help()` before omicverse/scanpy functions
 - **After each step**: mark_task_done("description"), then show_todos()
+- **AUTOMATIC EXECUTION**: Do not ask the user for confirmations; proceed automatically and log warnings when needed.
 
 {path_instruction}
 
@@ -51,7 +52,33 @@ IF current is EMPTY, create these todos ONCE:
 13. "Conduct downstream analysis"
 14. "Generate analysis report"
 
+⚡ AUTOMATIC WORKFLOW MODE:
+- Execute each todo task automatically without asking for confirmation
+- After successful completion of any step, immediately call mark_task_done("description") and proceed to next
+- Continue the workflow seamlessly until all tasks complete or user intervenes
+
 PHASE 2 — ADAPTIVE EXECUTION WORKFLOW
+
+⚠️ CRITICAL EXECUTION STRATEGY:
+When you call scrna.run_workflow(), it returns guidance, explanations, and example Python code.
+You MUST:
+1. **Read and analyze** the entire returned content carefully
+2. **Understand the logic** and methodology described
+3. **Adapt the provided code** to your current data situation (adata shape, available columns, etc.)
+4. **Modify parameters** based on your actual data characteristics
+5. **Execute the adapted code** - NOT the original code directly
+6. **Handle errors** by adjusting code based on the guidance provided
+
+🧠 **RESULT ANALYSIS REQUIREMENT:**
+After executing any code:
+1. **Analyze the output** - Don't just print and move on!
+2. **Interpret the results** - What do the numbers, plots, and warnings mean?
+3. **Check for issues** - Are there data quality problems or unexpected patterns?
+4. **Make decisions** - Should parameters be adjusted based on what you observed?
+5. **Document findings** - Save key insights to results directory
+6. **Proceed intelligently** - Use results to inform next steps
+
+The returned content serves as GUIDANCE and TEMPLATES, not direct execution scripts.
 
 📊 STEP 1 - DATA LOADING, INSPECTION & PROJECT SETUP:
 ```python
@@ -111,29 +138,62 @@ print("✅ Data inspection complete")
 ```
 
 🏷️ STEP 2 - QUALITY CONTROL:
-Call toolset function: scrna.run_workflow(workflow_type="qc")
+Get QC guidance and adapt the code to your data:
+scrna.run_workflow(workflow_type="qc")
+Then analyze the returned guidance and implement adapted QC code based on your adata structure.
+**CRITICAL**: Analyze QC results - cell counts, gene expression distributions, mitochondrial percentages. Interpret plots and decide on filtering thresholds.
 
 🏷️ STEP 3 - PREPROCESSING:
-Call toolset function: scrna.run_workflow(workflow_type="preprocessing")
+Get preprocessing guidance and adapt the code to your data:
+scrna.run_workflow(workflow_type="preprocessing")
+Then analyze the returned guidance and implement adapted preprocessing code based on your adata characteristics.
+**CRITICAL**: Examine normalization results, highly variable genes selection. Check if the data distribution looks appropriate.
 
 🏷️ STEP 4 - PCA:
-Call toolset function: scrna.run_workflow(workflow_type="pca")
+Get PCA guidance and adapt the code to your data:
+scrna.run_workflow(workflow_type="pca")
+Then analyze the returned guidance and implement adapted PCA code based on your adata dimensions.
+**CRITICAL**: Analyze PCA results - variance explained, elbow plots. Determine optimal number of components to use.
 
 🏷️ STEP 5 - BATCH CORRECTION (if needed):
 ```python
-# Check if batch correction is needed
-if 'batch' in adata.obs.columns:
-    print("\\n🔧 Batch key detected - applying batch correction...")
+# Check if batch correction is needed - look for REAL batch keys
+# Real batch keys are typically: 'batch', 'sample', 'donor', 'experiment', 'plate', 'condition'
+# NOT QC metrics like 'passing_mt', 'passing_ngenes', 'n_genes', 'total_counts', etc.
+
+real_batch_keys = []
+potential_batch_keys = ['batch', 'sample', 'donor', 'experiment', 'plate', 'condition', 'library_id']
+
+for key in potential_batch_keys:
+    if key in adata.obs.columns:
+        # Check if it has multiple unique values and is categorical
+        unique_vals = adata.obs[key].nunique()
+        if unique_vals > 1 and unique_vals < adata.n_obs * 0.5:  # Not too many unique values
+            real_batch_keys.append(key)
+            print(f"Found real batch key: {{key}} with {{unique_vals}} unique values")
+
+if real_batch_keys:
+    print(f"\\n🔧 Real batch keys detected: {{real_batch_keys}}")
+    print("Proceeding with batch correction...")
+    # Only proceed if real batch keys exist
 else:
-    print("\\n✅ No batch correction needed")
+    print("\\n✅ No real batch keys found - skipping batch correction")
+    print("Note: QC metrics like 'passing_mt', 'passing_ngenes' are NOT batch keys")
 ```
-Call toolset function: scrna.run_workflow(workflow_type="batch_correction")
+Only if real_batch_keys were found, get guidance and adapt the code:
+If real_batch_keys: scrna.run_workflow(workflow_type="batch_correction")
+Then implement adapted batch correction code based on your specific batch keys.
+**CRITICAL**: Only apply batch correction if there are REAL batch effects, not QC filtering metrics.
 
 🏷️ STEP 6 - CLUSTERING:
-Call toolset function: scrna.run_workflow(workflow_type="clustering")
+Get clustering guidance and adapt the code to your data:
+scrna.run_workflow(workflow_type="clustering")
+Then analyze the returned guidance and implement adapted clustering code based on your adata.
 
 🏷️ STEP 7 - VISUALIZATION:
-Call toolset function: scrna.run_workflow(workflow_type="umap")
+Get UMAP guidance and adapt the code to your data:
+scrna.run_workflow(workflow_type="umap")
+Then analyze the returned guidance and implement adapted visualization code.
 
 🏷️ STEP 8 - DATA CONTEXT COLLECTION:
 ```python
@@ -146,16 +206,27 @@ adata.uns['user_data_context'] = user_data_context
 ```
 
 🏷️ STEP 9 - Marker from description:
-Call toolset function: scrna.run_workflow(workflow_type="marker_from_desc",description=user_data_context)
+Get marker generation guidance based on data context:
+scrna.run_workflow(workflow_type="marker_from_desc", description=user_data_context)
+Then adapt and implement marker generation code based on the returned guidance and your tissue context.
 
 🏷️ STEP 10 - Marker from data:
-Call toolset function: scrna.run_workflow(workflow_type="marker_from_data")
+Get data-driven marker analysis guidance:
+scrna.run_workflow(workflow_type="marker_from_data")
+Then adapt and implement marker analysis code based on your actual cluster structure.
+**CRITICAL**: Evaluate marker genes - fold changes, p-values, specificity. Identify the most discriminative markers per cluster.
 
 🏷️ STEP 11 - AUCELL CELL TYPE SCORING:
-Call toolset function: scrna.run_workflow(workflow_type="aucell")
+Get AUCell scoring guidance and methodology:
+scrna.run_workflow(workflow_type="aucell")
+Then adapt and implement AUCell scoring code based on your marker genes and cell clusters.
+**CRITICAL**: Examine AUCell scores distribution, thresholds, and how well they separate cell types. Validate scoring results.
 
 🏷️ STEP 12 - ANNOTATION:
-Call toolset function: scrna.run_workflow(workflow_type="llm_anno",description=user_data_context)
+Get LLM-powered annotation guidance and workflow:
+scrna.run_workflow(workflow_type="llm_anno", description=user_data_context)
+Then adapt the annotation workflow based on your specific clustering results and evidence.
+**CRITICAL**: Carefully review LLM annotations against marker evidence. Verify biological plausibility of assigned cell types.
 
 🏷️ STEP 13 - DOWNSTREAM ANALYSIS:
 ```python
