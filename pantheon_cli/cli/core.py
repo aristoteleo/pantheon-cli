@@ -181,7 +181,7 @@ RNA-seq Analysis (when available):
 
 Other Bio Tools:
 - bio chipseq init: ChIP-seq analysis (when available)
-- bio scrna init: Single-cell RNA-seq (when available)
+- bio scrna init: Single-cell RNA-seq
 
 SEARCH PRIORITY RULES:
 - Use "grep" for ANY content search (even in single files)

@@ -47,7 +47,7 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio scatac init               # Initialize scATAC-seq project[/dim]")
         self.console.print("[dim]  /bio scatac upstream ./data    # Run cellranger-atac analysis[/dim]")
         self.console.print("[dim]  /bio scrna init                # Initialize scRNA-seq project[/dim]")
-        self.console.print("[dim]  /bio scrna load_data ./data    # Load and analyze scRNA-seq data[/dim]")
+        self.console.print("[dim]  /bio scrna analysis ./data    # Load and analyze scRNA-seq data[/dim]")
         self.console.print("[dim]  /bio rnaseq init               # Initialize RNA-seq project (when available)[/dim]")
         self.console.print("")
     
@@ -308,10 +308,10 @@ Response format (single line):
             # Just /bio scrna - show scRNA help
             self.console.print("\n[bold]🧬 Single-cell RNA-seq Analysis Helper[/bold]")
             self.console.print("[dim]/bio scrna init[/dim] - Initialize scRNA-seq analysis project")
-            self.console.print("[dim]/bio scrna load_data <file>[/dim] - Load and inspect scRNA-seq data")
-            self.console.print("[dim]/bio scrna qc <file>[/dim] - Run quality control analysis")
-            self.console.print("[dim]/bio scrna preprocess <file>[/dim] - Run preprocessing and normalization")
-            self.console.print("[dim]/bio scrna annotate <file>[/dim] - Perform cell type annotation")
+            self.console.print("[dim]/bio scrna analysis <folder/file>[/dim] - Load and inspect scRNA-seq data")
+            self.console.print("[dim]/bio scrna qc <folder/file>[/dim] - Run quality control analysis")
+            self.console.print("[dim]/bio scrna preprocess <folder/file>[/dim] - Run preprocessing and normalization")
+            self.console.print("[dim]/bio scrna annotate <folder/file>[/dim] - Perform cell type annotation")
             self.console.print("\n[dim]Examples:[/dim]")
             self.console.print("[dim]  /bio scrna init                        # Initialize scRNA project[/dim]")
             self.console.print("[dim]  /bio scrna load_data ./data.h5ad       # Load and inspect H5AD file[/dim]")
@@ -355,22 +355,22 @@ Response format (single line):
             self.console.print()
             self.console.print("[dim]The command structure is now clean:[/dim]")
             self.console.print("[dim]  - /bio scrna init - Enter scRNA mode (simple prompt loading)[/dim]")
-            self.console.print("[dim]  - /bio scrna load_data <file> - Load and analyze scRNA data[/dim]")
-            self.console.print("[dim]  - /bio scrna qc <file> - Run quality control analysis[/dim]")
+            self.console.print("[dim]  - /bio scrna analysis <file/folder> - Load and analyze scRNA data[/dim]")
+            self.console.print("[dim]  - /bio scrna qc <file/folder> - Run quality control analysis[/dim]")
             self.console.print()
             
             return clear_message
         
-        elif command == "load_data":
+        elif command == "analysis":
             # Handle data loading and inspection
             if len(parts) < 4:
                 self.console.print("[red]Error: Please specify a data file path[/red]")
-                self.console.print("[dim]Usage: /bio scrna load_data <file_path>[/dim]")
-                self.console.print("[dim]Example: /bio scrna load_data ./data.h5ad[/dim]")
+                self.console.print("[dim]Usage: /bio scrna analysis <file_path>[/dim]")
+                self.console.print("[dim]Example: /bio scrna analysis ./data.h5ad[/dim]")
                 return None
             
             try:
-                from ..cli.prompt.scrna_analysis import generate_scrna_analysis_message
+                from ..cli.prompt.scrna_anno_analysis import generate_scrna_analysis_message
                 
                 file_path = parts[3]
                 self.console.print(f"\n[bold cyan]🧬 Starting scRNA-seq Data Analysis[/bold cyan]")
@@ -391,7 +391,36 @@ Response format (single line):
             except Exception as e:
                 self.console.print(f"[red]Error preparing scRNA analysis: {str(e)}[/red]")
                 return None
-        
+        elif command == "subtype":
+            # Handle subtype analysis
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio scrna subtype <file_path>[/dim]")
+                self.console.print("[dim]Example: /bio scrna subtype ./data.h5ad[/dim]")
+                return None
+            try:
+                from ..cli.prompt.scrna_subtype_analysis import generate_scrna_subtype_analysis_message
+                
+                file_path = parts[3]
+                self.console.print(f"\n[bold cyan]🧬 Starting scRNA-seq Subtype Analysis[/bold cyan]")
+                self.console.print(f"[dim]Target file: {file_path}[/dim]")
+                self.console.print("[dim]Will load and inspect scRNA-seq data with omicverse integration...[/dim]")
+                self.console.print("[dim]Preparing comprehensive analysis pipeline...[/dim]\n")
+                
+                # Generate the analysis message with file path
+                scrna_message = generate_scrna_subtype_analysis_message(folder_path=file_path)
+
+                self.console.print("[dim]Sending scRNA-seq subtype analysis request...[/dim]\n")
+                
+                return scrna_message
+                
+            except ImportError as e:
+                self.console.print(f"[red]Error: scRNA module not available: {e}[/red]")
+                return None
+            except Exception as e:
+                self.console.print(f"[red]Error preparing scRNA subtype analysis: {str(e)}[/red]")
+                return None
+                
         elif command in ["qc", "quality_control"]:
             # Handle quality control
             if len(parts) < 4:
@@ -554,7 +583,7 @@ def get_bio_command_suggestions() -> list:
         '/bio scatac init',
         '/bio scatac upstream',
         '/bio scrna init',
-        '/bio scrna load_data',
+        '/bio scrna analysis',
         '/bio scrna qc',
         '/bio scrna preprocess',
         '/bio scrna annotate',
