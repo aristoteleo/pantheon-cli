@@ -87,19 +87,21 @@ if 'pct_counts_mt' not in adata.obs.columns:
     
     try:
         # Apply QC with actual omicverse parameters
+        qc_tresh = dict(mito_perc=0.2, nUMIs=500, detected_genes=250)
         ov.pp.qc(adata, 
                 mode='seurat',           # 'seurat' or 'mads'
                 min_cells=3, 
                 min_genes=200,
                 mt_startswith='MT-',     # Mitochondrial gene prefix
-                tresh={{'mito_perc': 20, 'nUMIs': 1000, 'detected_genes': 2500}})
+                tresh=qc_tresh)
         print("✅ QC completed successfully")
     except Exception as e:
         print(f"❌ QC failed: {{e}}")
         # Retry with more lenient thresholds
         try:
+            qc_tresh_relaxed = dict(mito_perc=0.3)
             ov.pp.qc(adata, mode='seurat', min_cells=1, min_genes=100,
-                    mt_startswith='MT-', tresh={{'mito_perc': 30}})
+                    mt_startswith='MT-', tresh=qc_tresh_relaxed)
             print("✅ QC completed with relaxed parameters")
         except Exception as e2:
             print(f"❌ QC still failed: {{e2}}")
@@ -301,87 +303,172 @@ if not needs_neighbors and not needs_clustering:
     print("✅ Neighbors and clustering already completed - skipping")
 ```
 
-🏷️ STEP 7 - CELL TYPE ANNOTATION:
+🏷️ STEP 7 - INTELLIGENT CELL TYPE ANNOTATION:
+
+**Step 7a: Ask user about data context**
 ```python
-print("\\n🏷️ Cell Type Annotation...")
+print("\\n🏷️ Intelligent Cell Type Annotation...")
+print("To accurately annotate cell types, I need to understand your data context.")
+print("Please provide information about:")
+print("1. What tissue/organ is this data from? (e.g., lung, brain, liver, PBMC)")
+print("2. What is the research purpose? (e.g., disease study, development, drug response)")
+print("3. Any specific conditions? (e.g., tumor, inflammation, treatment)")
 
-# Step 7a: Find marker genes for each cluster
-if 'rank_genes_groups' not in adata.uns.keys():
-    print("Finding marker genes...")
-    # Use scanpy rank_genes_groups (no help() needed - scanpy function)
-    sc.tl.rank_genes_groups(adata, 
-                           groupby='leiden',        # Cluster column
-                           method='wilcoxon',       # Statistical test
-                           key_added='rank_genes_groups',
-                           n_genes=25)              # Number of top genes
-    print("✅ Marker genes computed")
+# User should input their data context here
+data_context = input("Please describe your data context: ") 
+print(f"Data context: {{data_context}}")
+```
 
-# Step 7b: Extract marker genes with omicverse
-print("\\nExtracting top marker genes...")
+**Step 7b: Generate expected cell types and markers**
+```python
+print("\\n🧬 Generating expected cell types and marker genes...")
 
+# Based on data context, generate 20 major cell types likely to be present
+# This should be done via LLM interaction in actual implementation
+# For now, provide a template structure
+
+# Example for PBMC data - replace with LLM-generated content based on user input
+expected_cell_types = dict()
+expected_cell_types['T_cells_CD4'] = ['CD4', 'IL7R', 'CCR7', 'LEF1', 'FOXP3']
+expected_cell_types['T_cells_CD8'] = ['CD8A', 'CD8B', 'GZMK', 'CCL5', 'NKG7']
+expected_cell_types['NK_cells'] = ['GNLY', 'NKG7', 'CD16', 'FCGR3A', 'NCR1']
+expected_cell_types['B_cells'] = ['MS4A1', 'CD79A', 'CD79B', 'BANK1', 'PAX5']
+expected_cell_types['Monocytes'] = ['CD14', 'LYZ', 'CST3', 'MNDA', 'FCGR3A']
+expected_cell_types['Dendritic_cells'] = ['FCER1A', 'CST3', 'CLEC10A', 'CD1C', 'CLEC9A']
+expected_cell_types['Plasma_cells'] = ['IGHG1', 'MZB1', 'SDC1', 'CD27', 'TNFRSF17']
+expected_cell_types['Platelets'] = ['PPBP', 'PF4', 'NRGN', 'GP1BA', 'TUBB1']
+
+print(f"Generated {{len(expected_cell_types)}} expected cell types:")
+for cell_type, markers in expected_cell_types.items():
+    print(f"  {{cell_type}}: {{', '.join(markers)}}")
+```
+
+**Step 7c: Calculate AUCell scores for each cell type**
+First, check the function parameters:
+```python
 # MANDATORY: Check help first for omicverse function
+help(ov.single.geneset_aucell)
+```
+
+Then calculate AUCell scores:
+```python
+print("\\n📊 Calculating AUCell scores for cell type markers...")
+
+# Calculate AUCell scores for each expected cell type
+for cell_type, markers in expected_cell_types.items():
+    try:
+        ov.single.geneset_aucell(adata, 
+                               geneset_name=cell_type,     # Cell type name
+                               geneset=markers,             # Marker gene list
+                               AUC_threshold=0.01,          # AUC threshold
+                               seed=42)                     # Random seed
+        print(f"✅ AUCell score calculated for {{cell_type}}")
+    except Exception as e:
+        print(f"❌ AUCell failed for {{cell_type}}: {{e}}")
+
+print("\\n📈 AUCell scores added to adata.obs")
+```
+
+**Step 7d: Analyze cluster-celltype associations**
+```python
+print("\\n🔍 Analyzing cluster-celltype associations...")
+
+# Calculate mean AUCell scores per cluster for each cell type
+cluster_celltype_scores = {{}}
+celltype_columns = [col for col in adata.obs.columns if any(ct in col for ct in expected_cell_types.keys())]
+
+for celltype_col in celltype_columns:
+    if celltype_col in adata.obs.columns:
+        cluster_means = adata.obs.groupby('leiden')[celltype_col].mean()
+        cluster_celltype_scores[celltype_col] = cluster_means
+
+# Find best matching cell type for each cluster
+cluster_annotations = {{}}
+for cluster in adata.obs['leiden'].cat.categories:
+    best_score = 0
+    best_celltype = 'Unknown'
+    
+    for celltype_col, scores in cluster_celltype_scores.items():
+        if cluster in scores.index and scores[cluster] > best_score:
+            best_score = scores[cluster]
+            # Extract cell type name from column name
+            best_celltype = celltype_col.replace('_AUCell', '').replace('AUCell_', '')
+    
+    cluster_annotations[cluster] = best_celltype
+    print(f"Cluster {{cluster}} -> {{best_celltype}} (score: {{round(best_score, 3)}})")
+
+print("\\n✅ Initial cluster-celltype mapping completed")
+```
+
+**Step 7e: Validate with cluster-specific markers**
+First, check the function parameters:
+```python
+# MANDATORY: Check help for marker gene functions
 help(ov.single.get_celltype_marker)
+help(ov.single.cosg)
+```
 
+Then find cluster-specific markers:
+```python
+print("\\n🔬 Finding cluster-specific marker genes for validation...")
+
+# Method 1: Use omicverse get_celltype_marker
 try:
-    # Extract marker genes using omicverse with actual parameters
-    marker_dict = ov.single.get_celltype_marker(adata,
-                                               clustertype='leiden',        # Cluster column
-                                               log2fc_min=2,              # Min log2 fold change
-                                               scores_type='scores',       # 'scores' or 'logfoldchanges'
-                                               pval_cutoff=0.05,           # P-value threshold
-                                               rank=False,                 # Whether to rank
-                                               key='rank_genes_groups',    # Rank genes key
-                                               method='wilcoxon',          # Test method
-                                               foldchange=None,            # Fold change threshold
-                                               topgenenumber=10,           # Top genes per cluster
-                                               unique=True,                # Remove duplicates within cluster
-                                               global_unique=False)        # Remove duplicates globally
-    print("✅ Marker gene extraction completed")
-    
-    # Display marker genes for each cluster
-    for cluster, genes in marker_dict.items():
-        print(f"Cluster {{cluster}}: {{', '.join(genes[:5])}}...")  # Show top 5 genes
+    cluster_markers = ov.single.get_celltype_marker(adata,
+                                                   clustertype='leiden',
+                                                   log2fc_min=1,
+                                                   pval_cutoff=0.05,
+                                                   topgenenumber=10,
+                                                   unique=True)
+    print("✅ Cluster markers extracted with get_celltype_marker")
+except:
+    cluster_markers = None
+    print("❌ get_celltype_marker failed, trying alternative method")
+
+# Method 2: Use scanpy + cosg as backup
+if cluster_markers is None:
+    try:
+        # First run differential expression
+        sc.tl.rank_genes_groups(adata, groupby='leiden', method='wilcoxon')
         
-except Exception as e:
-    print(f"❌ Marker gene extraction failed: {{e}}")
-    # Fallback: manually extract from rank_genes_groups
-    marker_dict = {{}}
-    for cluster in adata.obs['leiden'].cat.categories:
-        marker_dict[cluster] = adata.uns['rank_genes_groups']['names'][cluster][:10].tolist()
-    print("✅ Fallback marker gene extraction completed")
+        # Then run COSG for more specific markers
+        ov.single.cosg(adata, 
+                      groupby='leiden',
+                      groups='all',
+                      mu=1,
+                      n_genes_user=10)
+        print("✅ Cluster markers extracted with scanpy + COSG")
+    except Exception as e:
+        print(f"❌ Alternative marker detection failed: {{e}}")
 
-# Step 7c: Cell ontology mapping (optional)
-print("\\nInitializing Cell Ontology Mapper...")
+# Display top markers for each cluster
+print("\\n📋 Top cluster-specific markers:")
+if cluster_markers:
+    for cluster, markers in cluster_markers.items():
+        predicted_type = cluster_annotations.get(cluster, 'Unknown')
+        print(f"Cluster {{cluster}} ({{predicted_type}}): {{', '.join(markers[:5])}}")
+```
 
-try:
-    # MANDATORY: Check help first for omicverse function
-    help(ov.single.CellOntologyMapper)
-    
-    # Initialize Cell Ontology Mapper with actual parameters
-    cell_mapper = ov.single.CellOntologyMapper(
-        cl_obo_file=None,                    # Path to CL ontology file
-        embeddings_path=None,               # Path to pre-computed embeddings
-        model_name="all-mpnet-base-v2",    # Sentence transformer model
-        local_model_dir=None                # Local model directory
-    )
-    
-    # Setup for cell type mapping if needed
-    # cell_mapper.setup_llm_expansion(
-    #     api_type="openai",
-    #     tissue_context="your_tissue",  # e.g., "lung", "brain"
-    #     species="human"                 # or "mouse"
-    # )
-    
-    print("✅ Cell Ontology Mapper initialized")
-    
-except Exception as e:
-    print(f"❌ Cell Ontology Mapper initialization failed: {{e}}")
-    print("Continuing with manual annotation based on marker genes...")
+**Step 7f: Final annotation assignment**
+```python
+print("\\n🎯 Assigning final cell type annotations...")
 
-# Step 7d: Add cluster annotations to adata (placeholder)
-adata.obs['cell_type_annotation'] = 'Unknown'  # Initialize
-print("✅ Cell type annotation column initialized")
-print("📝 Manual annotation required based on marker genes and biological knowledge")
+# Apply cluster annotations to cells
+adata.obs['predicted_celltype'] = adata.obs['leiden'].map(cluster_annotations)
+
+# Show annotation summary
+annotation_counts = adata.obs['predicted_celltype'].value_counts()
+print("\\n📊 Final cell type annotation summary:")
+for celltype, count in annotation_counts.items():
+    percentage = (count / adata.n_obs) * 100
+    print(f"  {{celltype}}: {{count}} cells ({{round(percentage, 1)}}%)")
+
+print("\\n✅ Cell type annotation completed!")
+print("Results saved in adata.obs['predicted_celltype']")
+
+# Optionally save cluster-celltype mapping for reference
+adata.uns['cluster_celltype_mapping'] = cluster_annotations
+print("Cluster mapping saved in adata.uns['cluster_celltype_mapping']")
 ```
 
 📈 STEP 8 - DOWNSTREAM ANALYSIS:
@@ -402,7 +489,7 @@ if 'leiden' in adata.obs.columns:
     cluster_counts = adata.obs['leiden'].value_counts().sort_index()
     for cluster, count in cluster_counts.items():
         percentage = (count / adata.n_obs) * 100
-        print(f"  Cluster {{cluster}}: {{count}} cells ({{percentage:.1f}}%)")
+        print(f"  Cluster {{cluster}}: {{count}} cells ({{round(percentage, 1)}}%)")
 
 # Step 8c: Quality metrics per cluster
 if 'leiden' in adata.obs.columns and 'total_counts' in adata.obs.columns:
@@ -424,14 +511,6 @@ if 'X_umap' in adata.obsm.keys():
 if 'rank_genes_groups' in adata.uns.keys():
     print("- adata.uns['rank_genes_groups']: Differential expression results")
 
-# Step 8e: Pertpy analysis (optional if pertpy available)
-try:
-    import pertpy as pt
-    print("\\n🧪 Pertpy available for perturbation analysis")
-    # Add pertpy-specific analyses here if needed
-    # help(pt.tl.some_function)  # Use help() for pertpy functions
-except ImportError:
-    print("\\n📝 Pertpy not available - basic analysis completed")
 
 print("\\n✅ scRNA-seq analysis pipeline completed successfully!")
 ```
