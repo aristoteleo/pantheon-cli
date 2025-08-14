@@ -117,6 +117,7 @@ class ReplUI:
         self.console.print("[dim][bold purple]/bio     [/bold purple][/dim] - Bioinformatics analysis helper 🧬")
         self.console.print("[dim][bold purple]!<cmd>   [/bold purple][/dim] - Execute bash command directly (no LLM)")
         self.console.print("[dim][bold purple]%<code>  [/bold purple][/dim] - Execute Python code directly (no LLM)")
+        self.console.print("[dim][bold purple]><code>  [/bold purple][/dim] - Execute R code directly (no LLM)")
         self.console.print("[dim][bold purple]/exit    [/bold purple][/dim] - Exit cleanly")
         self.console.print("[dim]Ctrl+C   [/dim] - Cancel current operation")
         self.console.print("[dim]Ctrl+C x2[/dim] - Force exit (within 2 seconds)")
