@@ -101,11 +101,61 @@ The bioinformatics guide includes detailed mappings for:
 
 ---
 
+## Direct Code Execution (REPL-Style Commands)
+
+### Quick Execution Prefixes
+
+| **Prefix** | **Language** | **Example** | **Description** |
+|------------|--------------|-------------|-----------------|
+| `!` | **Shell/Bash** | `!ls -la` | Execute shell commands directly in REPL |
+| `%` | **Python** | `%print("Hello World")` | Execute Python code directly with instant output |
+| `>` | **R** | `>summary(mtcars)` | Execute R statistical code directly |
+| `]` | **Julia** | `]println("Hello Julia")` | Execute Julia high-performance computing code |
+
+### Direct Execution Examples
+
+```bash
+# Shell commands - instant system operations
+!pwd                           # Show current directory
+!ls -la *.py                  # List Python files
+!git status                   # Check git status
+!pip install pandas          # Install Python packages
+
+# Python code - data analysis and scripting
+%import pandas as pd         # Import libraries
+%df = pd.read_csv("data.csv") # Load data
+%df.head()                   # Show first rows
+%x = [1,2,3]; sum(x)         # Quick calculations
+
+# R statistical computing - data science
+>library(ggplot2)            # Load R packages
+>data(mtcars)                # Load dataset
+>summary(mtcars)             # Statistical summary
+>plot(mtcars$mpg, mtcars$hp) # Create plots
+
+# Julia high-performance computing - numerical analysis
+]using LinearAlgebra         # Load Julia packages
+]A = [1 2; 3 4]             # Matrix operations
+]det(A)                     # Calculate determinant
+]using Plots; plot([1,2,3]) # Create visualizations
+```
+
+### Key Features
+
+- **Shared Interpreter Sessions**: All prefixed commands use the same interpreter session as the AI agent
+- **REPL-Style Output**: Only shows final results and print statements, suppressing intermediate assignments
+- **Instant Execution**: No need to call functions - just type the prefix and your code
+- **Language Switching**: Switch between languages seamlessly in the same session
+- **Persistent State**: Variables and imports persist across commands within each language
+
+---
+
 ## Python Code Execution
 
 | **Natural Language Request** | **Tool Call** | **Function Description** |
 |------------------------------|---------------|--------------------------|
 | "Run this Python code" | `run_python("print('Hello World')")` | Executes Python code with full package support |
+| "Quick Python execution" | `%print("Hello World")` | **NEW**: Direct Python execution with `%` prefix |
 | "Run code in specific interpreter" | `run_code_in_interpreter("interpreter_id", "print('test')")` | Executes code in specific Python interpreter session |
 | "Create new Python interpreter" | `new_interpreter("my_python_session")` | Creates new isolated Python interpreter session |
 | "Delete Python interpreter" | `delete_interpreter("interpreter_id")` | Removes Python interpreter session |
@@ -117,6 +167,7 @@ The bioinformatics guide includes detailed mappings for:
 | **Natural Language Request** | **Tool Call** | **Function Description** |
 |------------------------------|---------------|--------------------------|
 | "Run R statistical analysis" | `run_r("summary(mtcars)")` | Executes R code for statistical computing |
+| "Quick R execution" | `>summary(mtcars)` | **NEW**: Direct R execution with `>` prefix |
 | "Run R code in specific session" | `run_code_in_interpreter("r_session", "plot(iris)")` | Executes R code in specific interpreter session |
 | "Create new R interpreter" | `new_interpreter("my_r_session")` | Creates new isolated R interpreter session |
 | "Delete R interpreter" | `delete_interpreter("r_session_id")` | Removes R interpreter session |
@@ -129,6 +180,7 @@ The bioinformatics guide includes detailed mappings for:
 | **Natural Language Request** | **Tool Call** | **Function Description** |
 |------------------------------|---------------|--------------------------|
 | "Run Julia scientific computing" | `julia("using LinearAlgebra; det([1 2; 3 4])")` | Executes Julia code for high-performance numerical analysis |
+| "Quick Julia execution" | `]println("Hello Julia")` | **NEW**: Direct Julia execution with `]` prefix |
 | "Create Julia environment" | `new_interpreter("julia_session")` | Creates new isolated Julia interpreter session |
 | "Run Julia code in session" | `run_code_in_interpreter("julia_session", "using Plots; plot([1,2,3])")` | Executes Julia code in specific interpreter session |
 | "Install Julia package" | `julia_install_package("DataFrames")` | Installs Julia packages for scientific computing |
@@ -226,6 +278,8 @@ The bioinformatics guide includes detailed mappings for:
 
 | **Natural Language Request** | **Tool Call** | **Function Description** |
 |------------------------------|---------------|--------------------------|
+| "Run shell command directly" | `!ls -la` | **NEW**: Direct shell execution with `!` prefix |
+| "Execute system command" | `!pwd` | **NEW**: Instant system command execution |
 | "Create new shell session" | `new_shell("my_shell_session")` | Creates new isolated shell environment |
 | "Close shell session" | `close_shell("shell_session_id")` | Terminates specific shell session |
 | "Run command in shell" | `run_command_in_shell("shell_id", "ls -la")` | Executes command in specific shell session |
@@ -339,37 +393,54 @@ CLI: bio_scrna_run_cell_type_annotation("./data.h5ad")  # Cell annotation
 ### Pattern 6: Julia High-Performance Computing
 ```
 User: "Solve differential equations with Julia"
-CLI: new_interpreter("julia_hpc")  # Create Julia session
-CLI: julia_install_package("DifferentialEquations")  # Install packages
-CLI: julia("using DifferentialEquations; solve(ode_problem)")  # Solve equations
-CLI: auto_save_plot()  # Save generated plots automatically
+CLI: ]using DifferentialEquations  # Load packages directly
+CLI: ]prob = ODEProblem(f, u0, tspan)  # Define problem
+CLI: ]sol = solve(prob)  # Solve equations
+CLI: ]using Plots; plot(sol)  # Plot solution
 ```
 
-### Pattern 7: Multi-Session Development
+### Pattern 7: Multi-Language REPL Development
 ```
-User: "Set up development environment"
-CLI: new_interpreter("data_analysis_python")  # Create Python session
-CLI: new_interpreter("stats_r_session")  # Create R session  
-CLI: new_interpreter("julia_hpc")  # Create Julia session
-CLI: new_shell("system_commands")  # Create shell session
-CLI: run_code_in_interpreter("data_analysis_python", "import pandas")  # Setup Python
-CLI: run_code_in_interpreter("stats_r_session", "library(ggplot2)")  # Setup R
-CLI: run_code_in_interpreter("julia_hpc", "using Plots")  # Setup Julia
+User: "Quick analysis across languages"
+CLI: !ls data/  # Check available data files
+CLI: %import pandas as pd; df = pd.read_csv("data/data.csv")  # Load in Python
+CLI: %df.describe()  # Python descriptive stats
+CLI: >library(ggplot2)  # Switch to R for plotting
+CLI: >data <- read.csv("data/data.csv")  # Load in R
+CLI: >ggplot(data, aes(x=var1, y=var2)) + geom_point()  # R visualization
+CLI: ]using DataFrames, CSV  # Switch to Julia for performance
+CLI: ]df = CSV.read("data/data.csv", DataFrame)  # Load in Julia
+CLI: ]mean(df.var1)  # Julia statistical computation
+```
+
+### Pattern 8: System Administration Workflow
+```
+User: "Check system status and manage processes"
+CLI: !ps aux | grep python  # Check Python processes
+CLI: !df -h  # Check disk usage
+CLI: !free -m  # Check memory usage
+CLI: !top -n 1 | head -20  # Check CPU usage
+CLI: %import psutil; psutil.cpu_percent()  # Python system monitoring
+CLI: !systemctl status nginx  # Check service status
 ```
 
 ## Pro Tips
 
 1. **Start with TODO** - Use `add_todo()` for complex multi-step tasks
 2. **Get Guidance** - Use `execute_current_task()` when unsure what to do next  
-3. **Validate First** - Check syntax and files before running expensive operations
-4. **Track Progress** - Always use `mark_task_done()` to track completion
-5. **Use Sessions** - Create interpreter/shell sessions for complex workflows
-6. **Combine Tools** - Chain multiple tools together for powerful workflows
-7. **Search Smart** - Use `glob()` for files, `grep()` for content, `web_search()` for research
-8. **Manage Quality** - Validate code with quality tools before execution
-9. **Choose Right Language** - Python for general analysis, R for statistics/Seurat, Julia for HPC
-10. **Bio Mode Entry** - Use `/bio <tool> init` to enter focused analysis modes
-11. **Generate Custom Tools** - Use `generate_toolset()` for domain-specific workflows
-12. **Leverage AI Guidance** - Generated toolsets include intelligent workflow suggestions
+3. **Use Direct Execution** - **NEW**: Use `!`, `%`, `>`, `]` for instant code execution
+4. **Quick Commands** - Use `!ls`, `%import pandas`, `>summary()`, `]println()` for fast operations
+5. **Validate First** - Check syntax and files before running expensive operations
+6. **Track Progress** - Always use `mark_task_done()` to track completion
+7. **Use Sessions** - Create interpreter/shell sessions for complex workflows
+8. **Combine Tools** - Chain multiple tools together for powerful workflows
+9. **Search Smart** - Use `glob()` for files, `grep()` for content, `web_search()` for research
+10. **Manage Quality** - Validate code with quality tools before execution
+11. **Choose Right Language** - Python for general analysis, R for statistics/Seurat, Julia for HPC
+12. **Switch Languages Seamlessly** - **NEW**: Mix `%python`, `>R`, `]julia`, `!shell` in same session
+13. **Bio Mode Entry** - Use `/bio <tool> init` to enter focused analysis modes
+14. **Generate Custom Tools** - Use `generate_toolset()` for domain-specific workflows
+15. **Leverage AI Guidance** - Generated toolsets include intelligent workflow suggestions
+16. **REPL-Style Development** - **NEW**: Use direct execution for interactive development and testing
 
 This guide maps your natural language intentions to specific tool calls, making it easy to accomplish any task in the Pantheon CLI efficiently.
