@@ -275,6 +275,106 @@ class ReplUI:
         }
         self.conversation_history.append(entry)
 
+    def _format_tool_output(self, output):
+        """Format tool output for better readability in markdown"""
+        import json
+        
+        if output is None:
+            return "*No output*"
+        
+        # Handle dict outputs
+        if isinstance(output, dict):
+            # Special handling for common tool outputs
+            if "result" in output and isinstance(output.get("result"), dict):
+                # Python/R code execution results
+                result = output["result"]
+                stdout = output.get("stdout", "").strip()
+                stderr = output.get("stderr", "").strip()
+                
+                formatted_lines = []
+                
+                # Format the main result
+                if result:
+                    try:
+                        # Pretty print the result
+                        result_str = json.dumps(result, indent=2, ensure_ascii=False)
+                        formatted_lines.append("**Result:**")
+                        formatted_lines.append("```json")
+                        formatted_lines.append(result_str)
+                        formatted_lines.append("```")
+                    except:
+                        formatted_lines.append("**Result:**")
+                        formatted_lines.append("```")
+                        formatted_lines.append(str(result))
+                        formatted_lines.append("```")
+                
+                # Add stdout if present
+                if stdout:
+                    formatted_lines.append("")
+                    formatted_lines.append("**Standard Output:**")
+                    formatted_lines.append("```")
+                    formatted_lines.append(stdout)
+                    formatted_lines.append("```")
+                
+                # Add stderr if present
+                if stderr:
+                    formatted_lines.append("")
+                    formatted_lines.append("**Error Output:**")
+                    formatted_lines.append("```")
+                    formatted_lines.append(stderr)
+                    formatted_lines.append("```")
+                
+                return "\n".join(formatted_lines) if formatted_lines else "```\n{}\n```".format(str(output))
+            
+            # Special handling for todo outputs
+            elif "success" in output and "summary" in output:
+                formatted_lines = []
+                if output.get("success"):
+                    summary = output.get("summary", {})
+                    total = output.get("total_todos", 0)
+                    
+                    formatted_lines.append(f"✅ **Todo Status:** {total} total tasks")
+                    if summary:
+                        formatted_lines.append(f"- Pending: {summary.get('pending', 0)}")
+                        formatted_lines.append(f"- In Progress: {summary.get('in_progress', 0)}")
+                        formatted_lines.append(f"- Completed: {summary.get('completed', 0)}")
+                    
+                    # Add todos list if present
+                    if "todos" in output and output["todos"]:
+                        formatted_lines.append("")
+                        formatted_lines.append("**Tasks:**")
+                        for todo in output["todos"]:
+                            status_icon = "✅" if todo.get("status") == "completed" else "🔄" if todo.get("status") == "in_progress" else "⏳"
+                            formatted_lines.append(f"- {status_icon} {todo.get('content', 'Unknown task')}")
+                    
+                    return "\n".join(formatted_lines)
+            
+            # Generic dict formatting
+            try:
+                formatted = json.dumps(output, indent=2, ensure_ascii=False)
+                return f"```json\n{formatted}\n```"
+            except:
+                return f"```\n{str(output)}\n```"
+        
+        # Handle list outputs
+        elif isinstance(output, list):
+            try:
+                formatted = json.dumps(output, indent=2, ensure_ascii=False)
+                return f"```json\n{formatted}\n```"
+            except:
+                return f"```\n{str(output)}\n```"
+        
+        # Handle string outputs
+        elif isinstance(output, str):
+            if "\n" in output or len(output) > 80:
+                return f"```\n{output}\n```"
+            else:
+                return output
+        
+        # Default formatting
+        else:
+            return f"```\n{str(output)}\n```"
+
     def export_conversation_to_markdown(self, filename: str = None) -> str:
         """Export conversation history to a markdown file"""
         if not filename:
@@ -326,9 +426,39 @@ class ReplUI:
             elif entry["type"] == "tool_result":
                 lines.append("**Output:**")
                 lines.append("")
-                lines.append("```")
-                lines.append(entry["content"])
-                lines.append("```")
+                
+                # Format tool output based on content type
+                output_content = entry["content"]
+                
+                # Try to parse and format JSON/dict output
+                if isinstance(output_content, str):
+                    # Try to detect and format dict-like strings
+                    if output_content.startswith("{") and output_content.endswith("}"):
+                        try:
+                            import json
+                            import ast
+                            # Try to parse as Python dict literal first
+                            parsed = ast.literal_eval(output_content)
+                            formatted = self._format_tool_output(parsed)
+                            lines.extend(formatted.split("\n"))
+                        except:
+                            # Fallback to raw output in code block
+                            lines.append("```")
+                            lines.append(output_content)
+                            lines.append("```")
+                    else:
+                        # For non-dict output, use appropriate formatting
+                        if "\n" in output_content or len(output_content) > 80:
+                            lines.append("```")
+                            lines.append(output_content)
+                            lines.append("```")
+                        else:
+                            lines.append(output_content)
+                else:
+                    # If it's already a dict/list, format it nicely
+                    formatted = self._format_tool_output(output_content)
+                    lines.extend(formatted.split("\n"))
+                
                 lines.append("")
         
         markdown_content = "\n".join(lines)
