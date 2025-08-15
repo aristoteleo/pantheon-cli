@@ -196,6 +196,51 @@ class Repl(ReplUI):
         
         self.console.print()  # Add spacing
     
+    async def _restart_python_interpreter(self):
+        """Restart the Python interpreter"""
+        try:
+            self.console.print("\n[yellow]⚡ Restarting Python interpreter...[/yellow]")
+            
+            # Get the python toolset
+            python_toolset = None
+            if hasattr(self.agent, '_python_toolset') and self.agent._python_toolset:
+                python_toolset = self.agent._python_toolset
+            else:
+                self.console.print("[red]Python interpreter not available.[/red]")
+                return
+            
+            # Get client_id
+            client_id = self.agent.memory.id if hasattr(self.agent, 'memory') and hasattr(self.agent.memory, 'id') else "default"
+            
+            # Force restart by cleaning up old interpreter and creating new one
+            old_interpreter_id = python_toolset.clientid_to_interpreterid.get(client_id)
+            
+            if old_interpreter_id and old_interpreter_id in python_toolset.interpreters:
+                # Clean up old interpreter
+                try:
+                    await python_toolset.delete_interpreter(old_interpreter_id)
+                    self.console.print("[dim]Old interpreter cleaned up[/dim]")
+                except Exception as e:
+                    self.console.print(f"[dim]Warning: Failed to clean up old interpreter: {e}[/dim]")
+                finally:
+                    # Remove from tracking even if cleanup failed
+                    if old_interpreter_id in python_toolset.interpreters:
+                        del python_toolset.interpreters[old_interpreter_id]
+                    if old_interpreter_id in python_toolset.jobs:
+                        del python_toolset.jobs[old_interpreter_id]
+            
+            # Create new interpreter
+            new_interpreter_id = await python_toolset.new_interpreter()
+            python_toolset.clientid_to_interpreterid[client_id] = new_interpreter_id
+            
+            self.console.print("[green]✓ Python interpreter restarted successfully![/green]")
+            self.console.print("[dim]All variables and imports have been cleared.[/dim]\n")
+            
+        except Exception as e:
+            self.console.print(f"[red]Failed to restart Python interpreter: {e}[/red]")
+            import traceback
+            self.console.print(f"[dim]{traceback.format_exc()}[/dim]")
+    
     async def _execute_direct_python(self, code: str):
         """Execute Python code directly using the Python toolset"""
         try:
@@ -582,6 +627,10 @@ class Repl(ReplUI):
             elif cmd_lower in ["clear", "/clear"]:
                 self.console.clear()
                 await self.print_greeting()
+                current_message = None  # Reset to get new input
+                continue
+            elif cmd_lower in ["restart-python", "/restart-python", "restart", "/restart"]:
+                await self._restart_python_interpreter()
                 current_message = None  # Reset to get new input
                 continue
             elif cmd_lower in ["history", "/history"]:
