@@ -131,6 +131,30 @@ This creates a vector database at `tmp/pantheon_cli_tools_rag/pantheon-cli-tools
 - **Web**: Intelligent web operations with automatic URL intent analysis
 - **Notebook**: Jupyter notebook editing (no execution)
 
+## Configuration Files
+
+Pantheon CLI supports project-specific configuration files similar to Claude Code's `CLAUDE.md`:
+
+- **`PANTHEON.md`**: Project-wide configuration, commands, and guidelines (safe to commit)
+- **`PANTHEON.local.md`**: Personal preferences and local settings (add to `.gitignore`)
+
+These files are automatically discovered in your current directory or any parent directory and integrated into the AI assistant's context.
+
+**Example `PANTHEON.md`:**
+```markdown
+# My Project
+
+## Commands
+- Run analysis: `python scripts/analyze.py`
+- Quick data load: `%adata = sc.read_h5ad('data.h5ad')`
+
+## Guidelines  
+- Use scanpy for Python analysis
+- Use Seurat for R analysis
+```
+
+See [`CONFIG_FILES.md`](CONFIG_FILES.md) for detailed documentation and examples.
+
 
 
 

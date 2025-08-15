@@ -27,6 +27,9 @@ from .manager.model_manager import ModelManager
 
 from pantheon.utils.log import logger
 
+# Import config loader
+from ..utils.config_loader import load_user_config, print_config_info
+
 
 #Special toolsets
 from pantheon.toolsets.bio import BioToolsetManager
@@ -455,8 +458,15 @@ async def main(
                 toolset_list = [name.strip() for name in ext_toolsets.split(',')]
                 print(f"📋 Loading specific toolsets: {toolset_list}")
     
-    # Use custom instructions or default
-    agent_instructions = instructions or DEFAULT_INSTRUCTIONS
+    # Load user-defined configuration from PANTHEON.md and PANTHEON.local.md
+    user_config = load_user_config()
+    
+    # Use custom instructions or default, then append user config
+    base_instructions = instructions or DEFAULT_INSTRUCTIONS
+    agent_instructions = base_instructions + user_config
+    
+    # Print info about loaded config files
+    print_config_info()
     
     # Initialize toolsets
     shell_toolset = ShellToolSet("shell")
