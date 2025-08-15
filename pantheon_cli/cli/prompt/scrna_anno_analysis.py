@@ -22,11 +22,16 @@ def generate_scrna_analysis_message(folder_path: Optional[str] = None) -> str:
 {target_description}
 ⚠️ CRITICAL PYTHON ENVIRONMENT RULES:
 - **PERSISTENT STATE**: Python interpreter maintains ALL variables across calls! 
-- **NEVER re-import data** if `adata` already exists - check variable first!
-- **Error recovery**: If code fails, analyze error and generate corrected code!
-- **Use help()**: Always call `help()` before omicverse/scanpy functions
+- **MEMORY OPTIMIZATION**: Variables persist! NEVER re-read or re-import data that already exists in memory!
+- **SMART VARIABLE CHECKING**: Use `try/except` or `'var' in globals()` to check existence - NO redundant file I/O!
+- **EFFICIENCY FIRST**: 
+  - Check if adata exists before loading: `if 'adata' not in globals()`
+  - Use existing results: `if 'pca_result' in adata.obsm`
+  - Reuse computed values: `if 'marker_genes' in locals()`
+- **ERROR RECOVERY**: If code fails, analyze error and fix - don't reload everything!
+- **NO REPETITION**: Each import/load/compute happens ONCE per session unless explicitly needed
 - **After each step**: mark_task_done("description"), then show_todos()
-- **AUTOMATIC EXECUTION**: Do not ask the user for confirmations; proceed automatically and log warnings when needed.
+- **AUTOMATIC EXECUTION**: Proceed automatically without confirmations; log warnings when needed.
 
 {path_instruction}
 
@@ -60,7 +65,7 @@ IF current is EMPTY, create these todos ONCE:
 PHASE 2 — ADAPTIVE EXECUTION WORKFLOW
 
 ⚠️ CRITICAL EXECUTION STRATEGY:
-When you call scrna.run_workflow(), it returns guidance, explanations, and example Python code.
+When you call scrna.run_workflow(), it returns guidance, explanations, and example Python code using toolset function run_python_code.
 You MUST:
 1. **Read and analyze** the entire returned content carefully
 2. **Understand the logic** and methodology described
@@ -82,8 +87,14 @@ The returned content serves as GUIDANCE and TEMPLATES, not direct execution scri
 
 📊 STEP 1 - DATA LOADING, INSPECTION & PROJECT SETUP:
 ```python
-# Check if data already loaded
-if 'adata' not in globals():
+# EFFICIENT DATA LOADING - Check memory first!
+try:
+    # Check if adata exists and is valid
+    print(f"Using existing adata: {{adata.shape}} (n_obs, n_var)")
+    data_already_loaded = True
+except NameError:
+    # Only load if not in memory
+    print("Loading data for the first time...")
     import scanpy as sc
     import omicverse as ov
     import pandas as pd
@@ -92,19 +103,30 @@ if 'adata' not in globals():
     # Load data based on detected format
     adata = sc.read_xxx("path")  # .h5ad, .h5, .mtx, etc.
     print(f"Loaded: {{adata.shape}} (n_obs, n_var)")
-else:
-    print(f"Using existing adata: {{adata.shape}}")
+    data_already_loaded = False
 
-# Create structured output directory immediately
-print("\\n📁 Creating project structure...")
+# Only import libraries once
+if 'sc' not in globals():
+    import scanpy as sc
+    import omicverse as ov
+    import pandas as pd
+    import numpy as np
+    print("Libraries imported")
+
+# Create structured output directory (only if not exists)
+print("\\n📁 Setting up project structure...")
 try:
-    import os
-    from datetime import datetime
-    
-    # Create main results directory with timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    results_dir = f"scrna_analysis_results_{{timestamp}}"
-    os.makedirs(results_dir, exist_ok=True)
+    # Check if we already have a results directory
+    if 'results_dir' not in globals():
+        import os
+        from datetime import datetime
+        
+        # Create main results directory with timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        results_dir = f"scrna_analysis_results_{{timestamp}}"
+        os.makedirs(results_dir, exist_ok=True)
+    else:
+        print(f"Using existing results directory: {{results_dir}}")
     
     # Create subdirectories for different analysis components
     subdirs = [
@@ -124,9 +146,12 @@ try:
     for subdir in subdirs:
         os.makedirs(os.path.join(results_dir, subdir), exist_ok=True)
     
-    # Store results directory in adata for later use
-    adata.uns['results_directory'] = results_dir
-    print(f"✅ Project structure created: {{results_dir}}")
+    # Store results directory in adata for later use (if adata exists)
+    if 'adata' in globals():
+        adata.uns['results_directory'] = results_dir
+        print(f"✅ Project structure ready: {{results_dir}}")
+    else:
+        print(f"✅ Project structure created: {{results_dir}} (will link to adata after loading)")
     
 except Exception as e:
     print(f"❌ Failed to create project structure: {{e}}")
@@ -157,20 +182,24 @@ Then analyze the returned guidance and implement adapted PCA code based on your 
 
 🏷️ STEP 5 - BATCH CORRECTION (if needed):
 ```python
-# Check if batch correction is needed - look for REAL batch keys
-# Real batch keys are typically: 'batch', 'sample', 'donor', 'experiment', 'plate', 'condition'
-# NOT QC metrics like 'passing_mt', 'passing_ngenes', 'n_genes', 'total_counts', etc.
-
-real_batch_keys = []
-potential_batch_keys = ['batch', 'sample', 'donor', 'experiment', 'plate', 'condition', 'library_id']
-
-for key in potential_batch_keys:
-    if key in adata.obs.columns:
-        # Check if it has multiple unique values and is categorical
-        unique_vals = adata.obs[key].nunique()
-        if unique_vals > 1 and unique_vals < adata.n_obs * 0.5:  # Not too many unique values
-            real_batch_keys.append(key)
-            print(f"Found real batch key: {{key}} with {{unique_vals}} unique values")
+# EFFICIENT BATCH CHECK - Only compute if not done before
+if 'real_batch_keys' not in globals():
+    # Check if batch correction is needed - look for REAL batch keys
+    # Real batch keys are typically: 'batch', 'sample', 'donor', 'experiment', 'plate', 'condition'
+    # NOT QC metrics like 'passing_mt', 'passing_ngenes', 'n_genes', 'total_counts', etc.
+    
+    real_batch_keys = []
+    potential_batch_keys = ['batch', 'sample', 'donor', 'experiment', 'plate', 'condition', 'library_id']
+    
+    for key in potential_batch_keys:
+        if key in adata.obs.columns:
+            # Check if it has multiple unique values and is categorical
+            unique_vals = adata.obs[key].nunique()
+            if unique_vals > 1 and unique_vals < adata.n_obs * 0.5:  # Not too many unique values
+                real_batch_keys.append(key)
+                print(f"Found real batch key: {{key}} with {{unique_vals}} unique values")
+else:
+    print(f"Using previously identified batch keys: {{real_batch_keys}}")
 
 if real_batch_keys:
     print(f"\\n🔧 Real batch keys detected: {{real_batch_keys}}")
@@ -197,12 +226,16 @@ Then analyze the returned guidance and implement adapted visualization code.
 
 🏷️ STEP 8 - DATA CONTEXT COLLECTION:
 ```python
-print("\\n📝 **DATA CONTEXT COLLECTION**")
-user_data_context = input("Please briefly describe your data (tissue, condition, experiment): ").strip()
-print(f"Data context recorded: {{user_data_context}}")
-
-# Store context in adata
-adata.uns['user_data_context'] = user_data_context
+# EFFICIENT CONTEXT COLLECTION - Check if already collected
+if 'user_data_context' not in globals():
+    print("\\n📝 **DATA CONTEXT COLLECTION**")
+    user_data_context = input("Please briefly describe your data (tissue, condition, experiment): ").strip()
+    print(f"Data context recorded: {{user_data_context}}")
+    
+    # Store context in adata
+    adata.uns['user_data_context'] = user_data_context
+else:
+    print(f"Using existing data context: {{user_data_context}}")
 ```
 
 🏷️ STEP 9 - Marker from description:
@@ -263,7 +296,32 @@ print("✅ Downstream analysis and reporting complete")
 5. Interactive LLM annotation for expert cell type assignment
 6. Comprehensive result saving and reporting
 
-**Remember:** Always use help() before omicverse functions, maintain persistent state, and mark tasks complete with mark_task_done()!
+**EFFICIENCY PRINCIPLES:**
+1. **CHECK BEFORE COMPUTE**: Always check if variables/results exist before recomputing
+2. **USE TRY/EXCEPT**: Gracefully handle missing variables without re-reading files
+3. **MEMORY-FIRST**: Trust the persistent Python interpreter - no redundant I/O
+4. **SMART RECOVERY**: Fix errors in-place, don't restart entire analysis
+5. **INCREMENTAL PROGRESS**: Each step builds on previous results
+
+Example patterns:
+```python
+# Good - Check memory first
+try:
+    print(f"Using existing adata: {{adata.shape}}")
+except NameError:
+    adata = sc.read_h5ad(path)
+
+# Good - Check computed results
+if 'X_pca' not in adata.obsm:
+    sc.tl.pca(adata)
+else:
+    print("PCA already computed")
+
+# Bad - Redundant file I/O
+adata = sc.read_h5ad(path)  # Don't do this if adata exists!
+```
+
+**Remember:** Maintain persistent state, avoid redundant operations, and mark tasks complete with mark_task_done()!
 """
         
     else:
