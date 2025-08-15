@@ -74,22 +74,22 @@ AVAILABLE_MODELS = {
     # Qwen/Alibaba Models - Legacy
     "qwen/qwen-2.5-72b-instruct": "Qwen 2.5 72B (Legacy)",
     # Kimi/Moonshot Models - Latest K2 Series
-    "kimi-k2-0711-preview": "Kimi K2 (Preview)",
-    "kimi-k2-turbo-preview": "Kimi K2 Turbo (Preview)",
+    "moonshot/kimi-k2-0711-preview": "Kimi K2 (Preview)",
+    "moonshot/kimi-k2-turbo-preview": "Kimi K2 Turbo (Preview)",
     # Kimi/Moonshot Models - Latest Series
-    "kimi-latest": "Kimi Latest (Auto Context)",
-    "kimi-latest-8k": "Kimi Latest 8K",
-    "kimi-latest-32k": "Kimi Latest 32K",
-    "kimi-latest-128k": "Kimi Latest 128K",
+    "moonshot/kimi-latest": "Kimi Latest (Auto Context)",
+    "moonshot/kimi-latest-8k": "Kimi Latest 8K",
+    "moonshot/kimi-latest-32k": "Kimi Latest 32K",
+    "moonshot/kimi-latest-128k": "Kimi Latest 128K",
     # Kimi/Moonshot Models - Moonshot V1 Series
-    "moonshot-v1-8k": "Moonshot V1 8K",
-    "moonshot-v1-32k": "Moonshot V1 32K",
-    "moonshot-v1-128k": "Moonshot V1 128K",
-    "moonshot-v1-8k-vision-preview": "Moonshot V1 8K Vision",
-    "moonshot-v1-32k-vision-preview": "Moonshot V1 32K Vision",
-    "moonshot-v1-128k-vision-preview": "Moonshot V1 128K Vision",
+    "moonshot/moonshot-v1-8k": "Moonshot V1 8K",
+    "moonshot/moonshot-v1-32k": "Moonshot V1 32K",
+    "moonshot/moonshot-v1-128k": "Moonshot V1 128K",
+    "moonshot/moonshot-v1-8k-vision-preview": "Moonshot V1 8K Vision",
+    "moonshot/moonshot-v1-32k-vision-preview": "Moonshot V1 32K Vision",
+    "moonshot/moonshot-v1-128k-vision-preview": "Moonshot V1 128K Vision",
     # Kimi/Moonshot Models - Thinking Series
-    "kimi-thinking-preview": "Kimi Thinking (Preview)",
+    "moonshot/kimi-thinking-preview": "Kimi Thinking (Preview)",
     # Kimi/Moonshot Models - Legacy
     "moonshot/moonshot-v1-8k": "Kimi 8K (Legacy)",
     "moonshot/moonshot-v1-32k": "Kimi 32K (Legacy)", 

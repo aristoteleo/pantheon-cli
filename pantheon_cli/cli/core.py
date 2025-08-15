@@ -16,7 +16,6 @@ from pantheon.toolsets.code_search import CodeSearchToolSet
 from pantheon.toolsets.notebook import NotebookToolSet
 from pantheon.toolsets.web import WebToolSet
 from pantheon.toolsets.todo import TodoToolSet
-from pantheon.toolsets.code_validator import CodeValidatorToolSet
 from pantheon.toolsets.generator import GeneratorToolSet
 from pantheon.agent import Agent
 from rich.console import Console
@@ -86,15 +85,6 @@ Use CODE SEARCH for (PREFERRED for search operations):
 - glob: Find files by pattern (e.g., "*.py", "**/*.js")
 - grep: Search for text across multiple files or in specific file patterns
 - ls: List directory contents with details
-
-Use CODE VALIDATION for verifying generated code:
-- validate_python_code: Check Python code syntax, imports, and functions
-- validate_command: Verify shell commands and parameters using help
-- validate_function_call: Check if functions exist and have correct signatures (with auto-suggestions)
-- validate_imports: Test import statements and suggest alternatives
-- check_code_style: Analyze code style and provide improvement suggestions
-- detect_common_errors: Find common coding errors like redundant parameters, AnnData method mistakes, self parameter errors
-- suggest_function_alternatives: Find similar functions when a function doesn't exist, using help() and module inspection
 
 Use NOTEBOOK operations for Jupyter notebooks:
 - read_notebook: Display notebook contents with beautiful formatting
@@ -213,7 +203,6 @@ Examples:
 - "edit cell 3 in notebook" → Use notebook: edit_notebook_cell tool
 - "add code cell to notebook" → Use notebook: add_notebook_cell tool
 - "create new notebook" → Use notebook: create_notebook tool
-- "validate this Python code" → Use validate_python_code tool
 - "check if this command is valid" → Use validate_command tool
 - "verify numpy.array function" → Use validate_function_call tool
 - "check these imports" → Use validate_imports tool
@@ -365,7 +354,6 @@ async def main(
     disable_notebook: bool = False,
     disable_r: bool = False,
     disable_julia: bool = False,
-    disable_code_validator: bool = False,
     disable_bio: bool = False,
     disable_ext: bool = True,
     ext_toolsets: Optional[str] = None,
@@ -385,7 +373,6 @@ async def main(
         disable_notebook: Disable notebook toolset
         disable_r: Disable R interpreter toolset
         disable_julia: Disable Julia interpreter toolset
-        disable_code_validator: Disable code validator toolset
         disable_bio: Disable bio analysis toolsets (ATAC-seq, RNA-seq, etc.)
         ext_toolsets: Comma-separated list of external toolsets to load (default: load all)
         ext_dir: Directory containing external toolsets (default: ./ext_toolsets)
@@ -492,10 +479,6 @@ async def main(
     if not disable_julia:
         julia_interpreter = JuliaInterpreterToolSet("julia_interpreter", workdir=str(workspace_path))
     
-    code_validator = None
-    if not disable_code_validator:
-        code_validator = CodeValidatorToolSet("code_validator")
-    
     generator_toolset = GeneratorToolSet("generator")
     
     bio_toolset = None
@@ -533,8 +516,6 @@ async def main(
         agent.toolset(r_interpreter)
     if julia_interpreter:
         agent.toolset(julia_interpreter)
-    if code_validator:
-        agent.toolset(code_validator)
     
     agent.toolset(generator_toolset)
     
