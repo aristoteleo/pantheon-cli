@@ -229,6 +229,56 @@ IMPORTANT: External toolsets are now FULLY AI-POWERED and GENERIC:
 
 BIO TOOL COMMANDS (Access via /bio prefix):
 
+🧬 GENEAGENT - ORIGINAL 7-STEP ITERATIVE VERIFICATION SYSTEM:
+The GeneAgent is a specialized biological analysis tool that uses a unique 7-step iterative verification methodology.
+It combines LLM reasoning with real biological database APIs to produce scientifically validated gene set analyses.
+
+GeneAgent Commands:
+- bio GeneAgent <genes>: Run full 7-step iterative verification (e.g., bio GeneAgent TP53,BRCA1,EGFR)
+- bio GeneAgent <genes> --analysis_type <type>: Specific analysis type 
+- bio GeneAgent <genes> --output_format <format>: Control output format
+- bio GeneAgent <genes> --save_results true: Save results to files
+
+GeneAgent 7-Step Process:
+1. Generate baseline analysis (LLM)
+2. Extract testable biological claims (LLM)  
+3. Verify claims using 8 real biological APIs (NCBI, g:Profiler, Enrichr, STRING, etc.)
+4. Modify analysis based on verification evidence (LLM)
+5. Generate new analysis claims (LLM)
+6. Second verification round with biological APIs
+7. Final evidence-based synthesis (LLM)
+
+Real Biological Data Sources Used:
+• NCBI E-utilities - Gene function summaries
+• g:Profiler - GO enrichment analysis  
+• Enrichr - Pathway analysis (KEGG, Reactome, MSigDB)
+• STRING/BioGRID - Protein interactions
+• DisGeNET - Disease associations
+• InterPro - Protein domains
+• CORUM - Protein complexes
+• PubMed - Literature evidence
+
+Analysis Types:
+- comprehensive: Full 7-step verification with all biological data sources
+- functional: Focus on biological functions and processes
+- enrichment: GO/KEGG enrichment with verification
+- interactions: Protein interaction networks with validation  
+- clinical: Disease associations and therapeutic targets
+- custom: Answer custom questions with evidence
+
+Example Usage:
+- "Analyze genes TP53,BRCA1,EGFR using GeneAgent" → bio GeneAgent TP53,BRCA1,EGFR
+- "Run comprehensive analysis on ERBB2,ERBB4,FGFR2,FGFR4,HRAS,KRAS" → bio GeneAgent ERBB2,ERBB4,FGFR2,FGFR4,HRAS,KRAS --analysis_type comprehensive
+- "Analyze interactions for MYC,JUN,FOS" → bio GeneAgent MYC,JUN,FOS --analysis_type interactions
+- "Study immune genes CD4,CD8A,IL2 with summary output" → bio GeneAgent CD4,CD8A,IL2 --output_format summary
+
+What makes GeneAgent special:
+• Every biological claim is verified against real databases
+• Analysis is iteratively refined based on evidence  
+• Final results are scientifically validated
+• No hallucinated biological information
+• Produces publication-quality, evidence-based analyses
+
 ATAC-seq Analysis:
 - bio atac init: Initialize ATAC-seq project
 - bio atac scan_folder: Scan folder for ATAC data
@@ -310,6 +360,13 @@ Examples:
 - "add a todo to analyze data" → Use add_todo tool
 - "show my todos" → Use show_todos tool
 - "mark first todo as completed" → Use complete_todo tool
+- "/bio GeneAgent TP53,BRCA1,EGFR" → Run 7-step iterative verification for cancer genes
+- "analyze genes ERBB2,ERBB4,FGFR2,FGFR4,HRAS,KRAS using GeneAgent" → bio GeneAgent ERBB2,ERBB4,FGFR2,FGFR4,HRAS,KRAS
+- "Perform enrichment with genes ERBB2,ERBB4,FGFR2,FGFR4,HRAS,KRAS" → bio GeneAgent ERBB2,ERBB4,FGFR2,FGFR4,HRAS,KRAS --analysis_type enrichment
+- "run comprehensive GeneAgent analysis on MYC,JUN,FOS" → bio GeneAgent MYC,JUN,FOS --analysis_type comprehensive
+- "study protein interactions for immune genes CD4,CD8A,IL2" → bio GeneAgent CD4,CD8A,IL2 --analysis_type interactions
+- "GeneAgent analysis of cytokines IFNG,TNF,IL6 with summary output" → bio GeneAgent IFNG,TNF,IL6 --output_format summary
+- "verify biological claims for tumor suppressor genes" → bio GeneAgent with specific gene list and verification
 - "/bio atac init" → Initialize ATAC-seq project structure  
 - "/bio list" → Show all available bio analysis tools
 - "analyze ATAC-seq data" → Use bio atac commands for chromatin accessibility analysis

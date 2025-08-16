@@ -58,6 +58,54 @@ The bioinformatics guide includes detailed mappings for:
 
 ## Bioinformatics Analysis Tools
 
+### 🧬 GeneAgent - Original 7-Step Iterative Verification System
+
+GeneAgent is a specialized biological analysis tool that uses a unique 7-step iterative verification methodology. It combines LLM reasoning with real biological database APIs to produce scientifically validated gene set analyses.
+
+| **Natural Language Request** | **Tool Call** | **Function Description** |
+|------------------------------|---------------|--------------------------|
+| "Analyze genes TP53,BRCA1,EGFR using GeneAgent" | `bio GeneAgent TP53,BRCA1,EGFR` | Run full 7-step iterative verification for gene set |
+| "Perform enrichment with genes ERBB2,ERBB4,FGFR2,FGFR4,HRAS,KRAS" | `bio GeneAgent ERBB2,ERBB4,FGFR2,FGFR4,HRAS,KRAS --analysis_type enrichment` | Enrichment analysis with biological verification |
+| "Run comprehensive GeneAgent analysis on MYC,JUN,FOS" | `bio GeneAgent MYC,JUN,FOS --analysis_type comprehensive` | Complete analysis with all biological data sources |
+| "Study protein interactions for immune genes CD4,CD8A,IL2" | `bio GeneAgent CD4,CD8A,IL2 --analysis_type interactions` | Protein interaction network analysis with validation |
+| "GeneAgent analysis of cytokines with summary output" | `bio GeneAgent IFNG,TNF,IL6 --output_format summary` | Concise evidence-based summary analysis |
+| "Verify biological claims for tumor suppressor genes" | `bio GeneAgent TP53,RB1,BRCA1 --save_results true` | Scientific validation with saved results |
+
+#### GeneAgent 7-Step Process:
+1. **Generate baseline analysis** (LLM) - Initial biological process analysis
+2. **Extract testable biological claims** (LLM) - Generate verifiable statements  
+3. **Verify claims using 8 real biological APIs** - NCBI, g:Profiler, Enrichr, STRING, etc.
+4. **Modify analysis based on verification evidence** (LLM) - Evidence-driven refinement
+5. **Generate new analysis claims** (LLM) - Second round claim generation
+6. **Second verification round with biological APIs** - Additional evidence gathering
+7. **Final evidence-based synthesis** (LLM) - Scientifically validated conclusions
+
+#### Real Biological Data Sources:
+- **NCBI E-utilities** - Gene function summaries and annotations
+- **g:Profiler** - GO enrichment analysis and functional profiling  
+- **Enrichr** - Pathway analysis (KEGG, Reactome, MSigDB databases)
+- **STRING/BioGRID** - Protein-protein interaction networks
+- **DisGeNET** - Disease-gene associations and phenotypes
+- **InterPro** - Protein domain and family classifications
+- **CORUM** - Protein complex membership data
+- **PubMed** - Literature evidence and citations
+
+#### Analysis Types:
+- `comprehensive`: Full 7-step verification with all biological data sources
+- `functional`: Focus on biological functions and cellular processes
+- `enrichment`: GO/KEGG enrichment analysis with database verification
+- `interactions`: Protein interaction networks with experimental validation  
+- `clinical`: Disease associations and therapeutic target analysis
+- `custom`: Custom questions answered with biological evidence
+
+#### What Makes GeneAgent Special:
+- ✅ **Evidence-Based**: Every biological claim verified against real databases
+- ✅ **Iterative Refinement**: Analysis improved through multiple verification rounds  
+- ✅ **Scientifically Validated**: Final results are publication-quality
+- ✅ **No Hallucinations**: Zero fabricated biological information
+- ✅ **Real APIs**: Uses 8 authoritative biological databases
+- ✅ **Original Methodology**: Implements the complete research paper algorithm
+
 ### ATAC-seq Analysis
 
 | **Natural Language Request** | **Tool Call** | **Function Description** |
