@@ -175,3 +175,4 @@ try/
 .pantheon-chatroom-workspace*/
 tmp/
 test*
+.DS_Store
