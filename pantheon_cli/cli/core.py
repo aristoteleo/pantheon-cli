@@ -16,10 +16,10 @@ from pantheon.toolsets.code_search import CodeSearchToolSet
 from pantheon.toolsets.notebook import NotebookToolSet
 from pantheon.toolsets.web import WebToolSet
 from pantheon.toolsets.todo import TodoToolSet
-from pantheon.toolsets.code_validator import CodeValidatorToolSet
 from pantheon.toolsets.generator import GeneratorToolSet
 from pantheon.agent import Agent
 from rich.console import Console
+from rich.logging import RichHandler
 
 # Import management modules
 from .manager.api_key_manager import APIKeyManager
@@ -123,15 +123,6 @@ Use CODE SEARCH for (PREFERRED for search operations):
 - glob: Find files by pattern (e.g., "*.py", "**/*.js")
 - grep: Search for text across multiple files or in specific file patterns
 - ls: List directory contents with details
-
-Use CODE VALIDATION for verifying generated code:
-- validate_python_code: Check Python code syntax, imports, and functions
-- validate_command: Verify shell commands and parameters using help
-- validate_function_call: Check if functions exist and have correct signatures (with auto-suggestions)
-- validate_imports: Test import statements and suggest alternatives
-- check_code_style: Analyze code style and provide improvement suggestions
-- detect_common_errors: Find common coding errors like redundant parameters, AnnData method mistakes, self parameter errors
-- suggest_function_alternatives: Find similar functions when a function doesn't exist, using help() and module inspection
 
 Use NOTEBOOK operations for Jupyter notebooks:
 - read_notebook: Display notebook contents with beautiful formatting
@@ -326,7 +317,6 @@ Examples:
 - "edit cell 3 in notebook" → Use notebook: edit_notebook_cell tool
 - "add code cell to notebook" → Use notebook: add_notebook_cell tool
 - "create new notebook" → Use notebook: create_notebook tool
-- "validate this Python code" → Use validate_python_code tool
 - "check if this command is valid" → Use validate_command tool
 - "verify numpy.array function" → Use validate_function_call tool
 - "check these imports" → Use validate_imports tool
@@ -497,7 +487,6 @@ async def main(
     disable_notebook: bool = False,
     disable_r: bool = False,
     disable_julia: bool = False,
-    disable_code_validator: bool = False,
     disable_bio: bool = False,
     disable_ext: bool = True,
     ext_toolsets: Optional[str] = None,
@@ -517,16 +506,20 @@ async def main(
         disable_notebook: Disable notebook toolset
         disable_r: Disable R interpreter toolset
         disable_julia: Disable Julia interpreter toolset
-        disable_code_validator: Disable code validator toolset
         disable_bio: Disable bio analysis toolsets (ATAC-seq, RNA-seq, etc.)
         ext_toolsets: Comma-separated list of external toolsets to load (default: load all)
         ext_dir: Directory containing external toolsets (default: ./ext_toolsets)
     """
     console = Console()
-    def custom_sink(message):
-        console.print(message, end="")
+    class LoguruRichHandler(RichHandler):
+        def emit(self, record):
+            extra = getattr(record, "extra", {})
+            if "rich" in extra:
+                console.print(extra["rich"])
+            else:
+                console.print(record.msg)
 
-    logger.configure(handlers=[{"sink":custom_sink, "format":"{message}", "level":"INFO"}])
+    logger.configure(handlers=[{"sink":LoguruRichHandler(), "format":"{message}", "level":"INFO"}])
     logger.disable("executor.engine")
 
     # Initialize managers locally
@@ -563,15 +556,12 @@ async def main(
     key_available, key_message = api_key_manager.check_api_key_for_model(model_manager.current_model)
     key_status_icon = "✅" if key_available else "⚠️"
     
-    #print(f"Starting Pantheon CLI with model: {model_manager.current_model}")
-    #print(f"{key_status_icon} {key_message}")
     if not key_available:
         from .manager.api_key_manager import PROVIDER_API_KEYS, PROVIDER_NAMES
         required_key = PROVIDER_API_KEYS.get(model_manager.current_model)
         if required_key:
             provider_cmd = required_key.lower().replace('_api_key', '')
             print(f"Set your API key: /api-key {provider_cmd} <your-key>")
-    #print(f"Commands: '/model list' | '/api-key list' | '/help'")
     
 
     if not disable_ext:
@@ -629,10 +619,6 @@ async def main(
     if not disable_julia:
         julia_interpreter = JuliaInterpreterToolSet("julia_interpreter", workdir=str(workspace_path))
     
-    code_validator = None
-    if not disable_code_validator:
-        code_validator = CodeValidatorToolSet("code_validator")
-    
     generator_toolset = GeneratorToolSet("generator")
     
     bio_toolset = None
@@ -673,8 +659,6 @@ async def main(
         agent.toolset(r_interpreter)
     if julia_interpreter:
         agent.toolset(julia_interpreter)
-    if code_validator:
-        agent.toolset(code_validator)
     
     agent.toolset(generator_toolset)
     
