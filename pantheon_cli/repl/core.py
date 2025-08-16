@@ -59,6 +59,7 @@ class Repl(ReplUI):
         self._current_live_display = None
         self._tools_executing = False
         self._current_agent_task = None
+        self._current_tool_name = None
         
         # Setup history file
         self.history_file = Path.home() / ".pantheon_history"
@@ -541,6 +542,12 @@ class Repl(ReplUI):
         self.current_output_tokens = output_tokens
         self.total_input_tokens += input_tokens
         self.total_output_tokens += output_tokens
+    
+    def _add_output_tokens_estimate(self, content: str):
+        """Add estimated tokens from tool calls or other agent messages"""
+        if hasattr(self, 'estimated_output_tokens'):
+            additional_tokens = self._estimate_tokens(content)
+            self.estimated_output_tokens += additional_tokens
 
     async def run(self, message: str | dict | None = None):
         # Set up shell toolset callback now that agent is fully configured
@@ -548,6 +555,9 @@ class Repl(ReplUI):
 
         # Simple greeting 
         await self.print_greeting()
+        
+        # Set up connection between UI and token tracking
+        self._parent_repl = self
         
         # Start the message printing task
         print_task = asyncio.create_task(self.print_message())
@@ -677,11 +687,15 @@ class Repl(ReplUI):
             
             # Create live status with real-time token tracking (Claude Code style)
             content_buffer = []
+            estimated_output_tokens = 0  # Track estimated output tokens from all sources
             
             def process_chunk(chunk: dict):
+                nonlocal estimated_output_tokens
                 content = chunk.get("content")
                 if content is not None:
                     content_buffer.append(content)
+                    # Update estimated tokens when we get new content
+                    estimated_output_tokens = self._estimate_tokens(''.join(content_buffer))
 
             # Tetris-style animation frames (different from Claude's *)
             animation_frames = ["▢", "▣", "▤", "▥", "▦", "▧", "▨", "▩"]
@@ -694,12 +708,21 @@ class Repl(ReplUI):
             try:
                 def update_processing_status():
                     nonlocal frame_index
-                    current_output_tokens = self._estimate_tokens(''.join(content_buffer))
+                    # Use the estimated output tokens (updated by process_chunk and tool calls)
+                    current_output_tokens = estimated_output_tokens
                     elapsed = time.time() - start_time
                     
                     # Create processing message with animated tetris block and real-time token info
                     current_frame = animation_frames[frame_index % len(animation_frames)]
-                    status_text = f"[dim]{current_frame} Processing... • {self._format_token_count(input_tokens)} in, {self._format_token_count(current_output_tokens)} out"
+                    
+                    # Base status with animation and token info
+                    if self._current_tool_name and self._tools_executing:
+                        # Show tool name only when currently executing
+                        status_text = f"[dim]{current_frame} Running [bold cyan]{self._current_tool_name}[/bold cyan]... • {self._format_token_count(input_tokens)} in, {self._format_token_count(current_output_tokens)} out"
+                    else:
+                        # Default processing message
+                        status_text = f"[dim]{current_frame} Processing... • {self._format_token_count(input_tokens)} in, {self._format_token_count(current_output_tokens)} out"
+                    
                     if elapsed > 1:
                         status_text += f" • {elapsed:.1f}s"
                     status_text += "[/dim]"
@@ -717,12 +740,20 @@ class Repl(ReplUI):
                     def smart_process_chunk(chunk: dict):
                         # Store content
                         process_chunk(chunk)
-                        # Only update processing status if no tools are executing
-                        if not self._tools_executing:
-                            update_processing_status()
+                        # Always update processing status for real-time feedback
+                        update_processing_status()
                     
                     # Store processing_live reference for tool calls
                     self._current_live_display = processing_live
+                    
+                    # Create a background task to keep updating progress during toolset execution
+                    progress_update_task = None
+                    async def periodic_progress_update():
+                        """Background task to update progress during toolset execution"""
+                        while not agent_task.done():
+                            await asyncio.sleep(0.25)  # Update 4 times per second
+                            if not agent_task.done():
+                                update_processing_status()
                     
                     # Process with agent - tool outputs will display independently
                     # Create a cancellable task for the agent processing
@@ -732,6 +763,9 @@ class Repl(ReplUI):
                             process_chunk=smart_process_chunk,
                         )
                     )
+                    
+                    # Start background progress update task
+                    progress_update_task = asyncio.create_task(periodic_progress_update())
                     
                     # Store the task so it can be cancelled on interrupt
                     self._current_agent_task = agent_task
@@ -743,6 +777,13 @@ class Repl(ReplUI):
                         raise KeyboardInterrupt
                     finally:
                         self._current_agent_task = None
+                        # Cancel progress update task
+                        if progress_update_task and not progress_update_task.done():
+                            progress_update_task.cancel()
+                            try:
+                                await progress_update_task
+                            except asyncio.CancelledError:
+                                pass
                     
                     # Final output token calculation
                     if content_buffer:
@@ -765,6 +806,13 @@ class Repl(ReplUI):
                             await self._current_agent_task
                         except asyncio.CancelledError:
                             pass
+                    # Cancel progress update task
+                    if 'progress_update_task' in locals() and progress_update_task and not progress_update_task.done():
+                        progress_update_task.cancel()
+                        try:
+                            await progress_update_task
+                        except asyncio.CancelledError:
+                            pass
                     current_message = None  # Reset to get new input
                     continue
                 except Exception as e:
@@ -775,6 +823,8 @@ class Repl(ReplUI):
                     processing_live.stop()
                     self._tools_executing = False
                     self._current_live_display = None
+                    # Clear tool name for next request
+                    self._current_tool_name = None
                     # Clean up agent task reference
                     if self._current_agent_task and not self._current_agent_task.done():
                         self._current_agent_task.cancel()

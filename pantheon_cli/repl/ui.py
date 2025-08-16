@@ -34,6 +34,7 @@ class ReplUI:
                                  title="Input", border_style="bright_blue")
         self._tools_executing = False
         self._processing_live: Live | None = None
+        self._current_tool_name = None
         
         # Conversation history for /save command
         self.conversation_history = []
@@ -475,6 +476,8 @@ class ReplUI:
         """Print tool call in Claude Code style with fancy boxes"""
         # Mark that tools are executing
         self._tools_executing = True
+        # Set current tool name for progress display
+        self._current_tool_name = tool_name
         
         
         # Record tool call in conversation history
@@ -571,6 +574,8 @@ class ReplUI:
         
         # Mark that tool execution is complete
         self._tools_executing = False
+        # Clear current tool name since execution is done
+        self._current_tool_name = None
         
         # Record tool result in conversation history
         result_content = ""
@@ -642,6 +647,13 @@ class ReplUI:
             
             # Handle tool calls with Claude Code style
             if tool_calls := message.get("tool_calls"):
+                # Estimate tokens for tool calls message
+                tool_call_content = json.dumps(tool_calls)
+                # Update token estimate if we have access to the parent REPL instance
+                if hasattr(self, '_parent_repl') and hasattr(self._parent_repl, 'estimated_output_tokens'):
+                    additional_tokens = self._parent_repl._estimate_tokens(tool_call_content)
+                    self._parent_repl.estimated_output_tokens += additional_tokens
+                
                 for call in tool_calls:
                     tool_name = call.get('function', {}).get('name')
                     if tool_name:

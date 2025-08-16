@@ -48,6 +48,7 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio scatac upstream ./data    # Run cellranger-atac analysis[/dim]")
         self.console.print("[dim]  /bio scrna init                # Initialize scRNA-seq project[/dim]")
         self.console.print("[dim]  /bio scrna analysis ./data    # Load and analyze scRNA-seq data[/dim]")
+        self.console.print("[dim]  /bio GeneAgent TP53,BRCA1,EGFR # Gene set analysis with AI[/dim]")
         self.console.print("[dim]  /bio rnaseq init               # Initialize RNA-seq project (when available)[/dim]")
         self.console.print("")
     
@@ -77,6 +78,10 @@ class BioCommandHandler:
         # Handle scRNA commands with special logic
         if tool_name == "scrna":
             return self._handle_scrna_command(parts)
+        
+        # Handle GeneAgent commands with special logic
+        if tool_name == "GeneAgent":
+            return self._handle_gene_agent_command(parts)
         
         # Generic handler for other tools
         if len(parts) > 2:
@@ -474,6 +479,84 @@ Response format (single line):
             else:
                 return f"bio_scrna_{command}"
     
+    def _handle_gene_agent_command(self, parts) -> str:
+        """Handle GeneAgent commands with special logic"""
+        
+        if len(parts) == 2:
+            # Just /bio GeneAgent - show GeneAgent help
+            self.console.print("\n[bold]🧬 GeneAgent - Gene Set Analysis[/bold]")
+            self.console.print("[dim]/bio GeneAgent <genes>[/dim] - Analyze gene set (e.g., TP53,BRCA1,EGFR)")
+            self.console.print("[dim]/bio GeneAgent <genes> --analysis_type <type>[/dim] - Specific analysis type")
+            self.console.print("[dim]/bio GeneAgent <genes> --output_format <format>[/dim] - Output format")
+            self.console.print("\n[dim]Analysis Types:[/dim]")
+            self.console.print("[dim]  comprehensive - Full analysis (functional, pathways, interactions, clinical)[/dim]")
+            self.console.print("[dim]  functional - Biological functions and processes[/dim]")
+            self.console.print("[dim]  enrichment - GO/KEGG enrichment analysis[/dim]")
+            self.console.print("[dim]  interactions - Protein-protein interactions[/dim]")
+            self.console.print("[dim]  clinical - Disease associations and drug targets[/dim]")
+            self.console.print("[dim]  custom - Answer custom questions[/dim]")
+            self.console.print("\n[dim]Output Formats:[/dim]")
+            self.console.print("[dim]  detailed - Full detailed analysis (default)[/dim]")
+            self.console.print("[dim]  summary - Concise summary[/dim]")
+            self.console.print("[dim]  structured - JSON-structured output[/dim]")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio GeneAgent TP53,BRCA1,EGFR                          # Basic analysis[/dim]")
+            self.console.print("[dim]  /bio GeneAgent MYC,JUN,FOS --analysis_type interactions  # Interaction analysis[/dim]")
+            self.console.print("[dim]  /bio GeneAgent CD4,CD8A,IL2 --output_format summary      # Summary output[/dim]")
+            self.console.print("[dim]  /bio GeneAgent IFNG,TNF,IL6 --save_results true          # Save results[/dim]")
+            self.console.print()
+            return None
+        
+        # Extract gene list from first parameter
+        genes = parts[2]
+        
+        # Parse additional parameters
+        analysis_type = "comprehensive"
+        output_format = "detailed"
+        save_results = False
+        custom_questions = []
+        
+        # Simple parameter parsing
+        i = 3
+        while i < len(parts):
+            if parts[i] == "--analysis_type" and i + 1 < len(parts):
+                analysis_type = parts[i + 1]
+                i += 2
+            elif parts[i] == "--output_format" and i + 1 < len(parts):
+                output_format = parts[i + 1]
+                i += 2
+            elif parts[i] == "--save_results" and i + 1 < len(parts):
+                save_results = parts[i + 1].lower() in ["true", "1", "yes"]
+                i += 2
+            elif parts[i] == "--custom_questions":
+                # Collect all remaining parts as questions
+                questions = parts[i + 1:]
+                custom_questions = [q.strip('"\'') for q in questions if q.strip()]
+                break
+            else:
+                i += 1
+        
+        # Build the gene agent command
+        self.console.print(f"\n[bold cyan]🧬 Starting GeneAgent Analysis[/bold cyan]")
+        self.console.print(f"[dim]Genes: {genes}[/dim]")
+        self.console.print(f"[dim]Analysis type: {analysis_type}[/dim]")
+        self.console.print(f"[dim]Output format: {output_format}[/dim]")
+        if custom_questions:
+            self.console.print(f"[dim]Custom questions: {len(custom_questions)} questions[/dim]")
+        self.console.print("[dim]Powered by Pantheon-CLI's built-in Agent capabilities...[/dim]\n")
+        
+        # Format command for the gene agent toolset
+        cmd_parts = [f"gene_agent GeneAgent {genes}"]
+        cmd_parts.append(f"--analysis_type {analysis_type}")
+        cmd_parts.append(f"--output_format {output_format}")
+        if save_results:
+            cmd_parts.append(f"--save_results {save_results}")
+        if custom_questions:
+            questions_str = " ".join([f'"{q}"' for q in custom_questions])
+            cmd_parts.append(f"--custom_questions {questions_str}")
+        
+        return " ".join(cmd_parts)
+    
     async def handle_deprecated_atac_command(self, command: str) -> str:
         """
         Handle deprecated /atac commands with migration and auto-conversion
@@ -587,6 +670,8 @@ def get_bio_command_suggestions() -> list:
         '/bio scrna qc',
         '/bio scrna preprocess',
         '/bio scrna annotate',
+        '/bio GeneAgent',
+        '/bio GeneAgent TP53,BRCA1,EGFR',
         '/bio rnaseq init',  # Future
         '/bio chipseq init',  # Future
     ]
