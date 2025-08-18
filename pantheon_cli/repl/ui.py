@@ -878,7 +878,9 @@ class ReplUI:
             
             if is_bash_output:
                 # Multi-line display for bash command outputs
-                lines = output.strip().split('\n')
+                # Handle escaped characters in output
+                processed_output = output.replace('\\n', '\n').replace('\\t', '\t')
+                lines = processed_output.strip().split('\n')
                 max_width = 79
                 content_width = max_width - 4  # Account for borders and padding
                 
