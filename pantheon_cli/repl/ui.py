@@ -4,6 +4,7 @@ from rich.panel import Panel
 from rich.text import Text
 from rich.markdown import Markdown
 from rich.live import Live
+from typing import List
 import json
 
 import asyncio
@@ -145,6 +146,65 @@ class ReplUI:
             return "Text processing"
         
         return "Run bash command"
+
+    def _wrap_bash_command(self, command: str, max_width: int = 71) -> List[str]:
+        """Wrap a bash command for display, breaking at appropriate points"""
+        # If command already has newlines, split by those first
+        if '\n' in command:
+            lines = command.split('\n')
+        else:
+            lines = [command]
+        
+        wrapped_lines = []
+        for line in lines:
+            # If line is short enough, keep it as is
+            if len(line) <= max_width:
+                wrapped_lines.append(line)
+                continue
+            
+            # Try to break at logical points
+            # Priority: space before flags (-), pipes (|), && or ||, semicolons, spaces
+            current_line = ""
+            remaining = line
+            
+            while remaining:
+                if len(remaining) <= max_width:
+                    wrapped_lines.append(remaining)
+                    break
+                
+                # Find best break point
+                break_point = max_width
+                
+                # Look for good break points in priority order
+                # 1. Before a flag (space followed by -)
+                for i in range(max_width - 1, max(0, max_width - 20), -1):
+                    if i < len(remaining) - 1 and remaining[i] == ' ' and remaining[i + 1] == '-':
+                        break_point = i + 1
+                        break
+                
+                # 2. Before pipes, redirects, or logical operators
+                if break_point == max_width:
+                    for pattern in [' | ', ' > ', ' >> ', ' && ', ' || ', ' ; ']:
+                        idx = remaining[:max_width].rfind(pattern)
+                        if idx > 0:
+                            break_point = idx + 1
+                            break
+                
+                # 3. At any space
+                if break_point == max_width:
+                    space_idx = remaining[:max_width].rfind(' ')
+                    if space_idx > 0:
+                        break_point = space_idx + 1
+                
+                # 4. If no good break point, break at max_width
+                wrapped_lines.append(remaining[:break_point].rstrip())
+                remaining = remaining[break_point:].lstrip()
+                
+                # Add continuation indicator for wrapped lines (except last)
+                if remaining and not wrapped_lines[-1].endswith('\\'):
+                    wrapped_lines[-1] = wrapped_lines[-1]
+        
+        return wrapped_lines
 
     async def print_greeting(self):
         self.console.print("[purple]Aristotle™[/purple]")
@@ -651,8 +711,8 @@ class ReplUI:
                 self.console.print("⏺ [bold]Bash[/bold]")
                 header_title = self._get_bash_command_title(command)
                 
-                # Create the box (similar to Python code box)
-                command_lines = command.split('\n') if '\n' in command else [command]
+                # Wrap the command for better display
+                wrapped_lines = self._wrap_bash_command(command, max_width=71)
                 
                 self.console.print("╭" + "─" * 77 + "╮")
                 title_padding = " " * (77 - len(header_title) - 4)
@@ -661,18 +721,19 @@ class ReplUI:
 
                 # Limit display lines (show first 10 + last 10 if > 20 lines)
                 max_display_lines = 20
-                if len(command_lines) <= max_display_lines:
-                    display_lines = command_lines
+                if len(wrapped_lines) <= max_display_lines:
+                    display_lines = wrapped_lines
                 else:
-                    first_lines = command_lines[:10]
-                    last_lines = command_lines[-10:]
-                    display_lines = first_lines + [f"... (showing 20 of {len(command_lines)} lines) ..."] + last_lines
+                    first_lines = wrapped_lines[:10]
+                    last_lines = wrapped_lines[-10:]
+                    # Calculate actual hidden lines
+                    hidden_count = len(wrapped_lines) - 20
+                    display_lines = first_lines + [f"... ({hidden_count} more lines) ..."] + last_lines
                 
                 for line in display_lines:
-                    # Truncate long lines and pad short ones
-                    display_line = line[:73] if len(line) <= 73 else line[:70] + "..."
-                    padded_line = display_line.ljust(73)
-                    self.console.print(f"│ │ {padded_line[:71-2]}   │ │")
+                    # Lines are already wrapped to fit, just pad them
+                    padded_line = line.ljust(71)
+                    self.console.print(f"│ │ {padded_line} │ │")
                 
                 self.console.print("│ ╰" + "─" * 73 + "╯ │")
                 self.console.print("╰" + "─" * 77 + "╯")
@@ -797,28 +858,79 @@ class ReplUI:
                 output = output['stdout']
 
         if output and output.strip():
-            # Create a Claude Code style output box
-            lines = output.strip().split('\n')
-            max_width = 79
+            # Check if this is a bash command output (should be multi-line)
+            # vs other tool outputs (should be single line)
+            is_bash_output = tool_name.lower() in ['run_command', 'run_command_in_shell', 'bash']
             
-            self.console.print("╭" + "─" * (max_width - 2) + "╮")
-            self.console.print("│ [bold]Output[/bold]" + " " * (max_width - 9) + "│")
-            self.console.print("├" + "─" * (max_width - 2) + "┤")
-            #self.console.print(f"│ {output['stdout']} │")
-            
-            for line in lines:
-                # Handle long lines
-                if len(line) > max_width - 4:
-                    padded_line = line[:max_width - 7] + "..."
-                else:
-                    padded_line = line
+            if is_bash_output:
+                # Multi-line display for bash command outputs
+                lines = output.strip().split('\n')
+                max_width = 79
+                content_width = max_width - 4  # Account for borders and padding
                 
-
-                padding = max_width - len(padded_line) - 4
-                self.console.print(f"│ {padded_line}" + " " * padding + " │")
-            
-            self.console.print("╰" + "─" * (max_width - 2) + "╯")
-            self.console.print()  # Add space after output
+                # Wrap long lines in the output
+                wrapped_lines = []
+                for line in lines:
+                    if len(line) <= content_width:
+                        wrapped_lines.append(line)
+                    else:
+                        # Wrap long lines at word boundaries when possible
+                        while line:
+                            if len(line) <= content_width:
+                                wrapped_lines.append(line)
+                                break
+                            
+                            # Find a good break point
+                            break_point = content_width
+                            space_idx = line[:content_width].rfind(' ')
+                            if space_idx > content_width * 0.6:  # Only break at space if it's not too early
+                                break_point = space_idx + 1
+                            
+                            wrapped_lines.append(line[:break_point].rstrip())
+                            line = line[break_point:].lstrip()
+                
+                # Limit display lines (show first 15 + last 15 if > 30 lines)
+                max_display_lines = 30
+                if len(wrapped_lines) <= max_display_lines:
+                    display_lines = wrapped_lines
+                else:
+                    first_lines = wrapped_lines[:15]
+                    last_lines = wrapped_lines[-15:]
+                    hidden_count = len(wrapped_lines) - 30
+                    display_lines = first_lines + [f"... ({hidden_count} more lines) ..."] + last_lines
+                
+                self.console.print("╭" + "─" * (max_width - 2) + "╮")
+                self.console.print("│ [bold]Output[/bold]" + " " * (max_width - 9) + "│")
+                self.console.print("├" + "─" * (max_width - 2) + "┤")
+                
+                for line in display_lines:
+                    # Pad the line to fill the box width
+                    padding = content_width - len(line)
+                    self.console.print(f"│ {line}" + " " * padding + " │")
+                
+                self.console.print("╰" + "─" * (max_width - 2) + "╯")
+                self.console.print()  # Add space after output
+            else:
+                # Single line display for other tool outputs (like ATAC workflows)
+                max_width = 79
+                content_width = max_width - 4  # Account for borders and padding
+                
+                # Truncate very long outputs to single line
+                if len(output) > content_width:
+                    truncated_output = output[:content_width-3] + "..."
+                else:
+                    truncated_output = output
+                
+                self.console.print("╭" + "─" * (max_width - 2) + "╮")
+                self.console.print("│ [bold]Output[/bold]" + " " * (max_width - 9) + "│")
+                self.console.print("├" + "─" * (max_width - 2) + "┤")
+                
+                # Pad the line to fill the box width
+                padding = content_width - len(truncated_output)
+                self.console.print(f"│ {truncated_output}" + " " * padding + " │")
+                
+                self.console.print("╰" + "─" * (max_width - 2) + "╯")
+                self.console.print()  # Add space after output
 
     async def print_message(self):
         """Enhanced message handler with Claude Code style formatting"""
