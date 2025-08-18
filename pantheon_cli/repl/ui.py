@@ -741,7 +741,7 @@ class ReplUI:
                 # Simple commands use the original format
                 self.console.print(f"⏺ [bold]Bash[/bold]({command})")
             
-        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis"] and args and 'workflow_type' in args:
+        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", "ScATAC_Analysis"] and args and 'workflow_type' in args:
             # Special handling for workflow calls
             workflow_type = args['workflow_type']
             description = args.get('description', '')
@@ -750,9 +750,15 @@ class ReplUI:
             if tool_name == "ATAC_Upstream":
                 icon = "🧬"  # DNA for upstream processing
                 workflow_title = f"ATAC Upstream: {workflow_type}"
-            else:
+            elif tool_name == "ATAC_Analysis":
                 icon = "📊"  # Chart for downstream analysis
                 workflow_title = f"ATAC Analysis: {workflow_type}"
+            elif tool_name == "ScATAC_Upstream":
+                icon = "🧬"  # DNA for upstream processing
+                workflow_title = f"scATAC Upstream: {workflow_type}"
+            else:  # ScATAC_Analysis
+                icon = "📊"  # Chart for downstream analysis
+                workflow_title = f"scATAC Analysis: {workflow_type}"
             
             self.console.print(f"⏺ [bold]{icon} {tool_name}[/bold]")
             
