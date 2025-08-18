@@ -39,6 +39,113 @@ class ReplUI:
         # Conversation history for /save command
         self.conversation_history = []
 
+    def _should_display_bash_in_box(self, command: str) -> bool:
+        """Determine if a bash command should be displayed in a code box instead of inline"""
+        command = command.strip()
+        
+        # List of bioinformatics tools that should always use code box
+        bio_tools = [
+            'fastqc', 'multiqc', 'trim_galore', 'cutadapt', 
+            'bowtie2', 'bwa', 'minimap2', 'hisat2',
+            'samtools', 'bcftools', 'picard', 'sambamba',
+            'macs2', 'genrich', 'hmmratac',
+            'bamCoverage', 'computeMatrix', 'plotHeatmap', 'plotProfile',
+            'bedtools', 'findMotifsGenome.pl', 'homer',
+            'featureCounts', 'htseq-count', 'star', 'rsem'
+        ]
+        
+        # Check if command starts with any bio tool
+        command_parts = command.split()
+        if command_parts:
+            first_command = command_parts[0].split('/')[-1]  # Get just the command name (no path)
+            if any(tool in first_command.lower() for tool in bio_tools):
+                return True
+        
+        # Check command length (long commands should use code box)
+        if len(command) > 80:
+            return True
+        
+        # Check if command has many arguments (likely complex)
+        if len(command_parts) > 6:
+            return True
+        
+        # Check for multi-line commands
+        if '\n' in command or '&&' in command or '||' in command or ';' in command:
+            return True
+        
+        # Check for file paths (likely data processing)
+        if any(ext in command for ext in ['.fastq', '.fq', '.bam', '.sam', '.bed', '.gtf', '.gff', '.fa', '.fasta']):
+            return True
+        
+        return False
+
+    def _get_bash_command_title(self, command: str) -> str:
+        """Get an appropriate title for a bash command based on the tool being used"""
+        command = command.strip().lower()
+        command_parts = command.split()
+        
+        if not command_parts:
+            return "Run bash command"
+        
+        # Extract the actual command name (remove path if present)
+        first_command = command_parts[0].split('/')[-1]
+        
+        # Define titles for common bioinformatics tools
+        tool_titles = {
+            'fastqc': 'Quality Control with FastQC',
+            'multiqc': 'Generate MultiQC Report',
+            'trim_galore': 'Adapter Trimming with Trim Galore',
+            'cutadapt': 'Adapter Trimming with Cutadapt',
+            'bowtie2': 'Sequence Alignment with Bowtie2',
+            'bwa': 'Sequence Alignment with BWA',
+            'minimap2': 'Long-read Alignment with Minimap2',
+            'hisat2': 'RNA-seq Alignment with HISAT2',
+            'samtools': 'SAM/BAM Processing with Samtools',
+            'bcftools': 'Variant Processing with BCFtools',
+            'picard': 'BAM Processing with Picard',
+            'sambamba': 'BAM Processing with Sambamba',
+            'macs2': 'Peak Calling with MACS2',
+            'genrich': 'Peak Calling with Genrich',
+            'hmmratac': 'Peak Calling with HMMRATAC',
+            'bamcoverage': 'Generate Coverage Tracks',
+            'computematrix': 'Compute Matrix for Visualization',
+            'plotheatmap': 'Generate Heatmap',
+            'plotprofile': 'Generate Profile Plot',
+            'bedtools': 'Genomic Interval Operations',
+            'findmotifsgenome.pl': 'Motif Discovery with HOMER',
+            'homer': 'Motif Analysis with HOMER',
+            'featurecounts': 'Count Features with featureCounts',
+            'htseq-count': 'Count Features with HTSeq',
+            'star': 'RNA-seq Alignment with STAR',
+            'rsem': 'Expression Quantification with RSEM'
+        }
+        
+        # Check for exact matches first
+        for tool, title in tool_titles.items():
+            if first_command == tool:
+                return title
+        
+        # Check for partial matches (in case of versioned tools like fastqc-0.11.9)
+        for tool, title in tool_titles.items():
+            if tool in first_command:
+                return title
+        
+        # Check for pipeline-style commands
+        if any(connector in command for connector in ['&&', '||', ';', '|']):
+            return "Run multi-step pipeline"
+        
+        # Check for common patterns
+        if 'wget' in first_command or 'curl' in first_command:
+            return "Download files"
+        elif 'gunzip' in first_command or 'tar' in first_command or 'unzip' in first_command:
+            return "Extract/decompress files"
+        elif first_command in ['mkdir', 'cp', 'mv', 'rm']:
+            return "File system operations"
+        elif first_command in ['grep', 'awk', 'sed', 'sort', 'uniq']:
+            return "Text processing"
+        
+        return "Run bash command"
+
     async def print_greeting(self):
         self.console.print("[purple]Aristotle™[/purple]")
         await print_banner(self.console)
@@ -535,14 +642,94 @@ class ReplUI:
         elif tool_name in ["run_command", "run_command_in_shell"] and args and 'command' in args:
             # Shell command execution
             command = args['command']
-            self.console.print(f"⏺ [bold]Bash[/bold]({command})")
+            
+            # Check if this command should be displayed in a code box
+            should_use_code_box = self._should_display_bash_in_box(command)
+            
+            if should_use_code_box:
+                # Display complex bash commands in a code box (similar to Python)
+                self.console.print("⏺ [bold]Bash[/bold]")
+                header_title = self._get_bash_command_title(command)
+                
+                # Create the box (similar to Python code box)
+                command_lines = command.split('\n') if '\n' in command else [command]
+                
+                self.console.print("╭" + "─" * 77 + "╮")
+                title_padding = " " * (77 - len(header_title) - 4)
+                self.console.print(f"│ [bold]{header_title}[/bold]{title_padding}   │")
+                self.console.print("│ ╭" + "─" * 73 + "╮ │")
+
+                # Limit display lines (show first 10 + last 10 if > 20 lines)
+                max_display_lines = 20
+                if len(command_lines) <= max_display_lines:
+                    display_lines = command_lines
+                else:
+                    first_lines = command_lines[:10]
+                    last_lines = command_lines[-10:]
+                    display_lines = first_lines + [f"... (showing 20 of {len(command_lines)} lines) ..."] + last_lines
+                
+                for line in display_lines:
+                    # Truncate long lines and pad short ones
+                    display_line = line[:73] if len(line) <= 73 else line[:70] + "..."
+                    padded_line = display_line.ljust(73)
+                    self.console.print(f"│ │ {padded_line[:71-2]}   │ │")
+                
+                self.console.print("│ ╰" + "─" * 73 + "╯ │")
+                self.console.print("╰" + "─" * 77 + "╯")
+            else:
+                # Simple commands use the original format
+                self.console.print(f"⏺ [bold]Bash[/bold]({command})")
+            
+        elif tool_name in ["run_upstream_workflow", "run_workflow"] and args and 'workflow_type' in args:
+            # Special handling for workflow calls
+            workflow_type = args['workflow_type']
+            description = args.get('description', '')
+            
+            # Determine the workflow category and icon
+            if tool_name == "run_upstream_workflow":
+                category = "Upstream"
+                icon = "🧬"  # DNA for upstream processing
+            else:
+                category = "Analysis" 
+                icon = "📊"  # Chart for downstream analysis
+            
+            # Create a descriptive display
+            if description:
+                display_text = f"{workflow_type} - {description[:40]}{'...' if len(description) > 40 else ''}"
+            else:
+                display_text = workflow_type
+            
+            self.console.print(f"⏺ [bold]{icon} {category} Workflow[/bold]")
+            
+            # Create a workflow-specific box
+            self.console.print("╭" + "─" * 77 + "╮")
+            title_text = f"ATAC-seq {category}: {workflow_type}"
+            title_padding = " " * (77 - len(title_text) - 4)
+            self.console.print(f"│ [bold cyan]{title_text}[/bold cyan]{title_padding}   │")
+            
+            if description:
+                self.console.print("│ ╭" + "─" * 73 + "╮ │")
+                desc_line = description[:71] if len(description) <= 71 else description[:68] + "..."
+                desc_padding = " " * (71 - len(desc_line))
+                self.console.print(f"│ │ [dim]{desc_line}[/dim]{desc_padding} │ │")
+                self.console.print("│ ╰" + "─" * 73 + "╯ │")
+            
+            self.console.print("╰" + "─" * 77 + "╯")
             
         else:
             # Generic tool call
             if args:
                 # Try to show the most relevant argument
                 key_arg = None
-                if 'file_path' in args:
+                if 'workflow_type' in args:
+                    # Special handling for workflow functions that might not be caught above
+                    workflow_type = args['workflow_type']
+                    description = args.get('description', '')
+                    if description:
+                        key_arg = f"workflow_type='{workflow_type}', description='{description[:30]}...'" if len(description) > 30 else f"workflow_type='{workflow_type}', description='{description}'"
+                    else:
+                        key_arg = f"workflow_type='{workflow_type}'"
+                elif 'file_path' in args:
                     key_arg = f"file_path='{args['file_path']}'"
                 elif 'pattern' in args:
                     key_arg = f"pattern='{args['pattern']}'"
