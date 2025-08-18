@@ -52,7 +52,7 @@ class ReplUI:
             'macs2', 'genrich', 'hmmratac',
             'bamCoverage', 'computeMatrix', 'plotHeatmap', 'plotProfile',
             'bedtools', 'findMotifsGenome.pl', 'homer',
-            'featureCounts', 'htseq-count', 'star', 'rsem', 'salmon', 'kallisto'
+            'featureCounts', 'htseq-count', 'star', 'rsem', 'kallisto'
         ]
         
         # Check if command starts with any bio tool
@@ -119,7 +119,6 @@ class ReplUI:
             'htseq-count': 'Count Features with HTSeq',
             'star': 'RNA-seq Alignment with STAR',
             'rsem': 'Expression Quantification with RSEM',
-            'salmon': 'Expression Quantification with Salmon',
             'kallisto': 'Expression Quantification with Kallisto'
         }
         

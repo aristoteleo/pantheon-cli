@@ -39,7 +39,7 @@ Creation rule (single condition):
       3. "RNA-seq Quality Control with FastQC"
       4. "RNA-seq Adapter Trimming"
       5. "RNA-seq Genome Alignment with STAR"
-      6. "RNA-seq Quantification with Salmon"
+      6. "RNA-seq Expression Quantification"
       7. "RNA-seq BAM Processing and QC"
       8. "RNA-seq Coverage Track Generation"
       9. "RNA-seq QC Report Generation"
@@ -80,7 +80,6 @@ For each current task:
      - "trim_adapters" - Adapter trimming
      - "align_star" - STAR alignment (recommended for RNA-seq)
      - "align_hisat2" - HISAT2 alignment (alternative)
-     - "quantify_salmon" - Salmon quantification (alignment-free)
      - "quantify_featurecounts" - featureCounts quantification (alignment-based)
      - "process_bam_smart" - Smart BAM processing pipeline
      - "rna_qc" - RNA-seq specific quality control
@@ -123,7 +122,7 @@ init_commands = rna.RNA_Upstream("init")
 ```bash
 # Get dependency check commands  
 dep_commands = rna.RNA_Upstream("check_dependencies")
-# Execute: which fastqc, which STAR, which salmon, etc.
+# Execute: which fastqc, which STAR, which featureCounts, etc.
 # Install missing tools if needed
 ```
 
@@ -149,12 +148,12 @@ align_commands = rna.RNA_Upstream("align_star")
 
 🏷️ STEP 5 - QUANTIFICATION:
 ```bash
-# Get Salmon quantification template commands
-quant_commands = rna.RNA_Upstream("quantify_salmon")
-# Adapt with your trimmed FASTQ files
-# Execute: salmon quant -i genome/index/salmon -1 R1.fq.gz -2 R2.fq.gz ...
-# Check results: cat quantification/salmon/sample/quant.sf | head
-# Analyze: number of quantified transcripts, mapping rate
+# Get featureCounts quantification template commands
+quant_commands = rna.RNA_Upstream("quantify_featurecounts")
+# Adapt with your aligned BAM files
+# Execute: featureCounts -a annotation.gtf -o counts.txt sample.bam
+# Check results: head counts.txt
+# Analyze: number of quantified genes, count statistics
 ```
 
 **CRITICAL SUCCESS PATTERNS:**
@@ -212,7 +211,6 @@ QUALITY CONTROL & PREPROCESSING:
 ALIGNMENT & QUANTIFICATION:
 - "align_star" - STAR alignment (recommended for RNA-seq)
 - "align_hisat2" - HISAT2 alignment (alternative)
-- "quantify_salmon" - Salmon quantification (alignment-free, recommended)
 - "quantify_featurecounts" - featureCounts quantification (alignment-based)
 - "process_bam_smart" - Complete BAM processing pipeline
 - "rna_qc" - RNA-seq specific quality control

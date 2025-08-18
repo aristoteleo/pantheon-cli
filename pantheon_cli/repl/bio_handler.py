@@ -738,7 +738,6 @@ BIO_COMMAND_MAP = {
     'rna_check_dependencies': 'bio_rna_check_dependencies',
     'rna_setup_genome_resources': 'bio_rna_setup_genome_resources',
     'rna_align_star': 'bio_rna_align_star',
-    'rna_quantify_salmon': 'bio_rna_quantify_salmon',
     'rna_differential_expression': 'bio_rna_differential_expression',
     
     # ChIP-seq commands (for future use)
