@@ -680,32 +680,25 @@ class ReplUI:
                 # Simple commands use the original format
                 self.console.print(f"⏺ [bold]Bash[/bold]({command})")
             
-        elif tool_name in ["run_upstream_workflow", "run_workflow"] and args and 'workflow_type' in args:
+        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis"] and args and 'workflow_type' in args:
             # Special handling for workflow calls
             workflow_type = args['workflow_type']
             description = args.get('description', '')
             
             # Determine the workflow category and icon
-            if tool_name == "run_upstream_workflow":
-                category = "Upstream"
+            if tool_name == "ATAC_Upstream":
                 icon = "🧬"  # DNA for upstream processing
+                workflow_title = f"ATAC Upstream: {workflow_type}"
             else:
-                category = "Analysis" 
                 icon = "📊"  # Chart for downstream analysis
+                workflow_title = f"ATAC Analysis: {workflow_type}"
             
-            # Create a descriptive display
-            if description:
-                display_text = f"{workflow_type} - {description[:40]}{'...' if len(description) > 40 else ''}"
-            else:
-                display_text = workflow_type
-            
-            self.console.print(f"⏺ [bold]{icon} {category} Workflow[/bold]")
+            self.console.print(f"⏺ [bold]{icon} {tool_name}[/bold]")
             
             # Create a workflow-specific box
             self.console.print("╭" + "─" * 77 + "╮")
-            title_text = f"ATAC-seq {category}: {workflow_type}"
-            title_padding = " " * (77 - len(title_text) - 4)
-            self.console.print(f"│ [bold cyan]{title_text}[/bold cyan]{title_padding}   │")
+            title_padding = " " * (77 - len(workflow_title) - 4)
+            self.console.print(f"│ [bold cyan]{workflow_title}[/bold cyan]{title_padding}   │")
             
             if description:
                 self.console.print("│ ╭" + "─" * 73 + "╮ │")

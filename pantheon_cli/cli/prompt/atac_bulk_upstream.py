@@ -23,9 +23,9 @@ GLOBAL RULES
 
 PHASE 0 — SPECIES DETECTION & GENOME RESOURCES
 1) Use workflow commands for species detection and setup:
-   - atac.run_upstream_workflow("init") - Initialize project structure
-   - atac.run_upstream_workflow("check_dependencies") - Check tool availability
-   - atac.run_upstream_workflow("setup_genome_resources") - Setup genome resources
+   - atac.ATAC_Upstream("init") - Initialize project structure
+   - atac.ATAC_Upstream("check_dependencies") - Check tool availability
+   - atac.ATAC_Upstream("setup_genome_resources") - Setup genome resources
 
 PHASE 1 — TODO CREATION (STRICT DE-DUP)
 Mandatory order:
@@ -48,7 +48,7 @@ Creation rule (single condition):
 PHASE 2 — EXECUTE WITH TODO TRACKING (LOOP)
 
 ⚠️ CRITICAL EXECUTION STRATEGY:
-When you call atac.run_upstream_workflow() or atac.run_workflow(), they return bash command templates.
+When you call atac.ATAC_Upstream() or atac.ATAC_Analysis(), they return bash command templates.
 You MUST:
 1. **Read and analyze** the entire returned bash command content carefully
 2. **Understand the logic** and methodology described
@@ -72,7 +72,7 @@ For each current task:
   1) hint = execute_current_task()   # obtain guidance for the next action
   2) Get bash command templates using appropriate ATAC workflow:
      
-     UPSTREAM WORKFLOWS (use atac.run_upstream_workflow(workflow_type)):
+     UPSTREAM WORKFLOWS (use atac.ATAC_Upstream(workflow_type)):
      - "init" - Initialize project structure
      - "check_dependencies" - Check tool dependencies  
      - "setup_genome_resources" - Setup genome resources
@@ -84,7 +84,7 @@ For each current task:
      - "mark_duplicates" - Remove PCR duplicates
      - "process_bam_smart" - Smart BAM processing pipeline
      
-     DOWNSTREAM WORKFLOWS (use atac.run_workflow(workflow_type)):
+     DOWNSTREAM WORKFLOWS (use atac.ATAC_Analysis(workflow_type)):
      - "call_peaks_macs2" - MACS2 peak calling
      - "call_peaks_genrich" - Genrich peak calling
      - "bam_to_bigwig" - Generate coverage tracks
@@ -106,9 +106,9 @@ PHASE 3 — ADAPTIVE TODO REFINEMENT
 - If additional analysis needed → add_todo("Additional analysis task")
 
 EXECUTION STRATEGY (MUST FOLLOW THIS ORDER)
-  1) atac.run_upstream_workflow("init") → Initialize project
-  2) atac.run_upstream_workflow("check_dependencies") → Check tools
-  3) atac.run_upstream_workflow("setup_genome_resources") → Setup genome
+  1) atac.ATAC_Upstream("init") → Initialize project
+  2) atac.ATAC_Upstream("check_dependencies") → Check tools
+  3) atac.ATAC_Upstream("setup_genome_resources") → Setup genome
   4) show_todos()
   5) Analyze folder and create todos if empty
   6) Loop Phase 2 until all done; refine with Phase 3 when needed
@@ -118,7 +118,7 @@ EXECUTION STRATEGY (MUST FOLLOW THIS ORDER)
 🏷️ STEP 1 - PROJECT INITIALIZATION:
 ```bash
 # Get initialization commands
-init_commands = atac.run_upstream_workflow("init")
+init_commands = atac.ATAC_Upstream("init")
 # Analyze and adapt the commands to your project
 # Execute: mkdir -p project_structure, create config files, etc.
 ```
@@ -126,7 +126,7 @@ init_commands = atac.run_upstream_workflow("init")
 🏷️ STEP 2 - DEPENDENCY CHECK:
 ```bash
 # Get dependency check commands  
-dep_commands = atac.run_upstream_workflow("check_dependencies")
+dep_commands = atac.ATAC_Upstream("check_dependencies")
 # Execute: which fastqc, which bowtie2, etc.
 # Install missing tools if needed
 ```
@@ -134,7 +134,7 @@ dep_commands = atac.run_upstream_workflow("check_dependencies")
 🏷️ STEP 3 - FASTQC EXECUTION:
 ```bash
 # Get FastQC template commands
-fastqc_commands = atac.run_upstream_workflow("run_fastqc")
+fastqc_commands = atac.ATAC_Upstream("run_fastqc")
 # Adapt to your actual FASTQ files
 # Execute: fastqc sample_R1.fastq.gz sample_R2.fastq.gz -o qc/fastqc/
 # Check results: ls qc/fastqc/*.html
@@ -144,7 +144,7 @@ fastqc_commands = atac.run_upstream_workflow("run_fastqc")
 🏷️ STEP 4 - ALIGNMENT EXECUTION:
 ```bash
 # Get alignment template commands
-align_commands = atac.run_upstream_workflow("align_bowtie2") 
+align_commands = atac.ATAC_Upstream("align_bowtie2") 
 # Adapt with your actual file paths and genome index
 # Execute: bowtie2 -x genome_index -1 R1.fq.gz -2 R2.fq.gz | samtools view -bS - > sample.bam
 # Check results: samtools flagstat sample.bam
@@ -154,7 +154,7 @@ align_commands = atac.run_upstream_workflow("align_bowtie2")
 🏷️ STEP 5 - PEAK CALLING:
 ```bash
 # Get peak calling template commands
-peak_commands = atac.run_workflow("call_peaks_macs2")
+peak_commands = atac.ATAC_Analysis("call_peaks_macs2")
 # Adapt with your processed BAM file
 # Execute: macs2 callpeak -t sample_filtered.bam -n sample --outdir peaks/
 # Check results: wc -l peaks/sample_peaks.narrowPeak
@@ -201,7 +201,7 @@ You have access to comprehensive ATAC-seq and TODO management tools:
 
 🧬 COMPLETE ATAC-seq WORKFLOW TOOLSET:
 
-UPSTREAM WORKFLOWS (use atac.run_upstream_workflow(workflow_type)):
+UPSTREAM WORKFLOWS (use atac.ATAC_Upstream(workflow_type)):
 These return bash command templates for execution:
 
 PROJECT SETUP:
@@ -220,7 +220,7 @@ ALIGNMENT & PROCESSING:
 - "mark_duplicates" - Remove PCR duplicates
 - "process_bam_smart" - Complete BAM processing pipeline
 
-DOWNSTREAM WORKFLOWS (use atac.run_workflow(workflow_type)):
+DOWNSTREAM WORKFLOWS (use atac.ATAC_Analysis(workflow_type)):
 These return bash command templates for execution:
 
 PEAK CALLING:
@@ -245,7 +245,7 @@ All workflows return executable bash command templates. You must:
 EXECUTION EXAMPLES:
 ```bash
 # Step 1: Get command template
-fastqc_commands = atac.run_upstream_workflow("run_fastqc")
+fastqc_commands = atac.ATAC_Upstream("run_fastqc")
 
 # Step 2: Adapt and execute
 # Template: fastqc *.fastq.gz -o qc/fastqc/
