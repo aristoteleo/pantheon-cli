@@ -742,7 +742,7 @@ class ReplUI:
                 # Simple commands use the original format
                 self.console.print(f"⏺ [bold]Bash[/bold]({command})")
             
-        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", "ScATAC_Analysis", "RNA_Upstream", "RNA_Analysis"] and args and 'workflow_type' in args:
+        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", "ScATAC_Analysis", "RNA_Upstream", "RNA_Analysis", "HiC_Upstream", "HiC_Analysis"] and args and 'workflow_type' in args:
             # Special handling for workflow calls
             workflow_type = args['workflow_type']
             description = args.get('description', '')
@@ -763,9 +763,15 @@ class ReplUI:
             elif tool_name == "RNA_Upstream":
                 icon = "🧬"  # DNA for upstream processing
                 workflow_title = f"RNA Upstream: {workflow_type}"
-            else:  # RNA_Analysis
+            elif tool_name == "RNA_Analysis":
                 icon = "📊"  # Chart for downstream analysis
                 workflow_title = f"RNA Analysis: {workflow_type}"
+            elif tool_name == "HiC_Upstream":
+                icon = "🧬"  # DNA for upstream processing
+                workflow_title = f"Hi-C Upstream: {workflow_type}"
+            else:  # HiC_Analysis
+                icon = "📊"  # Chart for downstream analysis
+                workflow_title = f"Hi-C Analysis: {workflow_type}"
             
             self.console.print(f"⏺ [bold]{icon} {tool_name}[/bold]")
             
@@ -848,7 +854,7 @@ class ReplUI:
         self.add_to_conversation("tool_result", result_content, {"tool_name": tool_name})
         
         # Special handling for toolsets that print their own output - skip normal output box
-        skip_tools = ['edit', 'write', 'read', 'file', 'glob', 'grep', 'ls', 'notebook', 
+        skip_tools = ['edit', 'write', 'read', 'file', 'glob', 'grep', 'ls', 'notebook', 'update_todo_status',
                      'add_todo', 'mark_task_done', 'complete_current_todo', 'work_on_next_todo']
         if any(tool in tool_name.lower() for tool in skip_tools) and isinstance(result, dict):
             if result.get('success'):

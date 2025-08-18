@@ -94,6 +94,10 @@ class BioCommandHandler:
         if tool_name == "dock":
             return self._handle_dock_command(parts)
         
+        # Handle hic commands with special logic
+        if tool_name == "hic":
+            return self._handle_hic_command(parts)
+        
         # Generic handler for other tools
         if len(parts) > 2:
             method_name = parts[2]
@@ -755,6 +759,123 @@ Response format (single line):
                 return f"bio_dock_{command} {params}"
             else:
                 return f"bio_dock_{command}"
+    
+    def _handle_hic_command(self, parts) -> str:
+        """Handle Hi-C analysis commands"""
+        
+        if len(parts) == 2:
+            # Just /bio hic - show hic help
+            self.console.print("\n[bold]🧬 Hi-C Analysis Helper[/bold]")
+            self.console.print("[dim]/bio hic init[/dim] - Initialize Hi-C project")
+            self.console.print("[dim]/bio hic upstream <folder>[/dim] - Run Hi-C upstream analysis")
+            self.console.print("[dim]/bio hic analysis <folder>[/dim] - Run Hi-C downstream analysis")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio hic init                   # Initialize Hi-C project[/dim]")
+            self.console.print("[dim]  /bio hic upstream ./hic_data   # Run upstream processing[/dim]")
+            self.console.print("[dim]  /bio hic analysis ./hic_data   # Run TAD/compartment analysis[/dim]")
+            self.console.print()
+            return None
+        
+        command = parts[2]
+        
+        if command == "init":
+            # Enter Hi-C mode - strict init mode like dock
+            self.console.print("\n[bold cyan]🧬 Entering Hi-C Analysis Mode[/bold cyan]")
+            
+            # Clear all existing todos when entering Hi-C mode
+            clear_message = """
+HiC INIT MODE — STRICT
+
+Goal: ONLY clear TodoList and report the new status. Do NOT create or execute anything.
+
+Allowed tools (whitelist):
+  - clear_all_todos()
+  - show_todos()
+
+Hard bans (do NOT call under any circumstance in init):
+  - add_todo(), mark_task_done(), execute_current_task()
+  - any hic.* analysis tools
+
+Steps:
+  1) clear_all_todos()
+  2) todos = show_todos()
+
+Response format (single line):
+  Hi-C init ready • todos={len(todos)}
+"""
+            return clear_message
+        
+        elif command == "upstream":
+            # Handle Hi-C upstream analysis
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify folder path[/red]")
+                self.console.print("[dim]Usage: /bio hic upstream <folder>[/dim]")  
+                self.console.print("[dim]Example: /bio hic upstream ./hic_data[/dim]")
+                return None
+            
+            folder_path = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Hi-C Upstream Analysis Initiated[/bold cyan]")
+            self.console.print(f"[dim]Target folder: {folder_path}[/dim]")
+            self.console.print("[dim]Processing Hi-C data: QC, alignment, matrix building...[/dim]")
+            self.console.print()
+            
+            try:
+                # Import and use Hi-C upstream analysis message
+                from ..cli.prompt.hic_analysis import generate_hic_analysis_message
+                
+                # Generate the analysis message with folder
+                hic_message = generate_hic_analysis_message(folder_path=folder_path)
+                
+                self.console.print("[dim]Sending Hi-C upstream analysis request...[/dim]")
+                
+                return hic_message
+                
+            except ImportError as e:
+                self.console.print(f"[red]Error: Hi-C upstream module not available: {e}[/red]")
+                return None
+            except Exception as e:
+                self.console.print(f"[red]Error preparing Hi-C upstream analysis: {str(e)}[/red]")
+                return None
+        
+        elif command == "analysis":
+            # Handle Hi-C downstream analysis
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify folder path[/red]")
+                self.console.print("[dim]Usage: /bio hic analysis <folder>[/dim]")
+                self.console.print("[dim]Example: /bio hic analysis ./hic_data[/dim]")
+                return None
+            
+            folder_path = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Hi-C Analysis Initiated[/bold cyan]")
+            self.console.print(f"[dim]Target folder: {folder_path}[/dim]")
+            self.console.print("[dim]Processing Hi-C analysis: TADs, compartments, loops...[/dim]")
+            self.console.print()
+            
+            try:
+                # Import and use Hi-C analysis message
+                from ..cli.prompt.hic_analysis import generate_hic_analysis_message
+                
+                # Generate the analysis message with folder
+                hic_message = generate_hic_analysis_message(folder_path=folder_path)
+                
+                self.console.print("[dim]Sending Hi-C analysis request...[/dim]")
+                
+                return hic_message
+                
+            except ImportError as e:
+                self.console.print(f"[red]Error: Hi-C analysis module not available: {e}[/red]")
+                return None
+            except Exception as e:
+                self.console.print(f"[red]Error preparing Hi-C analysis: {str(e)}[/red]")
+                return None
+        
+        else:
+            # Handle other hic commands generically
+            params = " ".join(parts[3:]) if len(parts) > 3 else ""
+            if params:
+                return f"bio_hic_{command} {params}"
+            else:
+                return f"bio_hic_{command}"
     
     async def handle_deprecated_atac_command(self, command: str) -> str:
         """
