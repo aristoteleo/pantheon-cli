@@ -848,7 +848,8 @@ class ReplUI:
         self.add_to_conversation("tool_result", result_content, {"tool_name": tool_name})
         
         # Special handling for toolsets that print their own output - skip normal output box
-        skip_tools = ['edit', 'write', 'read', 'file', 'glob', 'grep', 'ls', 'notebook']
+        skip_tools = ['edit', 'write', 'read', 'file', 'glob', 'grep', 'ls', 'notebook', 
+                     'add_todo', 'mark_task_done', 'complete_current_todo', 'work_on_next_todo']
         if any(tool in tool_name.lower() for tool in skip_tools) and isinstance(result, dict):
             if result.get('success'):
                 # For successful operations, don't show any output box
