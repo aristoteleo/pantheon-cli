@@ -48,8 +48,9 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio scatac upstream ./data    # Run cellranger-atac analysis[/dim]")
         self.console.print("[dim]  /bio scrna init                # Initialize scRNA-seq project[/dim]")
         self.console.print("[dim]  /bio scrna analysis ./data    # Load and analyze scRNA-seq data[/dim]")
+        self.console.print("[dim]  /bio rna init                 # Initialize RNA-seq project[/dim]")
+        self.console.print("[dim]  /bio rna upstream ./data      # Run RNA-seq upstream analysis[/dim]")
         self.console.print("[dim]  /bio GeneAgent TP53,BRCA1,EGFR # Gene set analysis with AI[/dim]")
-        self.console.print("[dim]  /bio rnaseq init               # Initialize RNA-seq project (when available)[/dim]")
         self.console.print("")
     
     def _handle_bio_manager_command(self, parts) -> str:
@@ -82,6 +83,10 @@ class BioCommandHandler:
         # Handle GeneAgent commands with special logic
         if tool_name == "GeneAgent":
             return self._handle_gene_agent_command(parts)
+        
+        # Handle RNA commands with special logic
+        if tool_name == "rna":
+            return self._handle_rna_command(parts)
         
         # Generic handler for other tools
         if len(parts) > 2:
@@ -557,6 +562,97 @@ Response format (single line):
         
         return " ".join(cmd_parts)
     
+    def _handle_rna_command(self, parts) -> str:
+        """Handle RNA-specific commands with special logic"""
+        
+        if len(parts) == 2:
+            # Just /bio rna - show RNA help
+            self.console.print("\n[bold]🧬 RNA-seq Analysis Helper[/bold]")
+            self.console.print("[dim]/bio rna init[/dim] - Enter RNA-seq analysis mode")
+            self.console.print("[dim]/bio rna upstream <folder>[/dim] - Run upstream RNA-seq analysis on folder")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio rna init                     # Enter RNA mode[/dim]")
+            self.console.print("[dim]  /bio rna upstream ./fastq_data   # Analyze FASTQ data[/dim]")
+            self.console.print()
+            return None
+        
+        command = parts[2]
+        
+        if command == "init":
+            # Enter RNA mode - simple mode activation without automation
+            self.console.print("\n[bold cyan]🧬 Entering RNA-seq Analysis Mode[/bold cyan]")
+            
+            # Clear all existing todos when entering RNA mode
+            clear_message = """
+RNA INIT MODE — STRICT
+
+Goal: ONLY clear TodoList and report the new status. Do NOT create or execute anything.
+
+Allowed tools (whitelist):
+  - clear_all_todos()
+  - show_todos()
+
+Hard bans (do NOT call under any circumstance in init):
+  - add_todo(), mark_task_done(), execute_current_task()
+  - any rna.* analysis tools
+
+Steps:
+  1) clear_all_todos()
+  2) todos = show_todos()
+
+Response format (single line):
+  RNA init ready • todos={len(todos)}
+"""
+            
+            self.console.print("[dim]Clearing existing todos and preparing RNA environment...[/dim]")
+            self.console.print("[dim]Ready for RNA-seq analysis assistance...[/dim]")
+            self.console.print("[dim]RNA-seq mode activated. You can now use RNA tools directly.[/dim]")
+            self.console.print()
+            self.console.print("[dim]The command structure is now clean:[/dim]")
+            self.console.print("[dim]  - /bio rna init - Enter RNA mode (simple prompt loading)[/dim]")
+            self.console.print("[dim]  - /bio rna upstream <folder> - Run upstream RNA analysis on specific folder[/dim]")
+            self.console.print()
+            
+            return clear_message
+        
+        elif command == "upstream":
+            # Handle upstream analysis
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a folder path[/red]")
+                self.console.print("[dim]Usage: /bio rna upstream <folder_path>[/dim]")
+                self.console.print("[dim]Example: /bio rna upstream ./fastq_data[/dim]")
+                return None
+                
+            try:
+                from ..cli.prompt.rna_bulk_upstream import generate_rna_analysis_message
+                
+                folder_path = parts[3]
+                self.console.print(f"\n[bold cyan]🧬 Starting RNA-seq Analysis[/bold cyan]")
+                self.console.print(f"[dim]Target folder: {folder_path}[/dim]")
+                self.console.print("[dim]Preparing RNA-seq analysis pipeline...[/dim]\n")
+                
+                # Generate the analysis message with folder
+                rna_message = generate_rna_analysis_message(folder_path=folder_path)
+                
+                self.console.print("[dim]Sending RNA-seq analysis request...[/dim]\n")
+                
+                return rna_message
+                
+            except ImportError as e:
+                self.console.print(f"[red]Error: RNA module not available: {e}[/red]")
+                return None
+            except Exception as e:
+                self.console.print(f"[red]Error preparing analysis: {str(e)}[/red]")
+                return None
+        
+        else:
+            # Handle other RNA commands generically
+            params = " ".join(parts[3:]) if len(parts) > 3 else ""
+            if params:
+                return f"bio_rna_{command} {params}"
+            else:
+                return f"bio_rna_{command}"
+    
     async def handle_deprecated_atac_command(self, command: str) -> str:
         """
         Handle deprecated /atac commands with migration and auto-conversion
@@ -636,10 +732,14 @@ BIO_COMMAND_MAP = {
     'scrna_run_clustering': 'bio_scrna_run_clustering',
     'scrna_run_cell_type_annotation': 'bio_scrna_run_cell_type_annotation',
     
-    # RNA-seq commands (for future use)
-    'rnaseq_init': 'bio_rnaseq_init',
-    'rnaseq_align_reads': 'bio_rnaseq_align_reads',
-    'rnaseq_diff_expression': 'bio_rnaseq_diff_expression',
+    # RNA-seq commands
+    'rna_init': 'bio_rna_init',
+    'rna_upstream': 'bio_rna_upstream',
+    'rna_check_dependencies': 'bio_rna_check_dependencies',
+    'rna_setup_genome_resources': 'bio_rna_setup_genome_resources',
+    'rna_align_star': 'bio_rna_align_star',
+    'rna_quantify_salmon': 'bio_rna_quantify_salmon',
+    'rna_differential_expression': 'bio_rna_differential_expression',
     
     # ChIP-seq commands (for future use)
     'chipseq_init': 'bio_chipseq_init',
@@ -670,9 +770,10 @@ def get_bio_command_suggestions() -> list:
         '/bio scrna qc',
         '/bio scrna preprocess',
         '/bio scrna annotate',
+        '/bio rna init',
+        '/bio rna upstream',
         '/bio GeneAgent',
         '/bio GeneAgent TP53,BRCA1,EGFR',
-        '/bio rnaseq init',  # Future
         '/bio chipseq init',  # Future
     ]
     return suggestions

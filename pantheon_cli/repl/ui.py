@@ -52,7 +52,7 @@ class ReplUI:
             'macs2', 'genrich', 'hmmratac',
             'bamCoverage', 'computeMatrix', 'plotHeatmap', 'plotProfile',
             'bedtools', 'findMotifsGenome.pl', 'homer',
-            'featureCounts', 'htseq-count', 'star', 'rsem'
+            'featureCounts', 'htseq-count', 'star', 'rsem', 'salmon', 'kallisto'
         ]
         
         # Check if command starts with any bio tool
@@ -118,7 +118,9 @@ class ReplUI:
             'featurecounts': 'Count Features with featureCounts',
             'htseq-count': 'Count Features with HTSeq',
             'star': 'RNA-seq Alignment with STAR',
-            'rsem': 'Expression Quantification with RSEM'
+            'rsem': 'Expression Quantification with RSEM',
+            'salmon': 'Expression Quantification with Salmon',
+            'kallisto': 'Expression Quantification with Kallisto'
         }
         
         # Check for exact matches first
@@ -741,7 +743,7 @@ class ReplUI:
                 # Simple commands use the original format
                 self.console.print(f"⏺ [bold]Bash[/bold]({command})")
             
-        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", "ScATAC_Analysis"] and args and 'workflow_type' in args:
+        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", "ScATAC_Analysis", "RNA_Upstream", "RNA_Analysis"] and args and 'workflow_type' in args:
             # Special handling for workflow calls
             workflow_type = args['workflow_type']
             description = args.get('description', '')
@@ -756,9 +758,15 @@ class ReplUI:
             elif tool_name == "ScATAC_Upstream":
                 icon = "🧬"  # DNA for upstream processing
                 workflow_title = f"scATAC Upstream: {workflow_type}"
-            else:  # ScATAC_Analysis
+            elif tool_name == "ScATAC_Analysis":
                 icon = "📊"  # Chart for downstream analysis
                 workflow_title = f"scATAC Analysis: {workflow_type}"
+            elif tool_name == "RNA_Upstream":
+                icon = "🧬"  # DNA for upstream processing
+                workflow_title = f"RNA Upstream: {workflow_type}"
+            else:  # RNA_Analysis
+                icon = "📊"  # Chart for downstream analysis
+                workflow_title = f"RNA Analysis: {workflow_type}"
             
             self.console.print(f"⏺ [bold]{icon} {tool_name}[/bold]")
             
