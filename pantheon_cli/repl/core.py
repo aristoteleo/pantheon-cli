@@ -256,7 +256,7 @@ class Repl(ReplUI):
                         # Get client_id for shared interpreter
                         client_id = self.agent.memory.id if hasattr(self.agent, 'memory') and hasattr(self.agent.memory, 'id') else "default"
                         
-                        result = await python_func(code=code, skip_validation=True, context_variables={"client_id": client_id})
+                        result = await python_func(code=code, context_variables={"client_id": client_id})
                         if result and isinstance(result, dict):
                             # Extract and display relevant parts
                             if result.get('stdout'):
@@ -286,7 +286,6 @@ class Repl(ReplUI):
             client_id = self.agent.memory.id if hasattr(self.agent, 'memory') and hasattr(self.agent.memory, 'id') else "default"
             result = await python_toolset.run_python_code(
                 code=code,
-                skip_validation=True,  # Skip validation for direct execution
                 context_variables={"client_id": client_id}
             )
             

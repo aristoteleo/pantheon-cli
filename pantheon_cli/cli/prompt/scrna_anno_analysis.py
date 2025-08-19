@@ -36,8 +36,8 @@ def generate_scrna_analysis_message(folder_path: Optional[str] = None) -> str:
 {path_instruction}
 
 PHASE 0 — SETUP & VALIDATION
-1) Environment check: scrna.check_dependencies()
-2) Data discovery: scrna.scan_folder() if folder, or proceed with file
+1) Data discovery: Use ls command to check folder contents, then proceed with file loading
+2) Environment check will be done automatically within data loading step
 
 PHASE 1 — TODO CREATION (ONCE ONLY)
 Execute: current = show_todos()
@@ -95,6 +95,19 @@ try:
 except NameError:
     # Only load if not in memory
     print("Loading data for the first time...")
+    
+    # Check and install required packages
+    import subprocess
+    import sys
+    print("Checking required packages...")
+    required = ['scanpy', 'omicverse', 'pandas', 'numpy']
+    for pkg in required:
+        try:
+            __import__(pkg)
+        except ImportError:
+            print(f"Installing {{pkg}}...")
+            subprocess.run([sys.executable, '-m', 'pip', 'install', pkg])
+    
     import scanpy as sc
     import omicverse as ov
     import pandas as pd

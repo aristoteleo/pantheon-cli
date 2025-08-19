@@ -24,9 +24,9 @@ GLOBAL RULES
 PHASE 0 — SPECIES DETECTION & GENOME RESOURCES
 1) Use workflow commands for species detection and setup:
    - hic.init() - Initialize Hi-C project structure
-   - hic.check_dependencies() - Check Hi-C tool availability
    - hic.auto_detect_species("{folder_path}") - Auto-detect species and enzyme
    - hic.setup_genome_resources() - Setup genome and restriction sites
+   (Tool availability will be checked automatically within each workflow)
 
 PHASE 1 — TODO CREATION (STRICT DE-DUP)
 Mandatory order:
@@ -80,7 +80,6 @@ For each current task:
      
      UPSTREAM WORKFLOWS (use hic.HiC_Upstream(workflow_type)):
      - "init" - Initialize Hi-C project structure
-     - "check_dependencies" - Check Hi-C tool dependencies
      - "setup_genome_resources" - Setup genome and restriction enzyme sites
      - "run_fastqc" - Quality control analysis for Hi-C
      - "trim_adapters" - Minimal adapter trimming
@@ -117,10 +116,9 @@ PHASE 3 — ADAPTIVE TODO REFINEMENT
 - If additional analysis needed → add_todo("Hi-C specific analysis task")
 
 Hi-C EXECUTION STRATEGY (MUST FOLLOW THIS ORDER)
-  1) hic.init() → Initialize Hi-C project
+  1) hic.init() → Initialize Hi-C project (includes dependency check)
   2) hic.auto_detect_species("{folder_path}") → Detect species and enzyme
-  3) hic.check_dependencies() → Check Hi-C tools
-  4) hic.HiC_Upstream("setup_genome_resources") → Setup genome
+  3) hic.HiC_Upstream("setup_genome_resources") → Setup genome
   5) show_todos()
   6) Analyze folder and create Hi-C todos if empty
   7) Loop Phase 2 until all done; refine with Phase 3 when needed
