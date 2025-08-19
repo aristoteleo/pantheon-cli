@@ -82,7 +82,7 @@ pantheon-cli --disable_ext False --ext_dir ./ext_toolsets
     /api-key kimi sk-... - Set Kimi key
     /api-key grok sk-... - Set Grok key
 
-# now can you use the CLI for various tasks, enjoy!
+# Ensure you have proper internet and API connection. You can now use the CLI for various tasks, enjoy!
 ```
 
 ### With RAG Database
@@ -94,6 +94,7 @@ pantheon-cli --rag_db path/to/rag/database
 ```
 
 Default RAG database location: `tmp/sc_cli_tools_rag/single-cell-cli-tools`.
+
 **Note that, if a default RAG database is not found, the CLI will automatically run with RAG functionality disabled.**
 
 ## RAG System Setup
