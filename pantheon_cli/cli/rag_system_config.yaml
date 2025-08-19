@@ -29,5 +29,5 @@ pantheon-cli-tools:
     bulk-rna-seq:
       type: package documentation
       url: https://training.galaxyproject.org/training-material/topics/transcriptomics/tutorials/ref-based/tutorial.html
-      description: "Analysis of the gene expression data step by step using 7 of the original datasets:" 
+      description: "Analysis of the gene expression data step by step using 7 of the original datasets."
     

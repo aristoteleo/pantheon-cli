@@ -9,7 +9,7 @@
 <div align="center">
 
 ***We're not just building another CLI tool.  
-We're defining how scientists will interact with data in the AI era.***
+We're re-defining how scientists will interact with data in the AI era.***
 
 </div>
 
@@ -30,15 +30,16 @@ We're defining how scientists will interact with data in the AI era.***
 pantheon-cli
 
 # Now you can seamlessly mix natural language, Python, R, and Julia:
-> Analyze single-cell data using Seurat, then create a Python visualization
-> Load my_data.csv, run differential equations in Julia, plot with R
 > Solve optimization problem with Julia, visualize results in Python
+> Analyze single-cell data using Seurat, then create a Python visualization
+> Load my_data.csv, fit the data with differential equations in Julia, plot with R
 ```
 
 ### Installation
 
 ```bash
 # Install from source (recommended for development)
+git clone https://github.com/aristoteleo/pantheon-cli.git
 cd Pantheon-cli
 pip install -e .
 
@@ -46,7 +47,7 @@ pip install -e .
 pip install pantheon-agents pantheon-toolsets
 ```
 
-**Note**: Pantheon-CLI requires both `pantheon-agents` and `pantheon-toolsets` to be installed. These provide the core agent functionality and distributed toolsets respectively.
+**Note**: Pantheon-CLI requires both `pantheon-agents` and `pantheon-toolsets` to be installed. These provide the core agent functionality and distributed toolsets respectively. The complete list of features implemented in `pantheon-agents` and `pantheon-toolsets` will be introduced elsewhere.
 
 ### Basic Usage
 
@@ -65,9 +66,24 @@ pantheon-cli --workspace /path/to/project
 
 # Start with external toolsets
 pantheon-cli --disable_ext False --ext_dir ./ext_toolsets
+
+# Once the cli is running, you will need to setup your API keys and model preferences.
+/api-key list  # List current API keys
+# The following guidance will then show up to help you set your API keys:
+💡 Usage:
+  /api-key list - Show this status
+  /api-key <provider> <key> - Set API key
+  Examples:
+    /api-key openai sk-... - Set OpenAI key
+    /api-key anthropic sk-... - Set Anthropic key
+    /api-key google ai... - Set Google key
+    /api-key deepseek sk-... - Set DeepSeek key
+    /api-key qwen sk-... - Set Qwen key
+    /api-key kimi sk-... - Set Kimi key
+    /api-key grok sk-... - Set Grok key
+
+# now can you use the CLI for various tasks, enjoy!
 ```
-
-
 
 ### With RAG Database
 
@@ -77,7 +93,8 @@ If you have a RAG database prepared:
 pantheon-cli --rag_db path/to/rag/database
 ```
 
-Default RAG database location: `tmp/sc_cli_tools_rag/single-cell-cli-tools`
+Default RAG database location: `tmp/sc_cli_tools_rag/single-cell-cli-tools`.
+**Note that, if a default RAG database is not found, the CLI will automatically run with RAG functionality disabled.**
 
 ## RAG System Setup
 
@@ -186,7 +203,7 @@ Pantheon-cli/
 ```
 
 **Key Design Decisions:**
-- Package renamed from `pantheon` to `pantheon_cli` to avoid import conflicts
+- Package renamed from `pantheon-cli` to `pantheon_cli` to avoid import conflicts
 - All relative imports converted to absolute imports (`from pantheon.agent import Agent`)
 - Uses local REPL instead of `agent.chat()` to avoid import issues
 - Graceful fallback for missing toolsets with error handling
