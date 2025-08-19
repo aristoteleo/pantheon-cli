@@ -48,6 +48,8 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio scatac upstream ./data    # Run cellranger-atac analysis[/dim]")
         self.console.print("[dim]  /bio scrna init                # Initialize scRNA-seq project[/dim]")
         self.console.print("[dim]  /bio scrna analysis ./data    # Load and analyze scRNA-seq data[/dim]")
+        self.console.print("[dim]  /bio spatial init              # Initialize spatial transcriptomics project[/dim]")
+        self.console.print("[dim]  /bio spatial analysis [./data] # Load and analyze spatial data with bin2cell[/dim]")
         self.console.print("[dim]  /bio rna init                 # Initialize RNA-seq project[/dim]")
         self.console.print("[dim]  /bio rna upstream ./data      # Run RNA-seq upstream analysis[/dim]")
         self.console.print("[dim]  /bio dock init                # Initialize molecular docking project[/dim]")
@@ -81,6 +83,10 @@ class BioCommandHandler:
         # Handle scRNA commands with special logic
         if tool_name == "scrna":
             return self._handle_scrna_command(parts)
+        
+        # Handle spatial transcriptomics commands with special logic
+        if tool_name == "spatial":
+            return self._handle_spatial_command(parts)
         
         # Handle GeneAgent commands with special logic
         if tool_name == "GeneAgent":
@@ -493,6 +499,183 @@ Response format (single line):
                 return f"bio_scrna_{command} {params}"
             else:
                 return f"bio_scrna_{command}"
+    
+    def _handle_spatial_command(self, parts) -> str:
+        """Handle spatial transcriptomics commands with special logic"""
+        
+        if len(parts) == 2:
+            # Just /bio spatial - show spatial help
+            self.console.print("\n[bold]🔬 Spatial Transcriptomics Analysis Helper[/bold]")
+            self.console.print("[dim]/bio spatial init[/dim] - Initialize spatial transcriptomics analysis project")
+            self.console.print("[dim]/bio spatial analysis [folder/file][/dim] - Load and analyze spatial data with bin2cell (file path optional)")
+            self.console.print("[dim]/bio spatial bin2cell <folder/file> --image <image_path>[/dim] - Run bin2cell workflow")
+            self.console.print("[dim]/bio spatial segment <folder/file>[/dim] - Run H&E and gene expression segmentation")
+            self.console.print("[dim]/bio spatial destripe <folder/file>[/dim] - Apply destriping correction for Visium HD")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio spatial init                                    # Initialize spatial project[/dim]")
+            self.console.print("[dim]  /bio spatial analysis                                # General spatial analysis guidance[/dim]")
+            self.console.print("[dim]  /bio spatial analysis ./spatial_data.h5ad           # Analyze specific spatial data[/dim]")
+            self.console.print("[dim]  /bio spatial bin2cell ./visium_hd --image ./he.tiff # Run bin2cell with H&E image[/dim]")
+            self.console.print("[dim]  /bio spatial segment ./spatial_data.h5ad            # Run cell segmentation[/dim]")
+            self.console.print("[dim]  /bio spatial destripe ./visium_hd_data.h5ad         # Apply destriping correction[/dim]")
+            self.console.print()
+            return None
+        
+        command = parts[2]
+        
+        if command == "init":
+            # Enter spatial mode - simple mode activation
+            self.console.print("\n[bold cyan]🔬 Initializing Spatial Transcriptomics Project[/bold cyan]")
+            
+            # Clear all existing todos when entering spatial mode
+            clear_message = """
+SPATIAL INIT MODE — STRICT
+
+Goal: ONLY clear TodoList and report the new status. Do NOT create or execute anything.
+
+Allowed tools (whitelist):
+  - clear_all_todos()
+  - show_todos()
+
+Hard bans (do NOT call under any circumstance in init):
+  - add_todo(), mark_task_done(), execute_current_task()
+  - any spatial.* analysis tools
+
+Steps:
+  1) clear_all_todos()
+  2) todos = show_todos()
+
+Response format (single line):
+  Spatial init ready • todos={len(todos)}
+"""
+            
+            self.console.print("[dim]Clearing existing todos and preparing spatial environment...[/dim]")
+            self.console.print("[dim]Ready for spatial transcriptomics analysis assistance...[/dim]")
+            self.console.print("[dim]Spatial transcriptomics mode activated. You can now use spatial tools directly.[/dim]")
+            self.console.print()
+            self.console.print("[dim]The command structure is now clean:[/dim]")
+            self.console.print("[dim]  - /bio spatial init - Enter spatial mode (simple prompt loading)[/dim]")
+            self.console.print("[dim]  - /bio spatial analysis [file/folder] - Load and analyze spatial data (path optional)[/dim]")
+            self.console.print("[dim]  - /bio spatial bin2cell <file/folder> --image <image> - Run bin2cell workflow[/dim]")
+            self.console.print()
+            
+            return clear_message
+        
+        elif command == "analysis":
+            # Handle spatial data analysis
+            try:
+                from ..cli.prompt.spatial_bin2cell_analysis import generate_spatial_analysis_message
+                
+                # Check if file path is provided
+                if len(parts) >= 4:
+                    file_path = parts[3]
+                    self.console.print(f"\n[bold cyan]🔬 Starting Spatial Transcriptomics Analysis[/bold cyan]")
+                    self.console.print(f"[dim]Target file: {file_path}[/dim]")
+                    self.console.print("[dim]Will load and analyze spatial data with bin2cell integration...[/dim]")
+                    self.console.print("[dim]Preparing comprehensive spatial analysis pipeline...[/dim]\n")
+                    
+                    # Generate the analysis message with file path
+                    spatial_message = generate_spatial_analysis_message(folder_path=file_path)
+                else:
+                    # No file path provided - use generic message
+                    self.console.print(f"\n[bold cyan]🔬 Starting Spatial Transcriptomics Analysis[/bold cyan]")
+                    self.console.print("[dim]No specific file path provided[/dim]")
+                    self.console.print("[dim]Will guide you through spatial data analysis with bin2cell...[/dim]")
+                    self.console.print("[dim]Preparing spatial analysis guidance...[/dim]\n")
+                    
+                    # Generate the analysis message without file path
+                    spatial_message = generate_spatial_analysis_message()
+                
+                self.console.print("[dim]Sending spatial transcriptomics analysis request...[/dim]\n")
+                
+                return spatial_message
+                
+            except ImportError as e:
+                self.console.print(f"[red]Error: Spatial module not available: {e}[/red]")
+                return None
+            except Exception as e:
+                self.console.print(f"[red]Error preparing spatial analysis: {str(e)}[/red]")
+                return None
+        
+        elif command == "bin2cell":
+            # Handle bin2cell workflow with optional H&E image
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify spatial data path[/red]")
+                self.console.print("[dim]Usage: /bio spatial bin2cell <data_path> [--image <image_path>][/dim]")
+                self.console.print("[dim]Example: /bio spatial bin2cell ./visium_hd --image ./he_image.tiff[/dim]")
+                return None
+            
+            try:
+                from ..cli.prompt.spatial_bin2cell_analysis import generate_spatial_analysis_message
+                
+                data_path = parts[3]
+                image_path = None
+                
+                # Parse --image parameter
+                if len(parts) >= 6 and parts[4] == "--image":
+                    image_path = parts[5]
+                
+                self.console.print(f"\n[bold cyan]🔬 Starting Bin2Cell Spatial Analysis[/bold cyan]")
+                self.console.print(f"[dim]Data path: {data_path}[/dim]")
+                if image_path:
+                    self.console.print(f"[dim]H&E image: {image_path}[/dim]")
+                self.console.print("[dim]Running bin2cell workflow for Visium HD data...[/dim]")
+                self.console.print("[dim]Preparing H&E segmentation and bin-to-cell conversion...[/dim]\n")
+                
+                # Generate the analysis message with data and image paths
+                spatial_message = generate_spatial_analysis_message(
+                    folder_path=data_path, 
+                    source_image_path=image_path
+                )
+                
+                self.console.print("[dim]Sending bin2cell spatial analysis request...[/dim]\n")
+                
+                return spatial_message
+                
+            except ImportError as e:
+                self.console.print(f"[red]Error: Spatial bin2cell module not available: {e}[/red]")
+                return None
+            except Exception as e:
+                self.console.print(f"[red]Error preparing bin2cell analysis: {str(e)}[/red]")
+                return None
+        
+        elif command in ["segment", "segmentation"]:
+            # Handle cell segmentation workflow
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify spatial data path[/red]")
+                self.console.print("[dim]Usage: /bio spatial segment <data_path>[/dim]")
+                self.console.print("[dim]Example: /bio spatial segment ./spatial_data.h5ad[/dim]")
+                return None
+            
+            data_path = parts[3]
+            self.console.print(f"\n[bold cyan]🔬 Running Spatial Cell Segmentation[/bold cyan]")
+            self.console.print(f"[dim]Data path: {data_path}[/dim]")
+            self.console.print("[dim]Performing H&E and gene expression segmentation with StarDist...[/dim]")
+            
+            return f"spatial_run_segmentation {data_path}"
+        
+        elif command in ["destripe", "destriping"]:
+            # Handle destriping correction for Visium HD
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify Visium HD data path[/red]")
+                self.console.print("[dim]Usage: /bio spatial destripe <data_path>[/dim]")
+                self.console.print("[dim]Example: /bio spatial destripe ./visium_hd_data.h5ad[/dim]")
+                return None
+            
+            data_path = parts[3]
+            self.console.print(f"\n[bold cyan]🔬 Running Visium HD Destriping[/bold cyan]")
+            self.console.print(f"[dim]Data path: {data_path}[/dim]")
+            self.console.print("[dim]Correcting variable bin dimensions with destriping algorithm...[/dim]")
+            
+            return f"spatial_run_destripe {data_path}"
+        
+        else:
+            # Handle other spatial commands generically
+            params = " ".join(parts[3:]) if len(parts) > 3 else ""
+            if params:
+                return f"bio_spatial_{command} {params}"
+            else:
+                return f"bio_spatial_{command}"
     
     def _handle_gene_agent_command(self, parts) -> str:
         """Handle GeneAgent commands with special logic"""
@@ -956,6 +1139,17 @@ BIO_COMMAND_MAP = {
     'scrna_run_clustering': 'bio_scrna_run_clustering',
     'scrna_run_cell_type_annotation': 'bio_scrna_run_cell_type_annotation',
     
+    # Spatial transcriptomics commands
+    'spatial_init': 'bio_spatial_init',
+    'spatial_load_data': 'bio_spatial_load_data',
+    'spatial_run_destripe': 'bio_spatial_run_destripe',
+    'spatial_run_segmentation': 'bio_spatial_run_segmentation',
+    'spatial_run_bin2cell': 'bio_spatial_run_bin2cell',
+    'spatial_run_qc': 'bio_spatial_run_qc',
+    'spatial_run_preprocessing': 'bio_spatial_run_preprocessing',
+    'spatial_run_clustering': 'bio_spatial_run_clustering',
+    'spatial_run_annotation': 'bio_spatial_run_annotation',
+    
     # RNA-seq commands
     'rna_init': 'bio_rna_init',
     'rna_upstream': 'bio_rna_upstream',
@@ -993,6 +1187,11 @@ def get_bio_command_suggestions() -> list:
         '/bio scrna qc',
         '/bio scrna preprocess',
         '/bio scrna annotate',
+        '/bio spatial init',
+        '/bio spatial analysis',
+        '/bio spatial bin2cell',
+        '/bio spatial segment',
+        '/bio spatial destripe',
         '/bio rna init',
         '/bio rna upstream',
         '/bio GeneAgent',

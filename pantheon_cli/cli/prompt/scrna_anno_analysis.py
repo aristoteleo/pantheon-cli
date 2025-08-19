@@ -65,7 +65,7 @@ IF current is EMPTY, create these todos ONCE:
 PHASE 2 — ADAPTIVE EXECUTION WORKFLOW
 
 ⚠️ CRITICAL EXECUTION STRATEGY:
-When you call scrna.run_workflow(), it returns guidance, explanations, and example Python code using toolset function run_python_code.
+When you call scrna.run_scrna_workflow(), it returns guidance, explanations, and example Python code using toolset function run_python_code.
 You MUST:
 1. **Read and analyze** the entire returned content carefully
 2. **Understand the logic** and methodology described
@@ -164,19 +164,19 @@ print("✅ Data inspection complete")
 
 🏷️ STEP 2 - QUALITY CONTROL:
 Get QC guidance and adapt the code to your data:
-scrna.run_workflow(workflow_type="qc")
+scrna.run_scrna_workflow(workflow_type="qc")
 Then analyze the returned guidance and implement adapted QC code based on your adata structure.
 **CRITICAL**: Analyze QC results - cell counts, gene expression distributions, mitochondrial percentages. Interpret plots and decide on filtering thresholds.
 
 🏷️ STEP 3 - PREPROCESSING:
 Get preprocessing guidance and adapt the code to your data:
-scrna.run_workflow(workflow_type="preprocessing")
+scrna.run_scrna_workflow(workflow_type="preprocessing")
 Then analyze the returned guidance and implement adapted preprocessing code based on your adata characteristics.
 **CRITICAL**: Examine normalization results, highly variable genes selection. Check if the data distribution looks appropriate.
 
 🏷️ STEP 4 - PCA:
 Get PCA guidance and adapt the code to your data:
-scrna.run_workflow(workflow_type="pca")
+scrna.run_scrna_workflow(workflow_type="pca")
 Then analyze the returned guidance and implement adapted PCA code based on your adata dimensions.
 **CRITICAL**: Analyze PCA results - variance explained, elbow plots. Determine optimal number of components to use.
 
@@ -210,18 +210,18 @@ else:
     print("Note: QC metrics like 'passing_mt', 'passing_ngenes' are NOT batch keys")
 ```
 Only if real_batch_keys were found, get guidance and adapt the code:
-If real_batch_keys: scrna.run_workflow(workflow_type="batch_correction")
+If real_batch_keys: scrna.run_scrna_workflow(workflow_type="batch_correction")
 Then implement adapted batch correction code based on your specific batch keys.
 **CRITICAL**: Only apply batch correction if there are REAL batch effects, not QC filtering metrics.
 
 🏷️ STEP 6 - CLUSTERING:
 Get clustering guidance and adapt the code to your data:
-scrna.run_workflow(workflow_type="clustering")
+scrna.run_scrna_workflow(workflow_type="clustering")
 Then analyze the returned guidance and implement adapted clustering code based on your adata.
 
 🏷️ STEP 7 - VISUALIZATION:
 Get UMAP guidance and adapt the code to your data:
-scrna.run_workflow(workflow_type="umap")
+scrna.run_scrna_workflow(workflow_type="umap")
 Then analyze the returned guidance and implement adapted visualization code.
 
 🏷️ STEP 8 - DATA CONTEXT COLLECTION:
@@ -240,24 +240,24 @@ else:
 
 🏷️ STEP 9 - Marker from description:
 Get marker generation guidance based on data context:
-scrna.run_workflow(workflow_type="marker_from_desc", description=user_data_context)
+scrna.run_scrna_workflow(workflow_type="marker_from_desc", description=user_data_context)
 Then adapt and implement marker generation code based on the returned guidance and your tissue context.
 
 🏷️ STEP 10 - Marker from data:
 Get data-driven marker analysis guidance:
-scrna.run_workflow(workflow_type="marker_from_data")
+scrna.run_scrna_workflow(workflow_type="marker_from_data")
 Then adapt and implement marker analysis code based on your actual cluster structure.
 **CRITICAL**: Evaluate marker genes - fold changes, p-values, specificity. Identify the most discriminative markers per cluster.
 
 🏷️ STEP 11 - AUCELL CELL TYPE SCORING:
 Get AUCell scoring guidance and methodology:
-scrna.run_workflow(workflow_type="aucell")
+scrna.run_scrna_workflow(workflow_type="aucell")
 Then adapt and implement AUCell scoring code based on your marker genes and cell clusters.
 **CRITICAL**: Examine AUCell scores distribution, thresholds, and how well they separate cell types. Validate scoring results.
 
 🏷️ STEP 12 - ANNOTATION:
 Get LLM-powered annotation guidance and workflow:
-scrna.run_workflow(workflow_type="llm_anno", description=user_data_context)
+scrna.run_scrna_workflow(workflow_type="llm_anno", description=user_data_context)
 Then adapt the annotation workflow based on your specific clustering results and evidence.
 **CRITICAL**: Carefully review LLM annotations against marker evidence. Verify biological plausibility of assigned cell types.
 
@@ -281,12 +281,12 @@ print("✅ Downstream analysis and reporting complete")
 🔧 **AVAILABLE TOOLSET FUNCTIONS:**
 
 **UNIFIED WORKFLOW ENGINE:**
-- `scrna.run_workflow(workflow_type="qc")` - Quality control with omicverse
-- `scrna.run_workflow(workflow_type="preprocessing")` - Preprocessing with omicverse
-- `scrna.run_workflow(workflow_type="pca")` - PCA with omicverse
-- `scrna.run_workflow(workflow_type="clustering")` - Clustering analysis
-- `scrna.run_workflow(workflow_type="umap")` - Calculate UMAP
-- `scrna.run_workflow(workflow_type="aucell")` - AUCell scoring
+- `scrna.run_scrna_workflow(workflow_type="qc")` - Quality control with omicverse
+- `scrna.run_scrna_workflow(workflow_type="preprocessing")` - Preprocessing with omicverse
+- `scrna.run_scrna_workflow(workflow_type="pca")` - PCA with omicverse
+- `scrna.run_scrna_workflow(workflow_type="clustering")` - Clustering analysis
+- `scrna.run_scrna_workflow(workflow_type="umap")` - Calculate UMAP
+- `scrna.run_scrna_workflow(workflow_type="aucell")` - AUCell scoring
 
 **EXECUTION STRATEGY:**
 1. Load data and create project structure
@@ -339,12 +339,12 @@ You have access to comprehensive scRNA-seq and TODO management tools:
 🧬 COMPLETE scRNA-seq TOOLSET:
 
 **UNIFIED WORKFLOW ENGINE:**
-- `scrna.run_workflow(workflow_type="qc")` - Quality control with omicverse
-- `scrna.run_workflow(workflow_type="preprocessing")` - Preprocessing with omicverse
-- `scrna.run_workflow(workflow_type="pca")` - PCA with omicverse
-- `scrna.run_workflow(workflow_type="clustering")` - Clustering analysis
-- `scrna.run_workflow(workflow_type="umap")` - Calculate UMAP
-- `scrna.run_workflow(workflow_type="aucell")` - AUCell scoring
+- `scrna.run_scrna_workflow(workflow_type="qc")` - Quality control with omicverse
+- `scrna.run_scrna_workflow(workflow_type="preprocessing")` - Preprocessing with omicverse
+- `scrna.run_scrna_workflow(workflow_type="pca")` - PCA with omicverse
+- `scrna.run_scrna_workflow(workflow_type="clustering")` - Clustering analysis
+- `scrna.run_scrna_workflow(workflow_type="umap")` - Calculate UMAP
+- `scrna.run_scrna_workflow(workflow_type="aucell")` - AUCell scoring
 
 **EXECUTION STRATEGY:**
 1. Load data and create project structure
