@@ -208,12 +208,13 @@ class ReplUI:
         return wrapped_lines
 
     async def print_greeting(self):
-        self.console.print("[purple]Aristotle™[/purple]")
+        self.console.print("[purple]Aristotle © 2025[/purple]")
         await print_banner(self.console)
         self.console.print()
         self.console.print(
             "[bold italic]We're not just building another CLI tool.[/bold italic]\n" +
-            "[bold italic purple]We're redefining how scientists interact with data in the AI era.[/bold italic purple]"
+            "[bold italic purple]We're redefining how scientists interact with data in the AI era.\n[/bold italic purple]"
+            "[bold italic dim]Pantheon-CLI is a research project, use with caution.[/bold italic dim]"
         )
         self.console.print()
         
@@ -281,7 +282,7 @@ class ReplUI:
         self.console.print("[dim][bold purple]/status  [/bold purple][/dim] - Session info")
         self.console.print("[dim][bold purple]/history [/bold purple][/dim] - Show command history")
         self.console.print("[dim][bold purple]/tokens  [/bold purple][/dim] - Token usage analysis")  
-        self.console.print("[dim][bold purple]/save    [/bold purple][/dim] - Save conversation to markdown file")
+        self.console.print("[dim][bold purple]/save    [/bold purple][/dim] - Save conversation with terminal output to markdown")
         self.console.print("[dim][bold purple]/clear   [/bold purple][/dim] - Clear screen")
         self.console.print("[dim][bold purple]/restart [/bold purple][/dim] - Restart Python interpreter (clear all state)")
         self.console.print("[dim][bold purple]/bio     [/bold purple][/dim] - Bioinformatics analysis helper 🧬")
@@ -437,12 +438,16 @@ class ReplUI:
     def add_to_conversation(self, message_type: str, content: str, metadata: dict = None):
         """Add a message to the conversation history"""
         entry = {
-            "type": message_type,  # "user", "assistant", "tool_call", "tool_result"
+            "type": message_type,  # "user", "assistant", "tool_call", "tool_result", "terminal_output"
             "content": content,
             "timestamp": datetime.now().isoformat(),
             "metadata": metadata or {}
         }
         self.conversation_history.append(entry)
+    
+    def capture_terminal_output(self, content: str):
+        """Capture raw terminal output for preservation in saved conversations"""
+        self.add_to_conversation("terminal_output", content, {"source": "terminal"})
 
     def _format_tool_output(self, output):
         """Format tool output for better readability in markdown"""
@@ -545,7 +550,7 @@ class ReplUI:
             return f"```\n{str(output)}\n```"
 
     def export_conversation_to_markdown(self, filename: str = None) -> str:
-        """Export conversation history to a markdown file"""
+        """Export conversation history to a markdown file with full terminal display"""
         if not filename:
             # Generate filename with timestamp
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -553,16 +558,18 @@ class ReplUI:
         
         # Build markdown content
         lines = []
-        lines.append("# Pantheon CLI Conversation")
+        lines.append("# 🧬 Pantheon CLI Conversation")
         lines.append("")
-        lines.append(f"*Exported on {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
+        lines.append(f"**Exported on:** {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append("")
+        lines.append("---")
         lines.append("")
         
         current_user_message = None
         
         for entry in self.conversation_history:
             if entry["type"] == "user":
-                lines.append(f"## User")
+                lines.append(f"## 💬 User Input")
                 lines.append("")
                 lines.append(f"```")
                 lines.append(entry["content"])
@@ -571,16 +578,25 @@ class ReplUI:
                 current_user_message = entry["content"]
                 
             elif entry["type"] == "assistant":
-                lines.append(f"## Assistant")
+                lines.append(f"## 🤖 Assistant Response")
                 lines.append("")
                 lines.append(entry["content"])
                 lines.append("")
                 
             elif entry["type"] == "tool_call":
                 tool_name = entry["metadata"].get("tool_name", "unknown")
-                lines.append(f"### Tool: {tool_name}")
+                lines.append(f"### 🔧 Tool Call: `{tool_name}`")
                 lines.append("")
-                if "code" in entry["metadata"]:
+                
+                # Show terminal display if available
+                if "terminal_display" in entry["metadata"]:
+                    lines.append("**Terminal Display:**")
+                    lines.append("```")
+                    # Split the terminal display to preserve formatting
+                    for line in entry["metadata"]["terminal_display"].split('\n'):
+                        lines.append(line)
+                    lines.append("```")
+                elif "code" in entry["metadata"]:
                     # For code execution tools
                     lang = "python" if "python" in tool_name.lower() else "r" if "r" in tool_name.lower() else "julia" if "julia" in tool_name.lower() else "bash"
                     lines.append(f"```{lang}")
@@ -593,42 +609,144 @@ class ReplUI:
                 lines.append("")
                 
             elif entry["type"] == "tool_result":
-                lines.append("**Output:**")
+                lines.append("#### 📤 Output:")
                 lines.append("")
                 
-                # Format tool output based on content type
-                output_content = entry["content"]
+                # Check if we have the full result stored
+                full_result = entry.get("metadata", {}).get("full_result")
+                tool_name = entry.get("metadata", {}).get("tool_name", "")
                 
-                # Try to parse and format JSON/dict output
-                if isinstance(output_content, str):
-                    # Try to detect and format dict-like strings
-                    if output_content.startswith("{") and output_content.endswith("}"):
-                        try:
-                            import json
-                            import ast
-                            # Try to parse as Python dict literal first
-                            parsed = ast.literal_eval(output_content)
-                            formatted = self._format_tool_output(parsed)
-                            lines.extend(formatted.split("\n"))
-                        except:
-                            # Fallback to raw output in code block
-                            lines.append("```")
-                            lines.append(output_content)
-                            lines.append("```")
-                    else:
-                        # For non-dict output, use appropriate formatting
-                        if "\n" in output_content or len(output_content) > 80:
-                            lines.append("```")
-                            lines.append(output_content)
-                            lines.append("```")
+                # Show actual terminal output if captured
+                actual_output = entry.get("metadata", {}).get("actual_terminal_output")
+                if actual_output:
+                    lines.append("**Terminal Output:**")
+                    lines.append("```")
+                    # Split by newlines to preserve formatting
+                    for line in actual_output.split('\n'):
+                        lines.append(line)
+                    lines.append("```")
+                    lines.append("")
+                
+                # Special handling for code execution tools (only if no actual terminal output captured)
+                elif tool_name in ['run_python_code', 'run_julia_code', 'run_r_code'] and isinstance(full_result, dict):
+                    # Extract stdout, stderr, and result from the execution
+                    if 'stdout' in full_result and full_result['stdout']:
+                        lines.append("**stdout:**")
+                        lines.append("```")
+                        # Properly handle the stdout content
+                        stdout_content = full_result['stdout']
+                        if isinstance(stdout_content, str):
+                            # Split by newlines to preserve formatting
+                            for line in stdout_content.split('\n'):
+                                lines.append(line)
                         else:
-                            lines.append(output_content)
+                            lines.append(str(stdout_content))
+                        lines.append("```")
+                        lines.append("")
+                    
+                    if 'stderr' in full_result and full_result['stderr']:
+                        lines.append("**stderr:**")
+                        lines.append("```")
+                        stderr_content = full_result['stderr']
+                        if isinstance(stderr_content, str):
+                            for line in stderr_content.split('\n'):
+                                lines.append(line)
+                        else:
+                            lines.append(str(stderr_content))
+                        lines.append("```")
+                        lines.append("")
+                    
+                    if 'result' in full_result and full_result['result'] is not None:
+                        lines.append("**result:**")
+                        lines.append("```")
+                        lines.append(str(full_result['result']))
+                        lines.append("```")
+                        lines.append("")
+                
+                # Special handling for bash/shell commands (only if no actual terminal output captured)
+                elif tool_name in ['run_command', 'run_command_in_shell', 'bash'] and isinstance(full_result, dict):
+                    if 'output' in full_result:
+                        lines.append("```bash")
+                        output = full_result['output']
+                        if isinstance(output, str):
+                            for line in output.split('\n'):
+                                lines.append(line)
+                        else:
+                            lines.append(str(output))
+                        lines.append("```")
+                    elif 'stdout' in full_result:
+                        lines.append("```bash")
+                        stdout = full_result['stdout']
+                        if isinstance(stdout, str):
+                            for line in stdout.split('\n'):
+                                lines.append(line)
+                        else:
+                            lines.append(str(stdout))
+                        lines.append("```")
+                    else:
+                        lines.append("```")
+                        lines.append(str(full_result))
+                        lines.append("```")
+                
+                # Default handling for other tools or when full_result is not available
                 else:
-                    # If it's already a dict/list, format it nicely
-                    formatted = self._format_tool_output(output_content)
-                    lines.extend(formatted.split("\n"))
+                    output_content = entry["content"]
+                    
+                    # Try to parse and format JSON/dict output
+                    if isinstance(output_content, str):
+                        # Check if it contains newlines that need preserving
+                        if '\n' in output_content:
+                            lines.append("```")
+                            # Split and add each line separately to preserve formatting
+                            for line in output_content.split('\n'):
+                                lines.append(line)
+                            lines.append("```")
+                        elif output_content.startswith("{") and output_content.endswith("}"):
+                            try:
+                                import json
+                                import ast
+                                # Try to parse as Python dict literal first
+                                parsed = ast.literal_eval(output_content)
+                                formatted = self._format_tool_output(parsed)
+                                lines.extend(formatted.split("\n"))
+                            except:
+                                # Fallback to raw output in code block
+                                lines.append("```")
+                                lines.append(output_content)
+                                lines.append("```")
+                        else:
+                            # For single-line output
+                            if len(output_content) > 80:
+                                lines.append("```")
+                                lines.append(output_content)
+                                lines.append("```")
+                            else:
+                                lines.append(output_content)
+                    else:
+                        # If it's already a dict/list, format it nicely
+                        formatted = self._format_tool_output(output_content)
+                        lines.extend(formatted.split("\n"))
                 
                 lines.append("")
+            
+            elif entry["type"] == "terminal_output":
+                # Special handling for captured terminal output
+                lines.append("#### 🖥️ Terminal Display:")
+                lines.append("")
+                lines.append("```")
+                lines.append(entry["content"])
+                lines.append("```")
+                lines.append("")
+        
+        # Add footer
+        lines.append("---")
+        lines.append("")
+        lines.append("*End of conversation*")
+        lines.append("")
+        lines.append(f"📊 **Statistics:**")
+        lines.append(f"- Total interactions: {len([e for e in self.conversation_history if e['type'] == 'user'])}")
+        lines.append(f"- Tool calls: {len([e for e in self.conversation_history if e['type'] == 'tool_call'])}")
+        lines.append("")
         
         markdown_content = "\n".join(lines)
         
@@ -652,6 +770,59 @@ class ReplUI:
         metadata = {"tool_name": tool_name}
         if args:
             metadata.update(args)
+        
+        # Generate terminal display content for saving
+        terminal_display_lines = []
+        if tool_name in ["run_code", "run_code_in_interpreter", "run_python_code",
+                          "run_r_code", "run_julia_code"] and args and 'code' in args:
+            # Capture the code box display
+            if tool_name in ["run_python_code", "run_code", "run_code_in_interpreter"]:
+                terminal_display_lines.append("⏺ Python")
+                header_title = "Run Python code"
+            elif tool_name == "run_r_code":
+                terminal_display_lines.append("⏺ R")
+                header_title = "Run R code"
+            elif tool_name == "run_julia_code":
+                terminal_display_lines.append("⏺ Julia")
+                header_title = "Run Julia code"
+            
+            terminal_display_lines.append("╭" + "─" * 77 + "╮")
+            terminal_display_lines.append(f"│ {header_title}" + " " * (77 - len(header_title) - 4) + "   │")
+            terminal_display_lines.append("│ ╭" + "─" * 73 + "╮ │")
+            
+            code = args['code']
+            lines = code.split('\n')
+            for line in lines[:20]:  # Limit to first 20 lines for display
+                display_line = line[:71] if len(line) <= 71 else line[:68] + "..."
+                terminal_display_lines.append(f"│ │ {display_line.ljust(71)} │ │")
+            
+            terminal_display_lines.append("│ ╰" + "─" * 73 + "╯ │")
+            terminal_display_lines.append("╰" + "─" * 77 + "╯")
+            
+            metadata["terminal_display"] = "\n".join(terminal_display_lines)
+        
+        elif tool_name in ["run_command", "run_command_in_shell"] and args and 'command' in args:
+            # Capture bash command display
+            command = args['command']
+            if self._should_display_bash_in_box(command):
+                terminal_display_lines.append("⏺ Bash")
+                header_title = self._get_bash_command_title(command)
+                wrapped_lines = self._wrap_bash_command(command, max_width=71)
+                
+                terminal_display_lines.append("╭" + "─" * 77 + "╮")
+                terminal_display_lines.append(f"│ {header_title}" + " " * (77 - len(header_title) - 4) + "   │")
+                terminal_display_lines.append("│ ╭" + "─" * 73 + "╮ │")
+                
+                for line in wrapped_lines[:20]:  # Limit display
+                    terminal_display_lines.append(f"│ │ {line.ljust(71)} │ │")
+                
+                terminal_display_lines.append("│ ╰" + "─" * 73 + "╯ │")
+                terminal_display_lines.append("╰" + "─" * 77 + "╯")
+                
+                metadata["terminal_display"] = "\n".join(terminal_display_lines)
+            else:
+                metadata["terminal_display"] = f"⏺ Bash({command})"
+        
         self.add_to_conversation("tool_call", f"{tool_name}({args or {}})", metadata)
         
         self.console.print()  # Add some space
@@ -742,7 +913,9 @@ class ReplUI:
                 # Simple commands use the original format
                 self.console.print(f"⏺ [bold]Bash[/bold]({command})")
             
-        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", "ScATAC_Analysis", "RNA_Upstream", "RNA_Analysis", "HiC_Upstream", "HiC_Analysis"] and args and 'workflow_type' in args:
+        elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", 
+                           "ScATAC_Analysis", "RNA_Upstream", "RNA_Analysis",
+                             "HiC_Upstream", "HiC_Analysis", "Spatial_Bin2Cell_Analysis"] and args and 'workflow_type' in args:
             # Special handling for workflow calls
             workflow_type = args['workflow_type']
             description = args.get('description', '')
@@ -769,10 +942,13 @@ class ReplUI:
             elif tool_name == "HiC_Upstream":
                 icon = "🧬"  # DNA for upstream processing
                 workflow_title = f"Hi-C Upstream: {workflow_type}"
+            elif tool_name == "Spatial_Bin2Cell_Analysis":
+                icon = "🧬"  # DNA for upstream processing
+                workflow_title = f"Spatial Bin2Cell Analysis: {workflow_type}"
             else:  # HiC_Analysis
                 icon = "📊"  # Chart for downstream analysis
                 workflow_title = f"Hi-C Analysis: {workflow_type}"
-            
+                        
             self.console.print(f"⏺ [bold]{icon} {tool_name}[/bold]")
             
             # Create a workflow-specific box
@@ -837,9 +1013,12 @@ class ReplUI:
         # Clear current tool name since execution is done
         self._current_tool_name = None
         
-        # Record tool result in conversation history
+        # Record tool result in conversation history with full result data
         result_content = ""
+        terminal_display = ""
+        
         if isinstance(result, dict):
+            # Store the full result dict for proper formatting
             if 'stdout' in result:
                 result_content = result['stdout']
             elif 'output' in result:
@@ -848,10 +1027,51 @@ class ReplUI:
                 result_content = str(result['result'])
             else:
                 result_content = str(result)
+            
+            # Capture the actual terminal display format
+            if tool_name in ['run_python_code', 'run_julia_code', 'run_r_code', 'run_command', 'run_command_in_shell', 'bash']:
+                # For code execution, preserve the full output structure
+                terminal_display = str(result)
         else:
             result_content = str(result)
         
-        self.add_to_conversation("tool_result", result_content, {"tool_name": tool_name})
+        metadata = {"tool_name": tool_name}
+        if terminal_display:
+            metadata["terminal_display"] = terminal_display
+        metadata["full_result"] = result  # Store the complete result for formatting
+        
+        # Also capture what would appear in the terminal output box
+        if isinstance(result, dict) and 'output' in result:
+            output = result['output']
+        elif isinstance(result, dict) and 'result' in result:
+            output = result['result']
+        else:
+            output = str(result)
+
+        if tool_name in ['run_python_code', 'run_julia_code', 'run_r_code']:
+            try:
+                import ast
+                parsed_output = ast.literal_eval(output)
+                if isinstance(parsed_output, dict) and 'stdout' in parsed_output.keys():
+                    output = parsed_output['stdout']
+            except:
+                pass
+        
+        if output and output.strip():
+            metadata["actual_terminal_output"] = output
+        
+        # Check for interpreter restart notification
+        if isinstance(result, dict) and result.get("interpreter_restarted"):
+            restart_reason = result.get("restart_reason", "Unknown reason")
+            self.console.print(f"\n[yellow]⚠️  Python interpreter was automatically restarted due to: {restart_reason}[/yellow]")
+            self.console.print(f"[dim]All previous variables and imports have been lost. You may need to re-import libraries.[/dim]\n")
+        
+        # Check for interpreter crash
+        if isinstance(result, dict) and result.get("interpreter_crashed"):
+            self.console.print(f"\n[red]💥 Python interpreter crashed and could not be restarted automatically.[/red]")
+            self.console.print(f"[dim]Use [bold]/restart[/bold] command to manually reset the Python environment.[/dim]\n")
+        
+        self.add_to_conversation("tool_result", result_content, metadata)
         
         # Special handling for toolsets that print their own output - skip normal output box
         skip_tools = ['edit', 'write', 'read', 'file', 'glob', 'grep', 'ls', 'notebook', 'update_todo_status',

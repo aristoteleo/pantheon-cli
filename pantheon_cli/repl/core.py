@@ -297,6 +297,17 @@ class Repl(ReplUI):
                     stderr = result.get('stderr', '').strip()
                     exec_result = result.get('result')
                     
+                    # Check for interpreter restart or crash
+                    if result.get("interpreter_restarted"):
+                        restart_reason = result.get("restart_reason", "Unknown reason")
+                        self.console.print(f"[yellow]⚠️  Python interpreter was automatically restarted due to: {restart_reason}[/yellow]")
+                        self.console.print(f"[dim]All previous variables and imports have been lost. You may need to re-import libraries.[/dim]\n")
+                    
+                    if result.get("interpreter_crashed"):
+                        self.console.print(f"[red]💥 Python interpreter crashed and could not be restarted automatically.[/red]")
+                        self.console.print(f"[dim]Use [bold]/restart[/bold] command to manually reset the Python environment.[/dim]\n")
+                        return
+                    
                     # Display output in a clean way
                     if stdout:
                         self.console.print(stdout)

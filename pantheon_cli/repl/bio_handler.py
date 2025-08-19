@@ -50,6 +50,8 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio scrna analysis ./data    # Load and analyze scRNA-seq data[/dim]")
         self.console.print("[dim]  /bio rna init                 # Initialize RNA-seq project[/dim]")
         self.console.print("[dim]  /bio rna upstream ./data      # Run RNA-seq upstream analysis[/dim]")
+        self.console.print("[dim]  /bio spatial init              # Initialize spatial project[/dim]")
+        self.console.print("[dim]  /bio spatial run_spatial_workflow <workflow_type> # Run spatial workflow[/dim]")
         self.console.print("[dim]  /bio dock init                # Initialize molecular docking project[/dim]")
         self.console.print("[dim]  /bio dock run ./data          # Run batch molecular docking[/dim]")
         self.console.print("[dim]  /bio GeneAgent TP53,BRCA1,EGFR # Gene set analysis with AI[/dim]")
@@ -99,6 +101,9 @@ class BioCommandHandler:
         if tool_name == "hic":
             return self._handle_hic_command(parts)
         
+        if tool_name == "spatial":
+            return self._handle_spatial_command(parts)
+        
         # Generic handler for other tools
         if len(parts) > 2:
             method_name = parts[2]
@@ -110,6 +115,81 @@ class BioCommandHandler:
         else:
             # Just tool name, show tool help
             return f"bio info {tool_name}"
+        
+    def _handle_spatial_command(self, parts) -> str:
+        """Handle spatial-specific commands with special logic"""
+        if len(parts) == 2:
+            # Just /bio spatial - show spatial help
+            self.console.print("\n[bold]🧬 Spatial Analysis Helper[/bold]")
+            self.console.print("[dim]/bio spatial init[/dim] - Initialize spatial analysis project")
+            self.console.print("[dim]/bio spatial run_spatial_workflow <workflow_type>[/dim] - Run spatial workflow")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio spatial init                     # Initialize spatial analysis project[/dim]")
+            self.console.print("[dim]  /bio spatial run_spatial_workflow bin2cell # Run bin2cell workflow[/dim]")
+            self.console.print()
+            return None
+        
+        command = parts[2]
+        
+        if command == "init":
+            # Enter spatial mode - simple mode activation
+            self.console.print("\n[bold cyan]🧬 Initializing spatial analysis project[/bold cyan]")
+            
+            
+            # Clear all existing todos when entering spatial mode
+            clear_message = """
+spatial INIT MODE — STRICT
+
+Goal: ONLY clear TodoList and report the new status. Do NOT create or execute anything.
+
+Allowed tools (whitelist):
+  - clear_all_todos()
+  - show_todos()
+
+Hard bans (do NOT call under any circumstance in init):
+  - add_todo(), mark_task_done(), execute_current_task()
+  - any spatial.* analysis tools
+
+Steps:
+  1) clear_all_todos()
+  2) todos = show_todos()
+
+Response format (single line):
+  spatial init ready • todos={len(todos)}
+            """
+
+            self.console.print("[dim]Clearing existing todos and preparing spatial environment...[/dim]")
+            self.console.print("[dim]Ready for spatial analysis assistance...[/dim]")
+            self.console.print("[dim]Spatial mode activated. You can now use spatial tools directly.[/dim]")
+            self.console.print()
+            self.console.print("[dim]The command structure is now clean:[/dim]")
+            self.console.print("[dim]  - /bio spatial init - Enter spatial mode (simple prompt loading)[/dim]")
+            self.console.print("[dim]  - /bio spatial run_spatial_workflow <workflow_type> - Run spatial workflow[/dim]")
+            self.console.print()
+            
+            return clear_message
+        
+        elif command == "run_spatial_workflow":
+            # Handle spatial workflow
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a workflow type[/red]")
+                self.console.print("[dim]Usage: /bio spatial run_spatial_workflow <workflow_type>[/dim]")
+                self.console.print("[dim]Example: /bio spatial run_spatial_workflow bin2cell[/dim]")
+                return None
+            
+            workflow_type = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Starting spatial workflow: {workflow_type}[/bold cyan]")
+            self.console.print("[dim]Preparing spatial analysis pipeline...[/dim]\n")
+            
+            
+            # Generate the workflow message with workflow type
+            from ..cli.prompt.spatial_bin2cell import generate_spatial_workflow_message
+            spatial_message = generate_spatial_workflow_message(workflow_type=workflow_type)
+            
+            self.console.print("[dim]Sending spatial workflow request...[/dim]\n")
+            
+            return spatial_message
+            
     
     def _handle_atac_command(self, parts) -> str:
         """Handle ATAC-specific commands with special logic like the original _handle_atac_command"""
