@@ -9,10 +9,9 @@ def generate_spatial_workflow_message(workflow_type: str) -> str:
     bin2cell_message = f"""
 🧬 Spatial Analysis Pipeline with omicverse Integration 
 
-🔧 AVAILABLE SPATIAL ANALYSIS TOOL:
-You have access to the Spatial_Bin2Cell_Analysis tool which provides workflow guidance.
-Use it by calling: Spatial_Bin2Cell_Analysis(workflow_type="<type>")
-Available workflow types: cellpose_he, expand_labels, cellpose_gex, salvage_secondary_labels, bin2cell
+🔧 AVAILABLE WORKFLOW TOOLS:
+You have access to the Spatial_Bin2Cell_Analysis tool for getting official templates.
+💡 Use the tool when you need guidance, official examples, or best practices for a specific workflow step.
 
 ⚠️ CRITICAL PYTHON ENVIRONMENT RULES:
 - **PERSISTENT STATE**: Python interpreter maintains ALL variables across calls! 
@@ -48,21 +47,37 @@ IF current is EMPTY, create these todos ONCE:
 - Continue the workflow seamlessly until all tasks complete or user intervenes
 
 
-PHASE 2 — ADAPTIVE EXECUTION WORKFLOW
-⚠️ CRITICAL EXECUTION STRATEGY:
-The Spatial_Bin2Cell_Analysis tool is a registered toolset function that returns guidance and example code.
-To call it, you MUST use the tool calling mechanism:
-- Tool name: Spatial_Bin2Cell_Analysis
-- Required parameter: workflow_type (string) - one of: "cellpose_he", "expand_labels", "cellpose_gex", "salvage_secondary_labels", "bin2cell"
+PHASE 2 — INTELLIGENT EXECUTION STRATEGY
+🧠 SMART DECISION MAKING:
 
-When you call Spatial_Bin2Cell_Analysis(), it returns guidance, explanations, and example Python code.
-You MUST:
-1. **Read and analyze** the entire returned content carefully
-2. **Understand the logic** and methodology described
-3. **Adapt the provided code** to your current data situation (adata shape, available columns, etc.)
-4. **Modify parameters** based on your actual data characteristics
-5. **Execute the adapted code** - NOT the original code directly
-6. **Handle errors** by adjusting code based on the guidance provided
+**ASSESS CURRENT SITUATION FIRST:**
+- What data do you have loaded?
+- What analysis steps are completed?
+- What specific guidance do you need?
+
+**CHOOSE YOUR APPROACH:**
+
+**Option A - Use Template Tool (Recommended for new users or complex steps):**
+- Call Spatial_Bin2Cell_Analysis(workflow_type="<type>") to get official template
+- Study the returned guidance and code patterns
+- Adapt the template to your specific data
+- Execute the adapted code
+
+**Option B - Direct Implementation (For experienced users with clear requirements):**
+- Directly write and execute code based on omicverse documentation
+- Use help() functions to check parameters
+- Follow established best practices
+
+**WHEN TO USE TEMPLATE TOOL:**
+✅ When you need official guidance for a workflow step
+✅ When you want to see best practices and parameter examples  
+✅ When you're unsure about the correct approach
+✅ When you want standardized, tested code patterns
+
+**WHEN DIRECT IMPLEMENTATION IS OK:**
+✅ When you have clear requirements and know the approach
+✅ When adapting previous successful code
+✅ When making minor parameter adjustments
 
 🧠 **RESULT ANALYSIS REQUIREMENT:**
 After executing any code:
@@ -151,70 +166,136 @@ except Exception as e:
 ```
 
 🏷️ STEP 2 - cellpose_he:
-Get cellpose_he guidance and adapt the code to your data:
-All function using in omicverse, should use help() to check the function parameters!!!
+🤔 **ASSESS YOUR NEEDS:**
+- Do you need guidance on cellpose_he workflow?
+- Are you familiar with omicverse cellpose functions?
+- Do you have the required parameters (mpp, thresholds, etc.)?
 
-First, call the spatial analysis tool to get guidance:
-**Execute this tool call:** Spatial_Bin2Cell_Analysis workflow_type="cellpose_he"
+🛠️ **CHOOSE YOUR PATH:**
 
-Then analyze the returned guidance and implement adapted cellpose_he code based on your adata structure.
-**CRITICAL**: Analyze cellpose_he results
+**Path A - Get Official Template:**
+```
+Spatial_Bin2Cell_Analysis(workflow_type="cellpose_he")
+```
+Then adapt the returned template to your data.
+
+**Path B - Direct Implementation:**
+Direct implementation using omicverse if you know the approach:
+```python
+import omicverse as ov
+help(ov.space.visium_10x_hd_cellpose_he)  # Check parameters first
+# Then implement based on your data
+```
+
+🎯 **GOAL:** Generate H&E-based cell segmentation labels
 
 🏷️ STEP 3 - expand_labels:
-Get expand_labels guidance and adapt the code to your data:
-All function using in omicverse, should use help() to check the function parameters!!!
+🤔 **ASSESS YOUR NEEDS:**
+- Do you need guidance on label expansion?
+- Do you know the optimal max_bin_distance for your data?
+- Are you familiar with the expansion algorithm?
 
-First, call the spatial analysis tool to get guidance:
-**Execute this tool call:** Spatial_Bin2Cell_Analysis workflow_type="expand_labels"
+🛠️ **CHOOSE YOUR PATH:**
 
-Then analyze the returned guidance and implement adapted expand_labels code based on your adata structure.
-**CRITICAL**: Analyze expand_labels results
+**Path A - Get Official Template:**
+```
+Spatial_Bin2Cell_Analysis(workflow_type="expand_labels")
+```
+Then adapt the template with your specific parameters.
+
+**Path B - Direct Implementation:**
+Direct implementation if you know the approach:
+```python
+help(ov.space.visium_10x_hd_cellpose_expand)  # Check parameters
+# Implement with appropriate max_bin_distance
+```
+
+🎯 **GOAL:** Expand cell labels to cover more spatial bins
 
 🏷️ STEP 4 - cellpose_gex:
-Get cellpose_gex guidance and adapt the code to your data:
-All function using in omicverse, should use help() to check the function parameters!!!
+🤔 **ASSESS YOUR NEEDS:**
+- Do you need guidance on GEX-based segmentation?
+- Do you know the optimal obs_key for gene expression?
+- Are you familiar with GEX segmentation parameters?
 
-First, call the spatial analysis tool to get guidance:
-**Execute this tool call:** Spatial_Bin2Cell_Analysis workflow_type="cellpose_gex"
+🛠️ **CHOOSE YOUR PATH:**
 
-Then analyze the returned guidance and implement adapted cellpose_gex code based on your adata structure.
-**CRITICAL**: Analyze cellpose_gex results
+**Path A - Get Official Template:**
+```
+Spatial_Bin2Cell_Analysis(workflow_type="cellpose_gex")
+```
+Then adapt with your GEX-specific settings.
+
+**Path B - Direct Implementation:**
+Direct implementation if you understand the approach:
+```python
+help(ov.space.visium_10x_hd_cellpose_gex)  # Check parameters
+# Implement with appropriate obs_key and thresholds
+```
+
+🎯 **GOAL:** Generate gene expression-based cell segmentation
 
 🏷️ STEP 5 - salvage_secondary_labels:
-Get salvage_secondary_labels guidance and adapt the code to your data:
-All function using in omicverse, should use help() to check the function parameters!!!
+🤔 **ASSESS YOUR NEEDS:**
+- Do you need guidance on combining HE and GEX labels?
+- Do you know which labels to use as primary/secondary?
+- Are you familiar with the salvage algorithm?
 
-First, call the spatial analysis tool to get guidance:
-**Execute this tool call:** Spatial_Bin2Cell_Analysis workflow_type="salvage_secondary_labels"
+🛠️ **CHOOSE YOUR PATH:**
 
-Then analyze the returned guidance and implement adapted salvage_secondary_labels code based on your adata structure.
-**CRITICAL**: Analyze salvage_secondary_labels results
+**Path A - Get Official Template:**
+```
+Spatial_Bin2Cell_Analysis(workflow_type="salvage_secondary_labels")
+```
+Then adapt with your specific label keys.
+
+**Path B - Direct Implementation:**
+Direct implementation if you understand the process:
+```python
+help(ov.space.salvage_secondary_labels)  # Check parameters
+# Combine HE and GEX labels appropriately
+```
+
+🎯 **GOAL:** Combine primary and secondary labels optimally
 
 🏷️ STEP 6 - bin2cell:
-Get bin2cell guidance and adapt the code to your data:
-All function using in omicverse, should use help() to check the function parameters!!!
+🤔 **ASSESS YOUR NEEDS:**
+- Do you need guidance on bin-to-cell conversion?
+- Do you know the correct labels_key and spatial_keys?
+- Are you familiar with the aggregation process?
 
-First, call the spatial analysis tool to get guidance:
-**Execute this tool call:** Spatial_Bin2Cell_Analysis workflow_type="bin2cell"
+🛠️ **CHOOSE YOUR PATH:**
 
-Then analyze the returned guidance and implement adapted bin2cell code based on your adata structure.
-**CRITICAL**: Analyze bin2cell results
+**Path A - Get Official Template:**
+```
+Spatial_Bin2Cell_Analysis(workflow_type="bin2cell")
+```
+Then adapt with your verified keys and parameters.
 
-🔧 **AVAILABLE TOOLSET FUNCTIONS:**
+**Path B - Direct Implementation:**
+Direct implementation if you know the requirements:
+```python
+help(ov.space.bin2cell)  # Check parameters
+# Convert bins to cells using final labels
+```
 
-**UNIFIED WORKFLOW ENGINE:**
-- `Spatial_Bin2Cell_Analysis(workflow_type="cellpose_he")` - Cellpose HE with omicverse
-- `Spatial_Bin2Cell_Analysis(workflow_type="expand_labels")` - Expand labels with omicverse
-- `Spatial_Bin2Cell_Analysis(workflow_type="cellpose_gex")` - Cellpose GEX with omicverse
-- `Spatial_Bin2Cell_Analysis(workflow_type="salvage_secondary_labels")` - Salvage secondary labels with omicverse
-- `Spatial_Bin2Cell_Analysis(workflow_type="bin2cell")` - Bin2cell with omicverse
+🎯 **GOAL:** Convert spatial bins to cell-level data (cdata)
 
-**EXECUTION STRATEGY:**
-1. Load data and create project structure
-2. Execute todos in sequence using appropriate workflow functions
-3. Use modular functions for specialized analysis steps
-4. Leverage omicverse integration with scanpy fallbacks
-5. Comprehensive result saving and reporting
+🔧 **AVAILABLE GUIDANCE TOOLS:**
+
+**SPATIAL TEMPLATE ENGINE (Optional):**
+- `Spatial_Bin2Cell_Analysis(workflow_type="cellpose_he")` - Get H&E segmentation template
+- `Spatial_Bin2Cell_Analysis(workflow_type="expand_labels")` - Get label expansion template
+- `Spatial_Bin2Cell_Analysis(workflow_type="cellpose_gex")` - Get GEX segmentation template
+- `Spatial_Bin2Cell_Analysis(workflow_type="salvage_secondary_labels")` - Get label combination template
+- `Spatial_Bin2Cell_Analysis(workflow_type="bin2cell")` - Get bin-to-cell conversion template
+
+**FLEXIBLE EXECUTION STRATEGY:**
+1. **ASSESS**: Evaluate your current needs and knowledge level
+2. **CHOOSE**: Use templates for guidance OR implement directly
+3. **ADAPT**: Modify any template code to fit your specific data
+4. **EXECUTE**: Run your adapted code with run_python_code
+5. **PROGRESS**: Mark tasks complete and continue workflow
 
 **EFFICIENCY PRINCIPLES:**
 1. **CHECK BEFORE COMPUTE**: Always check if variables/results exist before recomputing
