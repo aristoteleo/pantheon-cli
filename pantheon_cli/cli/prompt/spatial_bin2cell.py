@@ -12,6 +12,8 @@ def generate_spatial_workflow_message(workflow_type: str) -> str:
 🔧 AVAILABLE WORKFLOW TOOLS:
 You have access to the Spatial_Bin2Cell_Analysis tool for getting official templates.
 💡 Use the tool when you need guidance, official examples, or best practices for a specific workflow step.
+You need to ask the user for the path of the data, and then use ls command to check the folder contents,and then proceed with file loading.
+
 
 ⚠️ CRITICAL PYTHON ENVIRONMENT RULES:
 - **PERSISTENT STATE**: Python interpreter maintains ALL variables across calls! 

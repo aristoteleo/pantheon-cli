@@ -12,6 +12,7 @@ from pantheon.toolsets.python import PythonInterpreterToolSet
 from pantheon.toolsets.r import RInterpreterToolSet
 from pantheon.toolsets.julia import JuliaInterpreterToolSet
 from pantheon.toolsets.file_editor import FileEditorToolSet
+from pantheon.toolsets.file_manager import FileManagerToolSet
 from pantheon.toolsets.code_search import CodeSearchToolSet
 from pantheon.toolsets.notebook import NotebookToolSet
 from pantheon.toolsets.web import WebToolSet
@@ -118,6 +119,7 @@ Use FILE OPERATIONS for:
 - edit_file: Edit files by replacing text (shows diff)
 - write_file: Create new files
 - search_in_file: Search within ONE specific file (when you already know the exact file)
+- read_pdf: Read PDF files and extract text content (automatic page separation)
 
 Use CODE SEARCH for (PREFERRED for search operations):
 - glob: Find files by pattern (e.g., "*.py", "**/*.js")
@@ -130,6 +132,26 @@ Use NOTEBOOK operations for Jupyter notebooks:
 - add_notebook_cell: Add new cells at specific positions
 - delete_notebook_cell: Remove cells from notebook
 - create_notebook: Create new Jupyter notebooks
+
+📄 PDF FILE OPERATIONS - MANDATORY FOR PDF HANDLING:
+⚠️ CRITICAL: When user asks to read/parse/extract from PDF files, YOU MUST use the read_pdf tool!
+
+PDF HANDLING RULES:
+- ALWAYS use file_manager: read_pdf tool for ANY PDF file operation
+- The tool automatically:
+  • Checks if file exists and is valid PDF
+  • Handles password-protected PDFs (returns error)
+  • Extracts text from all pages with page numbers
+  • Returns structured data with metadata (page count, file size)
+  • Handles corrupted or invalid PDFs gracefully
+
+PDF OPERATION EXAMPLES:
+- "read research_paper.pdf" → Use file_manager: read_pdf("research_paper.pdf")
+- "extract text from document.pdf" → Use file_manager: read_pdf("document.pdf")
+- "parse the PDF file" → Use file_manager: read_pdf with the PDF filename
+- "analyze this PDF" → Use file_manager: read_pdf first, then analyze the content
+- "summarize paper.pdf" → Use file_manager: read_pdf("paper.pdf") then summarize
+- "what's in the PDF?" → Use file_manager: read_pdf to extract content first
 
 🌐 MANDATORY WEB OPERATIONS - INTELLIGENT URL INTENT ANALYSIS:
 ⚠️ CRITICAL: When user input contains URLs (http/https links), YOU MUST ANALYZE THE INTENT first:
@@ -314,6 +336,9 @@ Examples:
 - "search for TODO in main.py" → Use code_search: grep tool (NOT search_in_file)
 - "read config.py" → Use file_editor: read_file tool
 - "read analysis.ipynb" → Use notebook: read_notebook tool
+- "read document.pdf" → Use file_manager: read_pdf tool
+- "extract text from paper.pdf" → Use file_manager: read_pdf tool
+- "parse PDF file" → Use file_manager: read_pdf tool
 - "edit cell 3 in notebook" → Use notebook: edit_notebook_cell tool
 - "add code cell to notebook" → Use notebook: add_notebook_cell tool
 - "create new notebook" → Use notebook: create_notebook tool
@@ -592,6 +617,7 @@ async def main(
     shell_toolset = ShellToolSet("shell")
     python_toolset = PythonInterpreterToolSet("python_interpreter", workdir=str(workspace_path))
     file_editor = FileEditorToolSet("file_editor", workspace_path=workspace_path)
+    file_manager = FileManagerToolSet("file_manager", path=workspace_path)
     code_search = CodeSearchToolSet("code_search", workspace_path=workspace_path)
     todo_toolset = TodoToolSet("todo", workspace_path=workspace_path)
     
@@ -646,6 +672,7 @@ async def main(
     agent.toolset(shell_toolset)
     agent.toolset(python_toolset)
     agent.toolset(file_editor)
+    agent.toolset(file_manager)
     agent.toolset(code_search)
     agent.toolset(todo_toolset)
     

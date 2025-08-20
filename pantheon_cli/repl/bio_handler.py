@@ -53,7 +53,8 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio spatial init              # Initialize spatial project[/dim]")
         self.console.print("[dim]  /bio spatial run_spatial_workflow <workflow_type> # Run spatial workflow[/dim]")
         self.console.print("[dim]  /bio dock init                # Initialize molecular docking project[/dim]")
-        self.console.print("[dim]  /bio dock run ./data          # Run batch molecular docking[/dim]")
+        self.console.print("[dim]  /bio dock run_dock            # Interactive molecular docking workflow[/dim]")
+        self.console.print("[dim]  /bio dock run ./data          # Run batch molecular docking on folder[/dim]")
         self.console.print("[dim]  /bio GeneAgent TP53,BRCA1,EGFR # Gene set analysis with AI[/dim]")
         self.console.print("")
     
@@ -753,11 +754,13 @@ Response format (single line):
             self.console.print("\n[bold]🧬 Molecular Docking Analysis Helper[/bold]")
             self.console.print("[dim]/bio dock init[/dim] - Initialize molecular docking project")
             self.console.print("[dim]/bio dock check[/dim] - Check dependencies (meeko, vina, pymol)")
-            self.console.print("[dim]/bio dock run <folder>[/dim] - Run batch docking analysis")
+            self.console.print("[dim]/bio dock run_dock[/dim] - Interactive docking workflow (no path needed)")
+            self.console.print("[dim]/bio dock run <folder>[/dim] - Run batch docking analysis on specific folder")
             self.console.print("\n[dim]Examples:[/dim]")
             self.console.print("[dim]  /bio dock init                   # Initialize docking project[/dim]")
             self.console.print("[dim]  /bio dock check                  # Check and install dependencies[/dim]")
-            self.console.print("[dim]  /bio dock run ./docking_data    # Run docking analysis[/dim]")
+            self.console.print("[dim]  /bio dock run_dock              # Interactive docking workflow[/dim]")
+            self.console.print("[dim]  /bio dock run ./docking_data    # Run docking analysis on folder[/dim]")
             self.console.print()
             return None
         
@@ -806,6 +809,35 @@ Response format (single line):
             check_message = "Execute dock.Dock_Workflow('check_dependencies') to verify installations"
             self.console.print("[dim]Checking meeko, vina, pymol installations...[/dim]")
             return check_message
+        
+        elif command == "run_dock":
+            # Handle interactive docking workflow (no path required)
+            self.console.print("\n[bold cyan]🧬 Starting Interactive Molecular Docking Workflow[/bold cyan]")
+            self.console.print("[dim]Preparing interactive docking pipeline...[/dim]\n")
+            
+            try:
+                # Try importing the module first
+                try:
+                    from ..cli.prompt.dock_interactive import generate_interactive_dock_message
+                except ImportError:
+                    # Fallback: execute the file directly
+                    import os
+                    dock_interactive_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 
+                                                        'cli', 'prompt', 'dock_interactive.py')
+                    namespace = {}
+                    exec(open(dock_interactive_path).read(), namespace)
+                    generate_interactive_dock_message = namespace['generate_interactive_dock_message']
+                
+                # Generate the interactive workflow message
+                dock_message = generate_interactive_dock_message()
+                
+                self.console.print("[dim]Sending interactive docking workflow request...[/dim]\n")
+                
+                return dock_message
+                
+            except Exception as e:
+                self.console.print(f"[red]Error generating interactive dock message: {e}[/red]")
+                return None
         
         elif command == "run":
             # Handle docking analysis

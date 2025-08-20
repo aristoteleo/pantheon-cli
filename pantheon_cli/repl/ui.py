@@ -915,7 +915,7 @@ class ReplUI:
             
         elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", 
                            "ScATAC_Analysis", "RNA_Upstream", "RNA_Analysis",
-                             "HiC_Upstream", "HiC_Analysis", "Spatial_Bin2Cell_Analysis"] and args and 'workflow_type' in args:
+                             "HiC_Upstream", "HiC_Analysis", "Spatial_Bin2Cell_Analysis", "Dock_Workflow"] and args and 'workflow_type' in args:
             # Special handling for workflow calls
             workflow_type = args['workflow_type']
             description = args.get('description', '')
@@ -945,6 +945,9 @@ class ReplUI:
             elif tool_name == "Spatial_Bin2Cell_Analysis":
                 icon = "🧬"  # DNA for upstream processing
                 workflow_title = f"Spatial Bin2Cell Analysis: {workflow_type}"
+            elif tool_name == "Dock_Workflow":
+                icon = "🧬"  # DNA for molecular docking
+                workflow_title = f"Molecular Docking: {workflow_type}"
             else:  # HiC_Analysis
                 icon = "📊"  # Chart for downstream analysis
                 workflow_title = f"Hi-C Analysis: {workflow_type}"
