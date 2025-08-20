@@ -1179,53 +1179,62 @@ class ReplUI:
 
     async def print_message(self):
         """Enhanced message handler with Claude Code style formatting"""
-        while True:
-            message = await self.agent.events_queue.get()
-            
-            # Handle tool calls with Claude Code style
-            if tool_calls := message.get("tool_calls"):
-                # Estimate tokens for tool calls message
-                tool_call_content = json.dumps(tool_calls)
-                # Update token estimate if we have access to the parent REPL instance
-                if hasattr(self, '_parent_repl') and hasattr(self._parent_repl, 'estimated_output_tokens'):
-                    additional_tokens = self._parent_repl._estimate_tokens(tool_call_content)
-                    self._parent_repl.estimated_output_tokens += additional_tokens
-                
-                for call in tool_calls:
-                    tool_name = call.get('function', {}).get('name')
-                    if tool_name:
-                        try:
-                            args = json.loads(call.get('function', {}).get('arguments', '{}'))
-                        except:
-                            args = {}
-                        self.print_tool_call(tool_name, args)
-                continue
-                
-            # Handle tool responses with enhanced formatting
-            elif message.get("role") == "tool":
-                tool_name = message.get("tool_name", "")
-                content = message.get("content", "")
-                
-                # Show tool results in Claude Code style
+        try:
+            while True:
                 try:
-                    # Try to parse as JSON for structured results
-                    result = json.loads(content)
-                    self.print_tool_result(tool_name, result)
-                except:
-                    # Fallback for plain text results
-                    if content.strip():
-                        # Create a simple output display for non-JSON results
-                        self.print_tool_result(tool_name, {"output": content})
-                continue
+                    message = await self.agent.events_queue.get()
+                except asyncio.CancelledError:
+                    break
+                except Exception as e:
+                    continue
+                    
+                # Handle tool calls with Claude Code style
+                if tool_calls := message.get("tool_calls"):
+                    # Estimate tokens for tool calls message
+                    tool_call_content = json.dumps(tool_calls)
+                    # Update token estimate if we have access to the parent REPL instance
+                    if hasattr(self, '_parent_repl') and hasattr(self._parent_repl, 'estimated_output_tokens'):
+                        additional_tokens = self._parent_repl._estimate_tokens(tool_call_content)
+                        self._parent_repl.estimated_output_tokens += additional_tokens
+                    
+                    for call in tool_calls:
+                        tool_name = call.get('function', {}).get('name')
+                        if tool_name:
+                            try:
+                                args = json.loads(call.get('function', {}).get('arguments', '{}'))
+                            except:
+                                args = {}
+                            self.print_tool_call(tool_name, args)
+                    continue
+                    
+                # Handle tool responses with enhanced formatting
+                elif message.get("role") == "tool":
+                    tool_name = message.get("tool_name", "")
+                    content = message.get("content", "")
+                    
+                    # Show tool results in Claude Code style
+                    try:
+                        # Try to parse as JSON for structured results
+                        result = json.loads(content)
+                        self.print_tool_result(tool_name, result)
+                    except:
+                        # Fallback for plain text results
+                        if content.strip():
+                            # Create a simple output display for non-JSON results
+                            self.print_tool_result(tool_name, {"output": content})
+                    continue
+                    
+                # Skip assistant messages - we handle them in main loop via content_buffer
+                if message.get("role") == "assistant":
+                    continue
                 
-            # Skip assistant messages - we handle them in main loop via content_buffer
-            if message.get("role") == "assistant":
-                continue
-            
-            # Only print other message types (like system messages, if any)
-            print_agent_message_modern_style(
-                self.agent.name, 
-                message, 
-                self.console,
-                show_tool_details=False
-            )
+                # Only print other message types (like system messages, if any)
+                print_agent_message_modern_style(
+                    self.agent.name, 
+                    message, 
+                    self.console,
+                    show_tool_details=False
+                )
+        except Exception as e:
+            # Silently handle critical errors in print_message
+            pass
