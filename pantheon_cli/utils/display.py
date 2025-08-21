@@ -8,7 +8,7 @@ from rich.markdown import Markdown
 
 if TYPE_CHECKING:
     from pantheon.agent import Agent
-    from pantheon.remote.agent import RemoteAgent
+    from pantheon.agent import RemoteAgent
 
 
 async def print_banner(console: Console, text: str = "PANTHEON"):
@@ -137,7 +137,7 @@ def print_agent_message(
 
 async def print_agent(agent: "Agent | RemoteAgent", console: Console | None = None):
     """Print agent information including models, tools, etc."""
-    from pantheon.remote.agent import RemoteAgent
+    from pantheon.agent import RemoteAgent
     
     is_remote = isinstance(agent, RemoteAgent)
     if is_remote:

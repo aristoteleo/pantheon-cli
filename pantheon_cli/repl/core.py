@@ -26,8 +26,7 @@ try:
 except ImportError:
     READLINE_AVAILABLE = False
 
-from pantheon.agent import Agent
-from pantheon.remote.agent import RemoteAgent
+from pantheon.agent import Agent, RemoteAgent
 from .ui import ReplUI
 from .bio_handler import BioCommandHandler
 

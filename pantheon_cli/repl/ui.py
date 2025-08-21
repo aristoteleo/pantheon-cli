@@ -22,7 +22,7 @@ except ImportError:
     READLINE_AVAILABLE = False
 
 from pantheon.agent import Agent
-from pantheon.remote.agent import RemoteAgent
+from pantheon.agent import RemoteAgent
 from ..utils.display import print_agent_message, print_agent, print_banner, print_agent_message_modern_style
 
 
