@@ -515,7 +515,8 @@ async def main(
     disable_bio: bool = False,
     disable_ext: bool = True,
     ext_toolsets: Optional[str] = None,
-    ext_dir: str = "./ext_toolsets"
+    ext_dir: str = "./ext_toolsets",
+    version: bool = False
 ):
     """
     Start the Pantheon CLI assistant.
@@ -534,7 +535,18 @@ async def main(
         disable_bio: Disable bio analysis toolsets (ATAC-seq, RNA-seq, etc.)
         ext_toolsets: Comma-separated list of external toolsets to load (default: load all)
         ext_dir: Directory containing external toolsets (default: ./ext_toolsets)
+        version: Show version information and exit
     """
+    # Handle version flag
+    if version:
+        import platform
+        from pantheon_cli import __version__
+        
+        print(f"Pantheon-CLI version {__version__}")
+        print(f"Python {platform.python_version()}")
+        print(f"Platform: {platform.system()}-{platform.release()}-{platform.machine()}")
+        return
+    
     console = Console()
     class LoguruRichHandler(RichHandler):
         def emit(self, record):
