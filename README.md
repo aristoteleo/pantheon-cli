@@ -166,13 +166,32 @@ The system will prompt you to configure an API key or select a local model. For 
 #### API Key Configuration
 ```bash
 # Once the CLI is running, setup your API keys:
-/api-key list  # List current API keys
+/api-key list  # List current API keys and their sources
 
-# Set API keys (examples):
+# Set API keys globally (available in any directory):
 /api-key openai sk-your-key-here
 /api-key anthropic sk-your-key-here
 /api-key deepseek sk-your-key-here
+
+# Set API keys locally (only for current project):
+/api-key openai sk-your-key-here --local
 ```
+
+#### Configuration Management
+
+Pantheon-CLI supports both **global** and **local** API key storage:
+
+- **Global Configuration** (`~/.pantheon/config.json`): 
+  - API keys saved here are available in any directory
+  - Perfect for personal API keys you use across all projects
+  - Use `/api-key <provider> <key>` (default behavior)
+
+- **Local Configuration** (`.pantheon_config.json` in current directory):
+  - API keys saved here are only available in the current project
+  - Useful for project-specific keys or team environments
+  - Use `/api-key <provider> <key> --local`
+
+Priority order: Environment Variables > Local Config > Global Config
 
 #### Launch Options
 ```bash
