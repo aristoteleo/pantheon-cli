@@ -16,6 +16,7 @@ from pantheon.toolsets.file_manager import FileManagerToolSet
 from pantheon.toolsets.code_search import CodeSearchToolSet
 from pantheon.toolsets.notebook import NotebookToolSet
 from pantheon.toolsets.web import WebToolSet
+from pantheon.toolsets.domain_research import DomainResearchToolSet
 from pantheon.toolsets.todo import TodoToolSet
 from pantheon.toolsets.generator import GeneratorToolSet
 from pantheon.agent import Agent
@@ -509,6 +510,7 @@ async def main(
     instructions: Optional[str] = None,
     disable_rag: bool = False,
     disable_web: bool = False,
+    disable_dr: bool = False,
     disable_notebook: bool = False,
     disable_r: bool = False,
     disable_julia: bool = False,
@@ -690,6 +692,14 @@ async def main(
     web = None
     if not disable_web:
         web = WebToolSet("web")
+
+    # Optional Domain Research toolset (OmicVerse-backed with demo fallback)
+    dr_toolset = None
+    if not disable_dr:
+        try:
+            dr_toolset = DomainResearchToolSet("domain_research")
+        except Exception as e:
+            logger.warning(f"[yellow]DomainResearchToolSet unavailable: {e}[/yellow]")
     
     r_interpreter = None
     if not disable_r:
@@ -736,6 +746,8 @@ async def main(
         agent.toolset(notebook)
     if web:
         agent.toolset(web)
+    if dr_toolset:
+        agent.toolset(dr_toolset)
     if r_interpreter:
         agent.toolset(r_interpreter)
     if julia_interpreter:
