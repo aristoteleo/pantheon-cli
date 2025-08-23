@@ -518,7 +518,9 @@ async def main(
     disable_ext: bool = True,
     ext_toolsets: Optional[str] = None,
     ext_dir: str = "./ext_toolsets",
-    version: bool = False
+    version: bool = False,
+    build_rag: Optional[str] = None,
+    rag_config: Optional[str] = None
 ):
     """
     Start the Pantheon CLI assistant.
@@ -538,6 +540,8 @@ async def main(
         ext_toolsets: Comma-separated list of external toolsets to load (default: load all)
         ext_dir: Directory containing external toolsets (default: ./ext_toolsets)
         version: Show version information and exit
+        build_rag: Build RAG database and exit. Optionally specify output directory.
+        rag_config: Path to RAG configuration YAML file (used with --build-rag).
     """
     # Handle version flag
     if version:
@@ -547,6 +551,44 @@ async def main(
         print(f"Pantheon-CLI version {__version__}")
         print(f"Python {platform.python_version()}")
         print(f"Platform: {platform.system()}-{platform.release()}-{platform.machine()}")
+        return
+    
+    # Handle build-rag flag
+    if build_rag is not None:
+        from .rag_builder import RAGBuilder
+        
+        # Initialize API key manager to load keys
+        local_config = Path.cwd() / ".pantheon_config.json"
+        api_manager = APIKeyManager(local_config)
+        api_manager.sync_environment_variables()
+        
+        # Build RAG database
+        builder = RAGBuilder()
+        
+        # Use provided path or default
+        if isinstance(build_rag, bool) or build_rag == "":
+            output_dir = "tmp/pantheon_cli_tools_rag"
+        else:
+            output_dir = build_rag
+        
+        # Use provided config or default
+        config_path = rag_config if rag_config else None
+        
+        if config_path:
+            print(f"📋 Using config: {config_path}")
+        else:
+            print(f"📋 Using default config: pantheon_cli/cli/rag_system_config.yaml")
+        
+        print(f"🔨 Building RAG database to: {output_dir}")
+        success = builder.build(config_path=config_path, output_dir=output_dir)
+        
+        if success:
+            print("\n✅ RAG database built successfully!")
+            print(f"📁 You can now use it with: pantheon-cli --rag_db {output_dir}")
+        else:
+            print("\n❌ Failed to build RAG database")
+            import sys
+            sys.exit(1)
         return
     
     console = Console()
