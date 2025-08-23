@@ -493,7 +493,7 @@ Contributions of all types are more than welcome; if you are interested in contr
 >
 > We are creating a technology-driven forum, fostering knowledge interaction and the exchange of ideas that may culminate in mutual inspiration and collaborative innovation.
 >
-> Help us make LobeChat better. Welcome to provide product design feedback, user experience discussions directly to us.
+> Help us make Pantheon-CLI better. Welcome to provide product design feedback, user experience discussions directly to us.
 >
 > **Principal Maintainers:** [@starlitnightly](https://github.com/starlitnightly) [@Nanguage](https://github.com/Nanguage)
 
