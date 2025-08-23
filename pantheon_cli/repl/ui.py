@@ -1106,75 +1106,37 @@ class ReplUI:
             is_bash_output = tool_name.lower() in ['run_command', 'run_command_in_shell', 'bash']
             
             if is_bash_output:
-                # Multi-line display for bash command outputs
+                # Compact single-line display for bash command outputs
                 # Handle escaped characters in output
                 processed_output = output.replace('\\n', '\n').replace('\\t', '\t')
                 lines = processed_output.strip().split('\n')
-                max_width = 79
-                content_width = max_width - 4  # Account for borders and padding
                 
-                # Wrap long lines in the output
-                wrapped_lines = []
-                for line in lines:
-                    if len(line) <= content_width:
-                        wrapped_lines.append(line)
-                    else:
-                        # Wrap long lines at word boundaries when possible
-                        while line:
-                            if len(line) <= content_width:
-                                wrapped_lines.append(line)
-                                break
-                            
-                            # Find a good break point
-                            break_point = content_width
-                            space_idx = line[:content_width].rfind(' ')
-                            if space_idx > content_width * 0.6:  # Only break at space if it's not too early
-                                break_point = space_idx + 1
-                            
-                            wrapped_lines.append(line[:break_point].rstrip())
-                            line = line[break_point:].lstrip()
-                
-                # Limit display lines (show first 15 + last 15 if > 30 lines)
-                max_display_lines = 30
-                if len(wrapped_lines) <= max_display_lines:
-                    display_lines = wrapped_lines
+                # Create summary for multi-line output
+                if len(lines) > 1:
+                    # Show first line with line count
+                    first_line = lines[0][:60].strip()
+                    if len(lines[0]) > 60:
+                        first_line += "..."
+                    summary = f"{first_line} ({len(lines)} lines)"
                 else:
-                    first_lines = wrapped_lines[:15]
-                    last_lines = wrapped_lines[-15:]
-                    hidden_count = len(wrapped_lines) - 30
-                    display_lines = first_lines + [f"... ({hidden_count} more lines) ..."] + last_lines
+                    # Single line, truncate if too long
+                    summary = lines[0][:70] + ("..." if len(lines[0]) > 70 else "")
                 
-                self.console.print("╭" + "─" * (max_width - 2) + "╮")
-                self.console.print("│ [bold]Output[/bold]" + " " * (max_width - 9) + "│")
-                self.console.print("├" + "─" * (max_width - 2) + "┤")
-                
-                for line in display_lines:
-                    # Pad the line to fill the box width
-                    padding = content_width - len(line)
-                    self.console.print(f"│ {line}" + " " * padding + " │")
-                
-                self.console.print("╰" + "─" * (max_width - 2) + "╯")
+                # Compact output format similar to Update() style
+                self.console.print(f"Output")
+                self.console.print(f"  ⎿  {summary}")
                 self.console.print()  # Add space after output
             else:
-                # Single line display for other tool outputs (like ATAC workflows)
-                max_width = 79
-                content_width = max_width - 4  # Account for borders and padding
-                
+                # Compact single-line display for other tool outputs
                 # Truncate very long outputs to single line
-                if len(output) > content_width:
-                    truncated_output = output[:content_width-3] + "..."
+                if len(output) > 70:
+                    truncated_output = output[:70] + "..."
                 else:
                     truncated_output = output
                 
-                self.console.print("╭" + "─" * (max_width - 2) + "╮")
-                self.console.print("│ [bold]Output[/bold]" + " " * (max_width - 9) + "│")
-                self.console.print("├" + "─" * (max_width - 2) + "┤")
-                
-                # Pad the line to fill the box width
-                padding = content_width - len(truncated_output)
-                self.console.print(f"│ {truncated_output}" + " " * padding + " │")
-                
-                self.console.print("╰" + "─" * (max_width - 2) + "╯")
+                # Compact output format similar to Update() style
+                self.console.print(f"Output")
+                self.console.print(f"  ⎿  {truncated_output}")
                 self.console.print()  # Add space after output
 
     async def print_message(self):
