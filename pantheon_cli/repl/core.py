@@ -672,6 +672,10 @@ class Repl(ReplUI):
                 self._handle_api_key_command(current_message.strip())
                 current_message = None  # Reset to get new input
                 continue
+            elif current_message.strip().startswith("/endpoint"):
+                self._handle_endpoint_command(current_message.strip())
+                current_message = None  # Reset to get new input
+                continue
             elif current_message.strip().startswith("/bio"):
                 bio_message = await self.bio_handler.handle_bio_command(current_message.strip())
                 if bio_message:
@@ -890,6 +894,19 @@ class Repl(ReplUI):
                 self.console.print("[red]API key management not available. Please restart with the CLI.[/red]")
         except Exception as e:
             self.console.print(f"[red]Error handling API key command: {str(e)}[/red]")
+        self.console.print()  # Add spacing
+
+    def _handle_endpoint_command(self, command: str):
+        """Handle /endpoint commands in REPL"""
+        try:
+            if hasattr(self.agent, '_api_key_manager') and self.agent._api_key_manager:
+                result = self.agent._api_key_manager.handle_endpoint_command(command)
+                # Print result as plain text to avoid formatting issues
+                self.console.print(result)
+            else:
+                self.console.print("[red]Error: Endpoint manager not available[/red]")
+        except Exception as e:
+            self.console.print(f"[red]Error handling endpoint command: {str(e)}[/red]")
         self.console.print()  # Add spacing
 
     def _handle_save_command(self, command: str):
