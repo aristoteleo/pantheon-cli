@@ -17,6 +17,13 @@ We're defining how scientists interact with data in the AI era.***
 
 **The first fully open-source, infinitely extensible scientific "chat analysis" human like framework**
 
+**English** · [简体中文](./README.zh-CN.md) · [Official Site][official-site] · [Changelog][changelog] · [Documents][docs] · [Blog][blog] · [Feedback][github-issues-link]
+
+[official-site]: https://pantheonos.stanford.edu/
+[changelog]: https://pantheonos.stanford.edu/cli/docs/release-notes
+[docs]: https://pantheonos.stanford.edu/cli/docs/intro/getting-started
+[blog]: https://pantheonos.stanford.edu/news
+
 </div>
 
 <div align="center">
@@ -258,13 +265,13 @@ Default RAG database location: `tmp/pantheon_cli_tools_rag/pantheon-cli-tools`.
 
 ## `5` [RAG System Setup](#5-rag-system-setup)
 
-### 4.4 Prerequisites
+### 5.1 Prerequisites
 
 Before building the RAG database, you need:
 - **OpenAI API Key**: For generating text embeddings
 - **ScrapingBee API Key**: For web crawling documentation
 
-### 4.5 Quick Build with Global API Keys
+### 5.2 Quick Build with Global API Keys
 
 The easiest way to build the RAG database is using the built-in command that automatically uses your global API keys:
 
@@ -286,7 +293,7 @@ pantheon-cli --build-rag --rag-config my_config.yaml  # Custom config
 pantheon-cli --build-rag /path/to/output --rag-config my_config.yaml  # Both
 ```
 
-### 4.6 Manual Build (Alternative Method)
+### 5.3 Manual Build (Alternative Method)
 
 To use the RAG knowledge base, build it from the provided configuration:
 
@@ -304,7 +311,7 @@ python -m pantheon.toolsets.utils.rag build \
 This creates a vector database at `tmp/pantheon_cli_tools_rag/pantheon-cli-tools` with genomics tools documentation.
 
 
-### 4.7 Command Line Options
+### 5.4 Command Line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
