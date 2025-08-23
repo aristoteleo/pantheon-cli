@@ -135,16 +135,20 @@ traditional programming. You can enter natural language at any time to program, 
 
 ### 3.8 Multi RAG Suport
 
+![](assets/feature_rag.jpg)
+
+- In Pantheon-CLI, we provide a complete pre-learning RAG solution. By leveraging powerful web crawlers to gather all available information from documents, we build an additional “brain” which then matches the user’s intent to this “brain” to generate more credible outputs.
+- Although RAG is still subject to much debate, people can’t always find the right tutorial to use as accurate input. In such cases, RAG becomes highly valuable—after all, extremely long contexts also consume a lot of tokens. We will later release a larger RAG database for anyone to download.
 
 
-### 3.8 Biology Support
+### 3.9 Biology Support
 
 ![](assets/feature_8.jpg)
 
 - Leveraging our expertise in biological omics analysis, we have predefined a series of built-in toolsets for omics. These can help you complete upstream sequencing alignment, downstream annotation, and differential analysis — and even fully reproduce all analyses from a biological research paper.
 
 
-## `2` [Detailed Installation](#2-quick-start)
+## `4` [Detailed Installation](#)
 
 
 ### Installation
@@ -232,7 +236,8 @@ pantheon-cli --workspace /path/to/project
 # Start with external toolsets
 pantheon-cli --disable_ext False --ext_dir ./ext_toolsets
 
-# Build RAG database (uses global API keys automatically)
+# Build RAG database (requires SCRAPER_API_KEY environment variable)
+export SCRAPER_API_KEY=2eaca840...
 pantheon-cli --build-rag  # Use default config and output
 pantheon-cli --build-rag custom_output_dir  # Custom output directory
 pantheon-cli --build-rag --rag-config custom.yaml  # Custom config file
@@ -251,17 +256,26 @@ Default RAG database location: `tmp/pantheon_cli_tools_rag/pantheon-cli-tools`.
 
 **Note that, if a default RAG database is not found, the CLI will automatically run with RAG functionality disabled.**
 
-## `3` [RAG System Setup](#3-rag-system-setup)
+## `5` [RAG System Setup](#5-rag-system-setup)
+
+### Prerequisites
+
+Before building the RAG database, you need:
+- **OpenAI API Key**: For generating text embeddings
+- **ScrapingBee API Key**: For web crawling documentation
 
 ### Quick Build with Global API Keys
 
 The easiest way to build the RAG database is using the built-in command that automatically uses your global API keys:
 
 ```bash
-# First, ensure you have an OpenAI API key configured globally
+# First, ensure you have required API keys configured
 pantheon-cli  # Start CLI
 /api-key openai sk-your-key-here  # Set OpenAI key globally
 exit  # Exit CLI
+
+# Set the scraper API key (required for web crawling)
+export SCRAPER_API_KEY=2eaca840...
 
 # Then build the RAG database
 pantheon-cli --build-rag
@@ -277,6 +291,11 @@ pantheon-cli --build-rag /path/to/output --rag-config my_config.yaml  # Both
 To use the RAG knowledge base, build it from the provided configuration:
 
 ```bash
+# Set required environment variables
+export OPENAI_API_KEY=sk-your-openai-key-here
+export SCRAPER_API_KEY=...
+
+# Build the RAG database
 python -m pantheon.toolsets.utils.rag build \
     pantheon/cli/rag_system_config.yaml \
     tmp/pantheon_cli_tools_rag
@@ -305,30 +324,8 @@ This creates a vector database at `tmp/pantheon_cli_tools_rag/pantheon-cli-tools
 | `--ext_toolsets` | Comma-separated list of external toolsets to load | All available |
 | `--ext_dir` | Directory containing external toolsets | `./ext_toolsets` |
 
-## `4` [Core Features](#4-core-features)
 
-### **AI-Driven Scientific Intelligent Agent**
-Built-in intelligent agent designed specifically for scientific computing, capable of handling various complex data analysis tasks. The intelligent agent not only executes commands but also:
-- **Understands scientific context**: Knows what type of analysis you're doing
-- **Recommends best methods**: Automatically selects appropriate algorithms and parameters  
-- **Explains analysis results**: Provides professional biological interpretations
-- **PhD-level domain knowledge**: Context-aware professional advice
-
-### **Hybrid Programming Paradigm**
-Seamlessly switch between multiple programming approaches within the same environment:
-- **Variable persistence**: Python/R/Julia variables directly shared in memory
-- **Natural language-driven**: Fluidly transforms thoughts into code execution
-- **Multi-language support**: Python, R, Julia in the same session
-- **Tool integration**: Access to comprehensive scientific computing ecosystems
-
-### **Open Source & Privacy-First**
-- **Fully Open Source**: Transparent, auditable source code
-- **Data Privacy Protection**: All computation performed locally
-- **Local model support**: Can be used completely offline
-- **Zero data uploads**: Research data never leaves your control
-- **Infinitely Extensible**: Based on Python ecosystem
-
-## `5` [Available Tools](#5-available-tools)
+## `6` [Available Tools](#6-available-tools)
 
 ### Core Tools (Always Enabled)
 - **Shell**: System commands and genomics tools with auto-installer
@@ -347,7 +344,7 @@ Seamlessly switch between multiple programming approaches within the same enviro
 - **Web**: Intelligent web operations with automatic URL intent analysis
 - **Notebook**: Jupyter notebook editing (no execution)
 
-## `6` [Configuration Files](#6-configuration-files)
+## `7` [Configuration Files](#7-configuration-files)
 
 Pantheon CLI supports project-specific configuration files similar to Claude Code's `CLAUDE.md`:
 
@@ -375,7 +372,7 @@ See [`CONFIG_FILES.md`](CONFIG_FILES.md) for detailed documentation and examples
 
 
 
-## `7` [Architecture](#7-architecture)
+## `8` [Architecture](#8-architecture)
 
 Pantheon-CLI is built as a standalone package that depends on:
 
@@ -402,13 +399,13 @@ Pantheon-cli/
 ```
 
 
-## `8` [Requirements](#8-requirements)
+## `9` [Requirements](#9-requirements)
 
 - Python 3.10+
 - Required packages: `fire`, `rich`, `pantheon-agents`, `pantheon-toolsets`, `hypha_rpc`, `pandas`
 - Optional: R for statistical analysis, Julia for high-performance computing
 
-## `9` [Real Application Scenarios](#9-real-application-scenarios)
+## `10` [Real Application Scenarios](#10-real-application-scenarios)
 
 ### Biomedical Research
 ```bash
@@ -437,29 +434,74 @@ Pantheon-cli/
 > Show how to perform statistical analysis for A/B testing
 ```
 
-## `10` [Why Choose Pantheon-CLI?](#10-why-choose-pantheon-cli)
+## `11` [Why Choose Pantheon-CLI?](#11-why-choose-pantheon-cli)
 
-### Problems It Solves
+### Revolutionary Features That Set Us Apart
 
-**Tool Fragmentation**
-- *Traditional*: Switch between multiple tools, data passed through file save/load
-- *Pantheon-CLI*: Hybrid programming with variable persistence, direct memory sharing
+**Chat with Data Like Never Before**
+- *Traditional*: Limited to simple CSV files, require data preprocessing
+- *Pantheon-CLI*: Process any local data format (anndata, pkl, torch, etc.) directly through conversation
 
-**High Technical Barriers** 
-- *Traditional*: Master multiple programming languages and complex tool chains
-- *Pantheon-CLI*: "Vibe analysis" that understands research intent and auto-matches tools
+**Mixed Programming Environment**
+- *Traditional*: Switch between Python, R, Julia environments constantly
+- *Pantheon-CLI*: Seamless language integration with persistent variables across all environments
 
-**Lack of Intelligent Guidance**
-- *Traditional*: Manual method selection, parameter adjustment, result interpretation  
-- *Pantheon-CLI*: PhD-level domain knowledge with context-aware professional advice
+**Advanced Web Intelligence**
+- *Traditional*: Manual web searches and copy-paste workflows
+- *Pantheon-CLI*: Reads tutorials, PDFs, and web content automatically for context-aware analysis
 
-**Data Privacy Concerns**
-- *Traditional*: Many AI tools require uploading sensitive data to cloud
-- *Pantheon-CLI*: Completely offline scientific computing AI with local models
+**Human-Like Research Behavior**
+- *Traditional*: Follow rigid predefined analysis pipelines
+- *Pantheon-CLI*: Learns from papers and tutorials, plans analysis like human scientists
 
+**Intelligent RAG Knowledge Base**
+- *Traditional*: Search through scattered documentation manually
+- *Pantheon-CLI*: Built-in scientific knowledge base with automatic document matching
 
+**Multi-AI Provider Support**
+- *Traditional*: Locked into single AI provider (OpenAI, Claude, etc.)
+- *Pantheon-CLI*: Choose from OpenAI, Anthropic, Gemini, DeepSeek, Qwen, and more
 
+**Complete Privacy Control**
+- *Traditional*: Data uploaded to cloud for AI processing
+- *Pantheon-CLI*: Fully offline analysis with local LLMs (Ollama support)
 
+**Domain-Specific Expertise**
+- *Traditional*: Generic AI tools without specialized knowledge
+- *Pantheon-CLI*: Built-in bioinformatics expertise with comprehensive omics analysis pipelines
+
+**Task Planning & Automation**
+- *Traditional*: Manual step-by-step analysis execution
+- *Pantheon-CLI*: Automatically learns and plans workflows from scientific literature
+
+**Infinite Extensibility**
+- *Traditional*: Limited to pre-built features
+- *Pantheon-CLI*: AI-powered toolset generation for any scientific domain
+
+## `12` [Contributing](#12-contributing)
+
+Contributions of all types are more than welcome; if you are interested in contributing code, feel free to check out our GitHub [Issues][github-issues-link] and [Projects][github-project-link] to get stuck in to show us what you're made of.
+
+> \[!TIP]
+>
+> We are creating a technology-driven forum, fostering knowledge interaction and the exchange of ideas that may culminate in mutual inspiration and collaborative innovation.
+>
+> Help us make LobeChat better. Welcome to provide product design feedback, user experience discussions directly to us.
+>
+> **Principal Maintainers:** [@starlitnightly](https://github.com/starlitnightly) [@Nanguage](https://github.com/Nanguage)
+
+[![][pr-welcome-shield]][pr-welcome-link]
+[![][submit-agents-shield]][submit-agents-link]
+[![][submit-plugin-shield]][submit-plugin-link]
+
+<details><summary><h4>📝 License</h4></summary>
+
+[![][fossa-license-shield]][fossa-license-link]
+
+</details>
+
+Copyright © 2025 [LobeHub][profile-link]. <br />
+This project is [Apache 2.0](./LICENSE) licensed.
 
 
 [github-contributors-link]: https://github.com/aristoteleo/pantheon-cli/graphs/contributors
@@ -503,3 +545,14 @@ Pantheon-cli/
 [share-whatsapp-shield]: https://img.shields.io/badge/-share%20on%20whatsapp-black?labelColor=black&logo=whatsapp&logoColor=white&style=flat-square
 [share-x-link]: https://x.com/PantheonOS
 [share-x-shield]: https://img.shields.io/badge/-share%20on%20x-black?labelColor=black&logo=x&logoColor=white&style=flat-square
+
+[pr-welcome-link]: https://github.com/aristoteleo/pantheon-cli/pulls
+[pr-welcome-shield]: https://img.shields.io/badge/👌_pr_welcome-%E2%86%92-ffcb47?labelColor=black&style=for-the-badge
+
+[submit-agents-link]: https://github.com/aristoteleo/pantheon-agents
+[submit-agents-shield]: https://img.shields.io/badge/🤖/🏪_submit_agent-%E2%86%92-c4f042?labelColor=black&style=for-the-badge
+[submit-plugin-link]: https://github.com/aristoteleo/pantheon-toolsets
+[submit-plugin-shield]: https://img.shields.io/badge/🧩/🏪_submit_toolsets-%E2%86%92-95f3d9?labelColor=black&style=for-the-badge
+
+[fossa-license-link]: https://app.fossa.com/projects/git%2Bgithub.com%2Faristoteleo%2Fpantheon-cli
+[fossa-license-shield]: https://app.fossa.com/api/projects/git%2Bgithub.com%2Faristoteleo%2Fpantheon-cli.svg?type=large
