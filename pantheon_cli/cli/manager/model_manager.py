@@ -97,6 +97,16 @@ AVAILABLE_MODELS = {
     # Grok/xAI Models
     "grok/grok-beta": "Grok Beta",
     "grok/grok-2": "Grok 2",
+    # Zhipu AI/GLM Models (User-friendly names, internally converted to openai/ format)
+    "zhipu/glm-4.5": "GLM-4.5 (Zhipu AI - Latest)",
+    "zhipu/glm-4.5-air": "GLM-4.5 Air (Zhipu AI - Latest)",
+    "zhipu/glm-4.5-flash": "GLM-4.5 Flash (Zhipu AI - Latest)",
+    "zhipu/glm-4": "GLM-4 (Zhipu AI)",
+    "zhipu/glm-4-plus": "GLM-4 Plus (Zhipu AI)", 
+    "zhipu/glm-4-air": "GLM-4 Air (Zhipu AI)",
+    "zhipu/glm-4-flash": "GLM-4 Flash (Zhipu AI - Free)",
+    "zhipu/glm-4-long": "GLM-4 Long (Zhipu AI)",
+    
     # Local/Other Models
     "ollama/llama3.2": "Llama 3.2 (Local)",
 }
@@ -148,6 +158,7 @@ class ModelManager:
         """Set the current agent reference for model updates"""
         self.current_agent = agent
     
+    
     def switch_model(self, new_model: str) -> str:
         """Switch to a new model"""
         if new_model not in AVAILABLE_MODELS:
@@ -198,6 +209,8 @@ class ModelManager:
                 provider = "DeepSeek"
             elif model_id.startswith("ollama/"):
                 provider = "Local"
+            elif model_id.startswith("zhipu/"):
+                provider = "Zhipu AI"
             else:
                 provider = "OpenAI"
             

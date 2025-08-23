@@ -103,6 +103,15 @@ PROVIDER_API_KEYS = {
     # Grok/xAI Models
     "grok/grok-beta": "GROK_API_KEY", 
     "grok/grok-2": "GROK_API_KEY",
+    # Zhipu AI/GLM Models (Use dedicated ZAI_API_KEY)
+    "zhipu/glm-4": "ZAI_API_KEY",
+    "zhipu/glm-4-plus": "ZAI_API_KEY",
+    "zhipu/glm-4-air": "ZAI_API_KEY", 
+    "zhipu/glm-4-flash": "ZAI_API_KEY",
+    "zhipu/glm-4-long": "ZAI_API_KEY",
+    "zhipu/glm-4.5": "ZAI_API_KEY",
+    "zhipu/glm-4.5-air": "ZAI_API_KEY",
+    "zhipu/glm-4.5-flash": "ZAI_API_KEY",
     # Local/Other Models (no key needed)
     "ollama/llama3.2": None,
 }
@@ -116,6 +125,7 @@ PROVIDER_NAMES = {
     "QWEN_API_KEY": "Qwen (Alibaba)",
     "MOONSHOT_API_KEY": "Kimi (Moonshot)",
     "GROK_API_KEY": "Grok (xAI)",
+    "ZAI_API_KEY": "Zhipu AI (GLM)",
 }
 
 
@@ -400,8 +410,22 @@ class APIKeyManager:
             if env_available and provider_key not in local_keys and provider_key not in global_keys:
                 source = " (environment)"
             
+            # Get all available command aliases for this provider
             provider_cmd = provider_key.lower().replace('_api_key', '')
-            result += f"{status_icon} {provider_name}: {provider_cmd}{source}\n"
+            cmd_aliases = [provider_cmd]
+            
+            # Add special aliases
+            if provider_key == "MOONSHOT_API_KEY":
+                cmd_aliases.extend(["kimi", "moonshot"])
+            elif provider_key == "ZHIPUAI_API_KEY":
+                cmd_aliases.extend(["zhipuai", "glm"])
+            
+            # Show primary command and aliases
+            cmd_display = cmd_aliases[0]
+            if len(cmd_aliases) > 1:
+                cmd_display += f" (or {', '.join(cmd_aliases[1:])})"
+            
+            result += f"{status_icon} {provider_name}: /api-key {cmd_display}{source}\n"
         
         result += "\n📁 Configuration Files:\n"
         result += f"  Global: {self.global_config_path}\n"
@@ -411,9 +435,12 @@ class APIKeyManager:
         result += "  /api-key list - Show this status\n"
         result += "  /api-key <provider> <key> - Set API key (saves globally)\n"
         result += "  /api-key <provider> <key> --local - Set API key (saves locally)\n"
-        result += "  Examples:\n"
-        result += "    /api-key openai sk-... - Set OpenAI key globally\n"
-        result += "    /api-key anthropic sk-... --local - Set Anthropic key locally\n"
+        result += "\n📝 Examples:\n"
+        result += "    /api-key openai sk-proj-xxx - Set OpenAI key globally\n"
+        result += "    /api-key anthropic sk-ant-xxx --local - Set Anthropic key locally\n"
+        result += "    /api-key zhipuai xxx.xxx - Set Zhipu AI key globally\n"
+        result += "    /api-key glm xxx.xxx - Set GLM key (same as zhipuai)\n"
+        result += "    /api-key kimi sk-xxx - Set Kimi/Moonshot key globally\n"
         result += "\n🌐 Endpoint Management:\n"
         result += "  /endpoint list - Show endpoint status\n"
         result += "  /endpoint <provider> <url> [--local] - Set custom endpoint\n"
@@ -466,7 +493,7 @@ class APIKeyManager:
             return self.list_api_keys()
         elif subcommand == "status":
             return self.show_api_key_status()
-        elif subcommand in ['openai', 'anthropic', 'google', 'deepseek', 'qwen', 'kimi', 'moonshot', 'grok']:
+        elif subcommand in ['openai', 'anthropic', 'google', 'deepseek', 'qwen', 'kimi', 'moonshot', 'grok', 'zai', 'zhipuai', 'glm']:
             # Check for --local flag
             save_global = True
             api_key_parts = []
@@ -485,6 +512,8 @@ class APIKeyManager:
             # Handle provider key mapping
             if subcommand in ['kimi', 'moonshot']:
                 provider_key = "MOONSHOT_API_KEY"
+            elif subcommand in ['zai', 'zhipuai', 'glm']:
+                provider_key = "ZAI_API_KEY"
             else:
                 provider_key = f"{subcommand.upper()}_API_KEY"
             
@@ -497,7 +526,7 @@ class APIKeyManager:
             else:
                 return f"❌ Failed to save {PROVIDER_NAMES[provider_key]} API key. Check file permissions."
         else:
-            return f"❌ Unknown provider '{subcommand}'. Available: openai, anthropic, google, deepseek, qwen, kimi, grok"
+            return f"❌ Unknown provider '{subcommand}'. Available: openai, anthropic, google, deepseek, qwen, kimi, grok, zai, zhipuai, glm"
     
     def list_endpoints(self) -> str:
         """List endpoint configuration for all providers"""
