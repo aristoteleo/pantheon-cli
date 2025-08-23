@@ -32,7 +32,7 @@ We're defining how scientists interact with data in the AI era.***
 [![][github-issues-shield]][github-issues-link]
 [![][github-license-shield]][github-license-link]<br>
 
-**Share LobeChat Repository**
+**Share Pantheon-CLI Repository**
 
 [![][share-x-shield]][share-x-link]
 [![][share-telegram-shield]][share-telegram-link]
