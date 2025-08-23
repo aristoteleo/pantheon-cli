@@ -56,10 +56,10 @@ We're defining how scientists interact with data in the AI era.***
 
 ## `1` [What is Pantheon-CLI?](#1-what-is-pantheon-cli)
 
-Pantheon-CLI is the **first fully open-source "vibe analysis" framework** built specifically for scientific research. We are defining a new way for scientists to interact with data in the AI era.
+Pantheon-CLI is the **first fully open-source "chat analysis" human-like framework** built specifically for scientific research. We are defining a new way for researchers to interact with data in the AI era.
 
 ### **PhD-Level Scientific Assistant**
-- Pantheon-CLI is the first command-line intelligent agent assistant for complex real-world scientific analysis, capable of handling PhD-level single-cell and spatial genomics tasks. This is not just a tool—**it's an AI scientist on your research team**.
+- Pantheon-CLI is the first command-line intelligent (CLI) agent assistant for complex real-world analysis like human, capable of handling PhD-level single-cell and spatial genomics tasks. This is not just a tool—**it's an AI scientist on your research team**.
 
 ### **Mixed Programming** 
 - With Pantheon-CLI, you can work within the same environment to:
@@ -67,7 +67,7 @@ Pantheon-CLI is the **first fully open-source "vibe analysis" framework** built 
   - Use natural language descriptions on the next line  
   - Even mix in R/Julia languages
 
-All scientists need only focus on the analysis itself, without switching between different tools and environments.
+All scientists need only focus on the **explore**, without switching between different tools and environments.
 
 ## `2` [Quick Start & Join our Community](#)
 
@@ -151,7 +151,7 @@ traditional programming. You can enter natural language at any time to program, 
 ## `4` [Detailed Installation](#)
 
 
-### Installation
+### 4.1 Installation
 
 #### Simple Installation (Recommended)
 
@@ -179,7 +179,7 @@ pantheon-cli --version
 
 
 
-### Basic Usage
+### 4.2 Basic Usage
 
 #### First Launch
 ```bash
@@ -244,7 +244,7 @@ pantheon-cli --build-rag --rag-config custom.yaml  # Custom config file
 pantheon-cli --build-rag output_dir --rag-config custom.yaml  # Both custom
 ```
 
-### With RAG Database
+### 4.3 With RAG Database
 
 If you have a RAG database prepared:
 
@@ -258,13 +258,13 @@ Default RAG database location: `tmp/pantheon_cli_tools_rag/pantheon-cli-tools`.
 
 ## `5` [RAG System Setup](#5-rag-system-setup)
 
-### Prerequisites
+### 4.4 Prerequisites
 
 Before building the RAG database, you need:
 - **OpenAI API Key**: For generating text embeddings
 - **ScrapingBee API Key**: For web crawling documentation
 
-### Quick Build with Global API Keys
+### 4.5 Quick Build with Global API Keys
 
 The easiest way to build the RAG database is using the built-in command that automatically uses your global API keys:
 
@@ -286,7 +286,7 @@ pantheon-cli --build-rag --rag-config my_config.yaml  # Custom config
 pantheon-cli --build-rag /path/to/output --rag-config my_config.yaml  # Both
 ```
 
-### Manual Build (Alternative Method)
+### 4.6 Manual Build (Alternative Method)
 
 To use the RAG knowledge base, build it from the provided configuration:
 
@@ -304,7 +304,7 @@ python -m pantheon.toolsets.utils.rag build \
 This creates a vector database at `tmp/pantheon_cli_tools_rag/pantheon-cli-tools` with genomics tools documentation.
 
 
-### Command Line Options
+### 4.7 Command Line Options
 
 | Option | Description | Default |
 |--------|-------------|---------|
@@ -500,7 +500,7 @@ Contributions of all types are more than welcome; if you are interested in contr
 
 </details>
 
-Copyright © 2025 [LobeHub][profile-link]. <br />
+Copyright © 2025 [Qiu Lab](https://www.devo-evo.com/). <br />
 This project is [Apache 2.0](./LICENSE) licensed.
 
 
@@ -554,5 +554,5 @@ This project is [Apache 2.0](./LICENSE) licensed.
 [submit-plugin-link]: https://github.com/aristoteleo/pantheon-toolsets
 [submit-plugin-shield]: https://img.shields.io/badge/🧩/🏪_submit_toolsets-%E2%86%92-95f3d9?labelColor=black&style=for-the-badge
 
-[fossa-license-link]: https://app.fossa.com/projects/git%2Bgithub.com%2Faristoteleo%2Fpantheon-cli
-[fossa-license-shield]: https://app.fossa.com/api/projects/git%2Bgithub.com%2Faristoteleo%2Fpantheon-cli.svg?type=large
+[fossa-license-link]: https://app.fossa.com/projects/git%2Bgithub.com%2FStarlitnightly%2Fpantheon-cli
+[fossa-license-shield]: https://app.fossa.com/api/projects/git%2Bgithub.com%2FStarlitnightly%2Fpantheon-cli.svg?type=large
