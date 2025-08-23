@@ -475,7 +475,7 @@ Pantheon-cli/
 >
 > 我们正在打造一个技术驱动的社区，促进知识互动与思想交流，激发彼此灵感与合作创新。
 >
-> 帮助我们把 LobeChat 做得更好。欢迎直接向我们提供产品设计反馈与用户体验建议。
+> 帮助我们把 Pantheon-CLI 做得更好。欢迎直接向我们提供产品设计反馈与用户体验建议。
 >
 > **主要维护者：** [@starlitnightly](https://github.com/starlitnightly) [@Nanguage](https://github.com/Nanguage)
 
