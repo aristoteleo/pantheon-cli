@@ -159,6 +159,7 @@ This creates a vector database at `tmp/pantheon_cli_tools_rag/pantheon-cli-tools
 | `--instructions` | Custom instructions | Built-in instructions |
 | `--disable_rag` | Disable RAG toolset | `False` |
 | `--disable_web` | Disable web toolset | `False` |
+| `--disable_dr` | Disable domain research toolset | `False` |
 | `--disable_notebook` | Disable notebook toolset | `False` |
 | `--disable_r` | Disable R interpreter toolset | `False` |
 | `--disable_julia` | Disable Julia interpreter toolset | `False` |
@@ -209,6 +210,11 @@ Seamlessly switch between multiple programming approaches within the same enviro
 - **RAG**: Vector-based knowledge search with built-in scientific knowledge
 - **Web**: Intelligent web operations with automatic URL intent analysis
 - **Notebook**: Jupyter notebook editing (no execution)
+ - **Domain Research**: OmicVerse-backed domain research with live web retrieval and demo fallback
+
+Quick example (Domain Research via agent):
+- Ask: "Research PBMC annotation best practices using live web and cite sources"
+- The agent can call `domain_research.run_research` under the hood.
 
 ## `6` [Configuration Files](#6-configuration-files)
 
@@ -319,7 +325,6 @@ Pantheon-cli/
 **Data Privacy Concerns**
 - *Traditional*: Many AI tools require uploading sensitive data to cloud
 - *Pantheon-CLI*: Completely offline scientific computing AI with local models
-
 
 
 
