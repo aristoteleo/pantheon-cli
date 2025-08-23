@@ -15,7 +15,7 @@
 ***We're not just building another CLI tool.  
 We're defining how scientists interact with data in the AI era.***
 
-**The first fully open-source, infinitely extensible scientific "vibe analysis" framework**
+**The first fully open-source, infinitely extensible scientific "chat analysis" human like framework**
 
 </div>
 
@@ -231,6 +231,12 @@ pantheon-cli --workspace /path/to/project
 
 # Start with external toolsets
 pantheon-cli --disable_ext False --ext_dir ./ext_toolsets
+
+# Build RAG database (uses global API keys automatically)
+pantheon-cli --build-rag  # Use default config and output
+pantheon-cli --build-rag custom_output_dir  # Custom output directory
+pantheon-cli --build-rag --rag-config custom.yaml  # Custom config file
+pantheon-cli --build-rag output_dir --rag-config custom.yaml  # Both custom
 ```
 
 ### With RAG Database
@@ -241,11 +247,32 @@ If you have a RAG database prepared:
 pantheon-cli --rag_db path/to/rag/database
 ```
 
-Default RAG database location: `tmp/sc_cli_tools_rag/single-cell-cli-tools`.
+Default RAG database location: `tmp/pantheon_cli_tools_rag/pantheon-cli-tools`.
 
 **Note that, if a default RAG database is not found, the CLI will automatically run with RAG functionality disabled.**
 
 ## `3` [RAG System Setup](#3-rag-system-setup)
+
+### Quick Build with Global API Keys
+
+The easiest way to build the RAG database is using the built-in command that automatically uses your global API keys:
+
+```bash
+# First, ensure you have an OpenAI API key configured globally
+pantheon-cli  # Start CLI
+/api-key openai sk-your-key-here  # Set OpenAI key globally
+exit  # Exit CLI
+
+# Then build the RAG database
+pantheon-cli --build-rag
+
+# Or specify options
+pantheon-cli --build-rag /path/to/rag/output  # Custom output directory
+pantheon-cli --build-rag --rag-config my_config.yaml  # Custom config
+pantheon-cli --build-rag /path/to/output --rag-config my_config.yaml  # Both
+```
+
+### Manual Build (Alternative Method)
 
 To use the RAG knowledge base, build it from the provided configuration:
 
