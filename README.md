@@ -84,7 +84,14 @@ Whether you are a biologist, financial analyst, social scientist, or machine lea
 
 | [![](https://img.shields.io/pypi/v/pantheon-cli)](https://pypi.org/project/pantheon-cli)   | `pip install pantheon-cli`                           |
 | :---------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| [![][discord-shield-badge]][discord-link] | Join our Discord community! This is where you can connect with developers and other enthusiastic users of Pantheon. |
+| [![][slack-shield-badge]]([slack-link]](https://join.slack.com/t/pantheonos/shared_invite/zt-3bmj318fo-vAWtJA01VkcqyHsleduFjQ))             | Join our Slack community! Connect with developers and other enthusiastic users of Pantheon. |
+| [![][discord-shield-badge]](https://discord.com/invite/74yzAGYW)        | Join our Discord community! Connect with developers and other enthusiastic users of Pantheon. |
+
+[slack-shield-badge]: https://img.shields.io/badge/Slack-join-blue?logo=slack&style=flat-square  
+[slack-link]: https://pantheonos.slack.com/ssb/redirect  
+
+[discord-shield-badge]: https://img.shields.io/badge/Discord-join-blue?logo=discord&style=flat-square  
+[discord-link]: https://discord.com/invite/74yzAGYW  
 
 ## `3` [Features](#)
 
@@ -101,9 +108,9 @@ Transform your data analysis workflow with Pantheon-CLI’s open-source power, b
 
 ![](assets/feature_2.jpg)
 
-- In Pantheon-CLI, all variable keep in the environment we have broken through the limitations of 
+- In Pantheon-CLI, all variables are kept in the environment. We have broken through the limitations of 
 traditional programming. You can enter natural language at any time to program, and the CLI will automatically generate Python/R/Julia code to run.
-- This is the world’s first Agent with variable support. During the coding process, you can input natural language at any time, and Pantheon-CLI will automatically carry out any analysis you want.
+- This is the world’s first Agent CLI with variable support. During the coding process, you can input natural language at any time, and Pantheon-CLI will automatically carry out any analysis you want.
 
 ### 3.3 MCP Integration
 
@@ -130,15 +137,15 @@ traditional programming. You can enter natural language at any time to program, 
 
 ![](assets/feature_6.jpg)
 
-- Pantheon-CLI supports major LLM providers, including OpenAI, Anthropic, Gemini, Deepseek, Qwen, and more, so you are not limited to any one model.
-- This may look simple, but it’s a highly practical feature: we support any large model, without requiring a Claude Code–style API—any LLM API is supported.
+- Pantheon-CLI supports major LLM providers, including OpenAI, Anthropic, Gemini, Deepseek, Qwen, and more, so you are not limited to any particular model.
+- This may look simple, but it’s a highly practical feature: we support all major large models, without requiring a Claude Code–style API—any LLM API is supported.
 
 ### 3.7 Local LLM Support
 
 ![](assets/feature_7.jpg)
 
-- Due to certain data privacy compliance requirements, Pantheon-CLI can analyze data completely offline using a local large model based on ollama.
-- I think running data locally and running models locally is another very interesting advantage of Pantheon-CLI.
+- To account for certain data privacy compliance requirements, Pantheon-CLI can analyze data completely offline using a local large model based on open sourced models, such as deepseek, ollama or gpt-oss.
+- Analyze data and run model locally as an important advantage of Pantheon-CLI.
 
 ### 3.8 Multi RAG Suport
 
@@ -290,7 +297,7 @@ pantheon-cli --build-rag
 # Or specify options
 pantheon-cli --build-rag /path/to/rag/output  # Custom output directory
 pantheon-cli --build-rag --rag-config my_config.yaml  # Custom config
-pantheon-cli --build-rag /path/to/output --rag-config my_config.yaml  # Both
+pantheon-cli --build-rag /path/to/rag/output --rag-config my_config.yaml  # Both
 ```
 
 ### 5.3 Manual Build (Alternative Method)
@@ -398,9 +405,9 @@ Pantheon-CLI is built as a standalone package that depends on:
 
 ```
 Pantheon-cli/
-├── pantheon_cli/              # Main package (renamed to avoid conflicts)
-│   ├── __init__.py           # Entry point with cli_main()
-│   ├── cli/                  # CLI implementation
+├── pantheon_cli/            # Main package (renamed to avoid conflicts)
+│   ├── __init__.py          # Entry point with cli_main()
+│   ├── cli/                 # CLI implementation
 │   │   ├── core.py          # Main CLI logic with toolset integration
 │   │   └── manager/         # API key and model management
 │   └── repl/                # REPL implementation  
@@ -408,7 +415,7 @@ Pantheon-cli/
 │       ├── ui.py            # User interface and tool call display
 │       └── bio_handler.py   # Bio command handling
 ├── pyproject.toml           # Package configuration
-└── README.md               # This file
+└── README.md                # This file
 ```
 
 
@@ -494,7 +501,7 @@ Pantheon-cli/
 
 ## `12` [Contributing](#12-contributing)
 
-Contributions of all types are more than welcome; if you are interested in contributing code, feel free to check out our GitHub [Issues][github-issues-link] and [Projects][github-project-link] to get stuck in to show us what you're made of.
+Contributions of all types are more than welcome; if you are interested in contributing code, feel free to check out our GitHub [Issues][github-issues-link] and [Projects][github-project-link] to to dive in and show us what you've got.
 
 > \[!TIP]
 >
