@@ -39,6 +39,49 @@ We're defining how scientists interact with data in the AI era.***
 [![][github-issues-shield]][github-issues-link]
 [![][github-license-shield]][github-license-link]<br>
 
+
+<table align="center" width="100%" style="border: none; border-collapse: collapse; margin: 30px 0;">
+<tr>
+<td width="50%" align="center" style="vertical-align: top; padding: 20px;">
+
+#### 🖥️ **CLI Interface**
+**Terminal-Based Development**
+
+<div align="center">
+
+  <img src="https://github.com/Starlitnightly/ImageStore/blob/main/pantheon_image/case_terminal_math.gif" alt="CLI Interface Demo" width="100%" style="border-radius: 10px; box-shadow: 0 8px 20px rgba(45,55,72,0.3); margin: 15px 0;"/>
+
+  <div style="background: linear-gradient(135deg, #2D3748 0%, #4A5568 100%); border-radius: 12px; padding: 15px; margin: 15px 0; color: white;">
+    <strong>Scientific Terminal Experience</strong><br/>
+    <small>All Claude Code Function<br/>Analyst-friendly interface<br/>Real-time progress tracking</small>
+  </div>
+
+  *Open-source CLI built for collaborative analysis, local-first execution, and seamless integration with modern DevOps.*
+</div>
+
+</td>
+<td width="50%" align="center" style="vertical-align: top; padding: 20px;">
+
+#### 🌐 **Notebook Interface**
+**Notebook Interactive Experience**
+
+<div align="center">
+
+  <img src="https://github.com/Starlitnightly/ImageStore/blob/main/pantheon_image/case_notebook_math.gif" alt="Web Interface Demo" width="100%" style="border-radius: 10px; box-shadow: 0 8px 20px rgba(14,165,233,0.3); margin: 15px 0;"/>
+
+  <div style="background: linear-gradient(135deg, #0EA5E9 0%, #00D4FF 100%); border-radius: 12px; padding: 15px; margin: 15px 0; color: white;">
+  <strong>📓 Interactive Notebook Integration</strong><br/>
+  <small>Step-by-step execution<br/>Real-time visualization<br/>Seamless CLI integration</small>
+</div>
+
+
+  *Pantheon-CLI meets JupyterLab—bridging natural language, code, and data in one unified notebook experience.*
+</div>
+
+</td>
+</tr>
+</table>
+
 **Share Pantheon-CLI Repository**
 
 [![][share-x-shield]][share-x-link]

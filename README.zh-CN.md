@@ -47,9 +47,64 @@
 [![][share-linkedin-shield]][share-linkedin-link]
 
 
+<table align="center" width="100%" style="border: none; border-collapse: collapse; margin: 30px 0;">
+<tr>
+<td width="50%" align="center" style="vertical-align: top; padding: 20px;">
+
+#### 🖥️ **CLI 界面**
+**终端开发体验**
+
+<div align="center">
+
+  <img src="https://github.com/Starlitnightly/ImageStore/blob/main/pantheon_image/case_terminal_math.gif" alt="CLI 界面演示" width="100%" style="border-radius: 10px; box-shadow: 0 8px 20px rgba(45,55,72,0.3); margin: 15px 0;"/>
+
+  <div style="background: linear-gradient(135deg, #2D3748 0%, #4A5568 100%); border-radius: 12px; padding: 15px; margin: 15px 0; color: white;">
+    <strong>科学终端体验</strong><br/>
+    <small>完整 Claude Code 功能<br/>分析师友好界面<br/>实时进度追踪</small>
+  </div>
+
+  *为协作分析、本地优先执行以及与现代 DevOps 无缝集成而构建的开源 CLI。*
+</div>
+
+</td>
+<td width="50%" align="center" style="vertical-align: top; padding: 20px;">
+
+#### 🌐 **Notebook 界面**
+**笔记本交互体验**
+
+<div align="center">
+
+  <img src="https://github.com/Starlitnightly/ImageStore/blob/main/pantheon_image/case_notebook_math.gif" alt="Web 界面演示" width="100%" style="border-radius: 10px; box-shadow: 0 8px 20px rgba(14,165,233,0.3); margin: 15px 0;"/>
+
+  <div style="background: linear-gradient(135deg, #0EA5E9 0%, #00D4FF 100%); border-radius: 12px; padding: 15px; margin: 15px 0; color: white;">
+  <strong>📓 交互式笔记本集成</strong><br/>
+  <small>逐步执行<br/>实时可视化<br/>无缝 CLI 集成</small>
+</div>
+
+
+  *Pantheon-CLI 遇上 JupyterLab——在统一的笔记本体验中连接自然语言、代码与数据。*
+</div>
+
+</td>
+</tr>
+</table>
+
+**分享 Pantheon-CLI 仓库**
+
+[![][share-x-shield]][share-x-link]
+[![][share-telegram-shield]][share-telegram-link]
+[![][share-whatsapp-shield]][share-whatsapp-link]
+[![][share-reddit-shield]][share-reddit-link]
+[![][share-weibo-shield]][share-weibo-link]
+[![][share-mastodon-shield]][share-mastodon-link]
+[![][share-linkedin-shield]][share-linkedin-link]
+
+
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![Status: Beta](https://img.shields.io/badge/Status-Beta-orange.svg)]()
 [![AI-Native](https://img.shields.io/badge/AI-Native-purple.svg)]()
+
+
 
 </div>
 
@@ -75,9 +130,16 @@ Pantheon-CLI 是专为科学研究打造的**首个完全开源的“聊天式�
 
 无论你是生物学家、金融分析师、社会科学家还是机器学习研究者，Pantheon-CLI 都将成为你的下一代分析乐园。请注意，Pantheon-CLI 仍在积极开发中，热忱欢迎你的反馈与贡献。
 
-| [![](https://img.shields.io/pypi/v/pantheon-cli)](https://pypi.org/project/pantheon-cli) | `pip install pantheon-cli` |
-| :---------------------------------------- | :------------------------------------------------------------ |
-| [![][discord-shield-badge]][discord-link] | 加入我们的 Discord！在这里你可以与开发者及热心用户交流。 |
+| [![](https://img.shields.io/pypi/v/pantheon-cli)](https://pypi.org/project/pantheon-cli)   | `pip install pantheon-cli`                           |
+| :---------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
+| [![][slack-shield-badge]]([slack-link]](https://join.slack.com/t/pantheonos/shared_invite/zt-3bmj318fo-vAWtJA01VkcqyHsleduFjQ))             | 加入我们的 Slack 社区！与开发者和其他 Pantheon 热心用户交流。 |
+| [![][discord-shield-badge]](https://discord.com/invite/74yzAGYW)        | 加入我们的 Discord 社区！与开发者和其他 Pantheon 热心用户交流。 |
+
+[slack-shield-badge]: https://img.shields.io/badge/Slack-join-blue?logo=slack&style=flat-square  
+[slack-link]: https://pantheonos.slack.com/ssb/redirect  
+
+[discord-shield-badge]: https://img.shields.io/badge/Discord-join-blue?logo=discord&style=flat-square  
+[discord-link]: https://discord.com/invite/74yzAGYW
 
 ## `3` [功能特性](#)
 
@@ -337,6 +399,11 @@ python -m pantheon.toolsets.utils.rag build \
 - **RAG**：内置科研知识的向量检索
 - **Web**：带意图识别的智能网页操作
 - **Notebook**：Jupyter 笔记本编辑（不执行）
+- **Domain Research**：基于 OmicVerse 的领域研究，支持实时网页检索和演示回退
+
+快速示例（通过 agent 进行领域研究）：
+- 询问："使用实时网页研究 PBMC 注释最佳实践并引用来源"
+- Agent 可在后台调用 `domain_research.run_research`
 
 ## `7` [配置文件](#7-configuration-files)
 
