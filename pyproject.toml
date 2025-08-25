@@ -4,9 +4,9 @@ description = "Command Line Interface for Pantheon - A framework for building di
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "pantheon-agents>=0.3.3rc1",
-    "pantheon-toolsets>=0.5.4rc1",
-    "pantheon-notebook>=0.1.0rc1",
+    "pantheon-agents>=0.3.3",
+    "pantheon-toolsets>=0.5.4",
+    "pantheon-notebook>=0.1.0",
     "fire>=0.7.0",
     "rich>=13.9.4",
     "rich-pyfiglet",
