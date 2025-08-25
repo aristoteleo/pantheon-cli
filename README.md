@@ -125,7 +125,7 @@ We are a group of scientist-engineers, building the first open-source Python-bas
 
 Whether you are a biologist, financial analyst, social scientist, or machine learning researcher, Pantheon-CLI will be your next-generation playground for analysis. Please note that Pantheon-CLI is still under active development, and we warmly welcome your feedback and contributions.
 
-| [![](https://img.shields.io/pypi/v/pantheon-cli)](https://pypi.org/project/pantheon-cli)   | `pip install pantheon-cli`                           |
+| [![](https://img.shields.io/pypi/v/pantheon-cli)](https://pypi.org/project/pantheon-cli)   | `pip install 'pantheon-cli[notebook]'`                           |
 | :---------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
 | [![][slack-shield-badge]]([slack-link]](https://join.slack.com/t/pantheonos/shared_invite/zt-3bmj318fo-vAWtJA01VkcqyHsleduFjQ))             | Join our Slack community! Connect with developers and other enthusiastic users of Pantheon. |
 | [![][discord-shield-badge]](https://discord.com/invite/74yzAGYW)        | Join our Discord community! Connect with developers and other enthusiastic users of Pantheon. |
@@ -213,7 +213,7 @@ traditional programming. You can enter natural language at any time to program, 
 #### Simple Installation (Recommended)
 
 ```bash
-pip install pantheon-cli
+pip install 'pantheon-cli[notebook]'
 ```
 
 #### Development Installation

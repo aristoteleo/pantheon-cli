@@ -1,6 +1,6 @@
 """Pantheon-CLI: Command Line Interface for Pantheon Agent Framework"""
 
-__version__ = "0.1.4rc1"
+__version__ = "0.1.4"
 
 # Entry point function for CLI command
 def cli_main():

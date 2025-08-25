@@ -130,7 +130,7 @@ Pantheon-CLI 是专为科学研究打造的**首个完全开源的“聊天式�
 
 无论你是生物学家、金融分析师、社会科学家还是机器学习研究者，Pantheon-CLI 都将成为你的下一代分析乐园。请注意，Pantheon-CLI 仍在积极开发中，热忱欢迎你的反馈与贡献。
 
-| [![](https://img.shields.io/pypi/v/pantheon-cli)](https://pypi.org/project/pantheon-cli)   | `pip install pantheon-cli`                           |
+| [![](https://img.shields.io/pypi/v/pantheon-cli)](https://pypi.org/project/pantheon-cli)   | `pip install 'pantheon-cli[notebook]'`                           |
 | :---------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
 | [![][slack-shield-badge]]([slack-link]](https://join.slack.com/t/pantheonos/shared_invite/zt-3bmj318fo-vAWtJA01VkcqyHsleduFjQ))             | 加入我们的 Slack 社区！与开发者和其他 Pantheon 热心用户交流。 |
 | [![][discord-shield-badge]](https://discord.com/invite/74yzAGYW)        | 加入我们的 Discord 社区！与开发者和其他 Pantheon 热心用户交流。 |
@@ -215,7 +215,7 @@ Pantheon-CLI 是专为科学研究打造的**首个完全开源的“聊天式�
 #### 简单安装（推荐）
 
 ```bash
-pip install pantheon-cli
+pip install 'pantheon-cli[notebook]'
 ```
 
 #### 开发者安装
