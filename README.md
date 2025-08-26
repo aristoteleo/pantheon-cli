@@ -127,8 +127,8 @@ Whether you are a biologist, financial analyst, social scientist, or machine lea
 
 | [![](https://img.shields.io/pypi/v/pantheon-cli)](https://pypi.org/project/pantheon-cli)   | `pip install 'pantheon-cli[notebook]'`                           |
 | :---------------------------------------- | :----------------------------------------------------------------------------------------------------------------- |
-| [![][slack-shield-badge]]([slack-link]](https://join.slack.com/t/pantheonos/shared_invite/zt-3bmj318fo-vAWtJA01VkcqyHsleduFjQ))             | Join our Slack community! Connect with developers and other enthusiastic users of Pantheon. |
-| [![][discord-shield-badge]](https://discord.com/invite/74yzAGYW)        | Join our Discord community! Connect with developers and other enthusiastic users of Pantheon. |
+| [![][slack-shield-badge]](https://join.slack.com/t/pantheonos/shared_invite/zt-3bmj318fo-vAWtJA01VkcqyHsleduFjQ)             | Join our Slack community! Connect with developers and other enthusiastic users of Pantheon. |
+| [![][discord-shield-badge]](https://discord.gg/3yjHaPUn)        | Join our Discord community! Connect with developers and other enthusiastic users of Pantheon. |
 
 [slack-shield-badge]: https://img.shields.io/badge/Slack-join-blue?logo=slack&style=flat-square  
 [slack-link]: https://pantheonos.slack.com/ssb/redirect  
