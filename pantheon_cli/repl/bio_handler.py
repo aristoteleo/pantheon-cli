@@ -52,6 +52,8 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio rna upstream ./data      # Run RNA-seq upstream analysis[/dim]")
         self.console.print("[dim]  /bio spatial init              # Initialize spatial project[/dim]")
         self.console.print("[dim]  /bio spatial run_spatial_workflow <workflow_type> # Run spatial workflow[/dim]")
+        self.console.print("[dim]  /bio singlecell init           # Initialize single-cell analysis mode[/dim]")
+        self.console.print("[dim]  /bio singlecell run_singlecell_workflow <analysis_type> # Run single-cell workflow[/dim]")
         self.console.print("[dim]  /bio dock init                # Initialize molecular docking project[/dim]")
         self.console.print("[dim]  /bio dock run_dock            # Interactive molecular docking workflow[/dim]")
         self.console.print("[dim]  /bio dock run ./data          # Run batch molecular docking on folder[/dim]")
@@ -104,6 +106,9 @@ class BioCommandHandler:
         
         if tool_name == "spatial":
             return self._handle_spatial_command(parts)
+        
+        if tool_name in ["singlecell", "single_cell", "single_cell_agent", "SingleCellAgent"]:
+            return self._handle_singlecell_command(parts)
         
         # Generic handler for other tools
         if len(parts) > 2:
@@ -190,6 +195,69 @@ Response format (single line):
             self.console.print("[dim]Sending spatial workflow request...[/dim]\n")
             
             return spatial_message
+
+    def _handle_singlecell_command(self, parts) -> str:
+        """Handle single-cell-specific commands with special logic"""
+        if len(parts) == 2:
+            # Just /bio singlecell - show help
+            self.console.print("\n[bold]🧬 Single-Cell Analysis Helper[/bold]")
+            self.console.print("[dim]/bio singlecell init[/dim] - Initialize single-cell analysis mode")
+            self.console.print("[dim]/bio singlecell run_singlecell_workflow <analysis_type>[/dim] - Run single-cell workflow")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio singlecell init                                # Initialize single-cell mode[/dim]")
+            self.console.print("[dim]  /bio singlecell run_singlecell_workflow annotation  # Run annotation workflow[/dim]")
+            self.console.print()
+            return None
+
+        command = parts[2]
+
+        if command == "init":
+            self.console.print("\n[bold cyan]🧬 Initializing single-cell analysis project[/bold cyan]")
+            clear_message = """
+singlecell INIT MODE — STRICT
+
+Goal: ONLY clear TodoList and report the new status. Do NOT create or execute anything.
+
+Allowed tools (whitelist):
+  - clear_all_todos()
+  - show_todos()
+
+Hard bans (do NOT call under any circumstance in init):
+  - add_todo(), mark_task_done(), execute_current_task()
+  - any single cell analysis tools
+
+Steps:
+  1) clear_all_todos()
+  2) todos = show_todos()
+
+Response format (single line):
+  singlecell init ready • todos={len(todos)}
+            """
+            self.console.print("[dim]Clearing existing todos and preparing single-cell environment...[/dim]")
+            self.console.print("[dim]Ready for single-cell analysis assistance...[/dim]")
+            self.console.print("[dim]Single-cell mode activated. You can now use single-cell tools directly.[/dim]")
+            self.console.print()
+            self.console.print("[dim]The command structure is now:[/dim]")
+            self.console.print("[dim]  - /bio singlecell init - Enter single-cell mode[/dim]")
+            self.console.print("[dim]  - /bio singlecell run_singlecell_workflow <analysis_type> - Run single-cell workflow[/dim]")
+            self.console.print()
+            return clear_message
+
+        elif command == "run_singlecell_workflow":
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify an analysis_type[/red]")
+                self.console.print("[dim]Usage: /bio singlecell run_singlecell_workflow <analysis_type>[/dim]")
+                self.console.print("[dim]Example: /bio singlecell run_singlecell_workflow annotation[/dim]")
+                return None
+
+            analysis_type = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Starting single-cell workflow: {analysis_type}[/bold cyan]")
+            self.console.print("[dim]Preparing single-cell analysis pipeline...[/dim]\n")
+
+            from ..cli.prompt.single_cell_agent import generate_single_cell_workflow_message
+            sc_message = generate_single_cell_workflow_message(workflow_type=analysis_type)
+            self.console.print("[dim]Sending single-cell workflow request...[/dim]\n")
+            return sc_message
             
     
     def _handle_atac_command(self, parts) -> str:
