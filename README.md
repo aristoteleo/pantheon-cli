@@ -204,6 +204,13 @@ traditional programming. You can enter natural language at any time to program, 
 
 - Leveraging our expertise in biological omics analysis, we have predefined a series of built-in toolsets for omics. These can help you complete upstream sequencing alignment, downstream annotation, and differential analysis — and even fully reproduce all analyses from a biological research paper.
 
+### 3.10 Notebook Support
+
+![](assets/feature_notebook.png)
+
+- Imagine this: from now on, when analyzing data in Notebook, you have a requirement but don't want to sift through complicated documents. All you need to do is have a conversation, and the analysis is done in an instant.
+- Not just for writing code, it can also run and revise code automatically to generate the correct result, and even operate on files and study from website — beyond what any other tool can do.
+
 
 ## `4` [Detailed Installation](#)
 
