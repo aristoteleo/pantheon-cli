@@ -2,12 +2,12 @@ from pathlib import Path
 
 
 def generate_single_cell_workflow_message(workflow_type: str) -> str:
-    """Generate SingleCellAgent workflow message using omicverse with persistent-state rules and templates"""
+    """Generate SingleCellAgent workflow message with persistent-state rules and templates"""
     message = f"""
-🧬 Single-Cell Analysis Pipeline with OmicVerse Integration
+🧬 Single-Cell Analysis Pipeline
 
 🔧 AVAILABLE WORKFLOW TOOLS:
-You have access to the SingleCellAgent_Templates tool for getting official templates.
+You have access to the SingleCellAgent_Analysis tool for getting official templates.
 💡 Use the tool when you need guidance, official examples, or best practices for a specific workflow step.
 Ask for dataset path if unknown, use ls to inspect folders, then proceed with file loading.
 
@@ -53,13 +53,13 @@ ASSESS:
 CHOOSE YOUR APPROACH:
 
 Option A — Use Template Tool (Recommended):
-- Call SingleCellAgent_Templates(workflow_type="<type>") to get official templates
+- Call SingleCellAgent_Analysis(workflow_type="<type>") to get official templates
 - Study returned guidance and patterns
 - Adapt template to your data
 - Execute adapted code
 
 Option B — Direct Implementation (Experienced users):
-- Write and run code based on omicverse/scanpy docs
+- Write and run code based on your preferred toolkit's docs
 - Use help() to verify parameters
 - Follow best practices
 
@@ -81,31 +81,30 @@ The returned content serves as GUIDANCE and TEMPLATES, not execution scripts.
 🏷️ STEP EXAMPLES:
 
 — annotation —
-Use: SingleCellAgent_Templates(workflow_type="annotation")
+Use: SingleCellAgent_Analysis(workflow_type="annotation")
 Then adapt to your data and execute.
 
 — trajectory —
-Use: SingleCellAgent_Templates(workflow_type="trajectory")
+Use: SingleCellAgent_Analysis(workflow_type="trajectory")
 
 — differential —
-Use: SingleCellAgent_Templates(workflow_type="differential")
+Use: SingleCellAgent_Analysis(workflow_type="differential")
 
 — visualization —
-Use: SingleCellAgent_Templates(workflow_type="visualization")
+Use: SingleCellAgent_Analysis(workflow_type="visualization")
 
 — qc —
-Use: SingleCellAgent_Templates(workflow_type="qc")
+Use: SingleCellAgent_Analysis(workflow_type="qc")
 
 — clustering —
-Use: SingleCellAgent_Templates(workflow_type="clustering")
+Use: SingleCellAgent_Analysis(workflow_type="clustering")
 
 — batch_integration —
-Use: SingleCellAgent_Templates(workflow_type="batch_integration")
+Use: SingleCellAgent_Analysis(workflow_type="batch_integration")
 
 — communication | grn | drug | metacell —
-Use the corresponding workflow_type with SingleCellAgent_Templates
+Use the corresponding workflow_type with SingleCellAgent_Analysis
 
 """
 
     return message
-
