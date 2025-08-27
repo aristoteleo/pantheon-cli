@@ -968,6 +968,18 @@ class ReplUI:
             
             self.console.print("╰" + "─" * 77 + "╯")
             
+        elif tool_name == "SingleCellAgent" and args and 'analysis_type' in args:
+            # Special handling for SingleCellAgent calls
+            analysis_type = args['analysis_type']
+            icon = "🧬"
+            workflow_title = f"Single-Cell Analysis: {analysis_type}"
+            self.console.print(f"⏺ [bold]{icon} {tool_name}[/bold]")
+
+            self.console.print("╭" + "─" * 77 + "╮")
+            title_padding = " " * (77 - len(workflow_title) - 4)
+            self.console.print(f"│ [bold cyan]{workflow_title}[/bold cyan]{title_padding}   │")
+            self.console.print("╰" + "─" * 77 + "╯")
+
         else:
             # Generic tool call
             if args:
