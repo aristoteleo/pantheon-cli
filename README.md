@@ -162,7 +162,7 @@ traditional programming. You can enter natural language at any time to program, 
 - Through Pantheon-CLI, we have created an assistant for human-computer interaction that has all the capabilities of a human operating a computer: reading files, creating files, running commands, generating code, and reading web pages.
 - Unlike traditional agents, we have implemented nearly all the functionalities of Claude Code and further optimized them—aiming to make Pantheon-CLI better suited for data analysis rather than pure code programming.
 
-### 3.4 Human Behavious
+### 3.4 Human Behaviours
 
 ![](assets/feature_4.jpg)
 
