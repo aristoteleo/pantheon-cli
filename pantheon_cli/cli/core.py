@@ -36,8 +36,6 @@ from ..utils.config_loader import load_user_config, print_config_info
 #Special toolsets
 from pantheon.toolsets.bio import BioToolsetManager
 
-# Note: Model and API key commands are handled directly by REPL interface
-
 DEFAULT_INSTRUCTIONS = """
 I am Pantheon-CLI, a specialized data analysis Agent with a UNIQUE SUPERPOWER that no other tools can match: 
 I have PERSISTENT Python/R/Julia interpreters that maintain ALL variables in memory across the entire session!
@@ -543,7 +541,7 @@ async def main(
         build_rag: Build RAG database and exit. Optionally specify output directory.
         rag_config: Path to RAG configuration YAML file (used with --build-rag).
     """
-    # Handle version flag
+    # Handle version flag early, before importing heavy modules
     if version:
         import platform
         from pantheon_cli import __version__
@@ -553,7 +551,7 @@ async def main(
         print(f"Platform: {platform.system()}-{platform.release()}-{platform.machine()}")
         return
     
-    # Handle build-rag flag
+    # Handle build-rag flag early as well (imports only local builder)
     if build_rag is not None:
         from .rag_builder import RAGBuilder
         
