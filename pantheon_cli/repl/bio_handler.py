@@ -72,6 +72,16 @@ class BioCommandHandler:
     def _handle_tool_specific_command(self, parts) -> str:
         """Handle tool-specific commands"""
         tool_name = parts[1]
+
+        # Normalize aliases to singlecellagent entrypoint
+        if tool_name in ["SingleCellAgent", "singlecell", "sc", "scrna-single", "singlecellagent"]:
+            return self._handle_singlecellagent_command([parts[0], "singlecellagent", *parts[2:]])
+        # Light migration of /bio scrna to singlecellagent when using analysis/run
+        if tool_name == "scrna" and len(parts) >= 3 and parts[2] in {"run", "analysis", "annotate", "qc", "differential", "trajectory"}:
+            # Convert to singlecellagent run, passing dataset if present
+            dataset = parts[3] if len(parts) >= 4 else ""
+            self.console.print("[dim]→ Routing to /bio singlecellagent run (unified entrypoint)[/dim]")
+            return self._handle_singlecellagent_command([parts[0], "singlecellagent", "run", dataset])
         
         # Handle ATAC commands with special logic
         if tool_name == "atac":
@@ -104,7 +114,7 @@ class BioCommandHandler:
         
         if tool_name == "spatial":
             return self._handle_spatial_command(parts)
-        
+
         # Generic handler for other tools
         if len(parts) > 2:
             method_name = parts[2]
@@ -116,6 +126,88 @@ class BioCommandHandler:
         else:
             # Just tool name, show tool help
             return f"bio info {tool_name}"
+
+    def _handle_singlecellagent_command(self, parts) -> str:
+        """Handle singlecellagent-specific commands with special logic (LLM-first)."""
+        # Help: /bio singlecellagent
+        if len(parts) == 2:
+            self.console.print("\n[bold]🧬 SingleCellAgent Helper[/bold]")
+            self.console.print("[dim]/bio singlecellagent init[/dim] - Initialize single-cell analysis mode (clear todos)")
+            self.console.print("[dim]/bio singlecellagent run <dataset.h5ad> [--question ...] [--profile auto|quick|standard|comprehensive][/dim] - Run automatic pipeline")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio singlecellagent init[/dim]")
+            self.console.print("[dim]  /bio singlecellagent run pbmc3k.h5ad --profile standard --question 'focus on T cells'[/dim]")
+            self.console.print()
+            return None
+
+        command = parts[2]
+
+        if command == "init":
+            # Enter singlecell mode - STRICT init (guide-compliant)
+            self.console.print("\n[bold cyan]🧬 Initializing single-cell analysis mode[/bold cyan]")
+            clear_message = """
+singlecell INIT MODE — STRICT
+
+Goal: ONLY clear TodoList and report status. Do NOT create or execute anything.
+
+Allowed tools (whitelist):
+  - clear_all_todos()
+  - show_todos()
+
+Hard bans (do NOT call in init):
+  - add_todo(), mark_task_done(), execute_current_task()
+  - any SingleCellAgent analysis tools
+
+Steps:
+  1) clear_all_todos()
+  2) todos = show_todos()
+
+Response format (single line):
+  singlecell init ready • todos={len(todos)}
+            """
+            self.console.print("[dim]Clearing existing todos and preparing single-cell environment...[/dim]")
+            self.console.print("[dim]Single-cell mode activated. Use /bio singlecellagent run to proceed.[/dim]")
+            self.console.print()
+            return clear_message
+
+        if command == "run":
+            # Parse dataset and optional flags (minimal parsing; LLM handles details)
+            dataset = parts[3] if len(parts) >= 4 else None
+            if not dataset:
+                self.console.print("[red]Error: Please provide a dataset path (.h5ad).[/red]")
+                self.console.print("[dim]Usage: /bio singlecellagent run <dataset.h5ad> [--question ...] [--profile auto|quick|standard|comprehensive][/dim]")
+                return None
+
+            # Extract simple flags (profile/question) from remaining parts
+            extra = parts[4:] if len(parts) > 4 else []
+            profile = "auto"
+            question = None
+            # naive parse
+            if "--profile" in extra:
+                try:
+                    profile = extra[extra.index("--profile") + 1]
+                except Exception:
+                    profile = "auto"
+            if "--question" in extra:
+                try:
+                    question = extra[extra.index("--question") + 1]
+                except Exception:
+                    question = None
+
+            from ..cli.prompt.single_cell_agent import generate_singlecell_workflow_message
+            message = generate_singlecell_workflow_message(
+                dataset_path=dataset,
+                profile=profile,
+                question=question,
+                save_results=True,
+                visualize=True,
+            )
+            self.console.print("[dim]Sending single-cell workflow request...[/dim]\n")
+            return message
+
+        # Unknown subcommand → show help
+        self.console.print("[red]Unknown singlecellagent command.[/red]")
+        return None
         
     def _handle_spatial_command(self, parts) -> str:
         """Handle spatial-specific commands with special logic"""

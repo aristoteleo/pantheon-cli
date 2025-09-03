@@ -913,9 +913,20 @@ class ReplUI:
                 # Simple commands use the original format
                 self.console.print(f"⏺ [bold]Bash[/bold]({command})")
             
+        elif tool_name == "SingleCellAgent" and args and 'analysis_type' in args:
+            # Special handling for SingleCellAgent which uses analysis_type
+            analysis_type = args['analysis_type']
+            icon = "🧬"
+            workflow_title = f"SingleCellAgent: {analysis_type}"
+            self.console.print(f"⏺ [bold]{icon} {tool_name}[/bold]")
+            self.console.print("╭" + "─" * 77 + "╮")
+            title_padding = " " * (77 - len(workflow_title) - 4)
+            self.console.print(f"│ [bold cyan]{workflow_title}[/bold cyan]{title_padding}   │")
+            self.console.print("╰" + "─" * 77 + "╯")
+
         elif tool_name in ["ATAC_Upstream", "ATAC_Analysis", "ScATAC_Upstream", 
                            "ScATAC_Analysis", "RNA_Upstream", "RNA_Analysis",
-                             "HiC_Upstream", "HiC_Analysis", "Spatial_Bin2Cell_Analysis", "Dock_Workflow"] and args and 'workflow_type' in args:
+                             "HiC_Upstream", "HiC_Analysis", "Spatial_Bin2Cell_Analysis", "Dock_Workflow", "SingleCellAgent"] and args and 'workflow_type' in args:
             # Special handling for workflow calls
             workflow_type = args['workflow_type']
             description = args.get('description', '')
@@ -948,6 +959,9 @@ class ReplUI:
             elif tool_name == "Dock_Workflow":
                 icon = "🧬"  # DNA for molecular docking
                 workflow_title = f"Molecular Docking: {workflow_type}"
+            elif tool_name == "SingleCellAgent":
+                icon = "🧬"  # DNA for single-cell workflows
+                workflow_title = f"SingleCellAgent: {workflow_type}"
             else:  # HiC_Analysis
                 icon = "📊"  # Chart for downstream analysis
                 workflow_title = f"Hi-C Analysis: {workflow_type}"
