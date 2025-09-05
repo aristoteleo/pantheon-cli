@@ -518,7 +518,11 @@ async def main(
     ext_dir: str = "./ext_toolsets",
     version: bool = False,
     build_rag: Optional[str] = None,
-    rag_config: Optional[str] = None
+    rag_config: Optional[str] = None,
+    # Access & institution options
+    access_open: str = "none",  # one of: none, oa, proxy
+    institution_proxy_url: Optional[str] = None,
+    save_proxy_url: bool = False,
 ):
     """
     Start the Pantheon CLI assistant.
@@ -625,6 +629,44 @@ async def main(
     
     # Ensure API keys are synced to environment variables
     api_key_manager.sync_environment_variables()
+
+    # Load and apply user preferences (proxy URL, access open mode)
+    import json as _json
+    prefs = {}
+    if config_file_path.exists():
+        try:
+            with open(config_file_path, "r") as _f:
+                cfg = _json.load(_f) or {}
+                prefs = cfg.get("prefs", {}) or {}
+        except Exception:
+            prefs = {}
+
+    # Determine institution proxy URL
+    proxy_url_effective = institution_proxy_url or prefs.get("institution_proxy_url")
+    if proxy_url_effective:
+        import os as _os
+        _os.environ["INSTITUTION_PROXY_URL"] = proxy_url_effective
+        # Persist if requested
+        if institution_proxy_url and save_proxy_url:
+            try:
+                cfg = {}
+                if config_file_path.exists():
+                    with open(config_file_path, "r") as _f:
+                        cfg = _json.load(_f) or {}
+                cfg.setdefault("prefs", {})
+                cfg["prefs"]["institution_proxy_url"] = institution_proxy_url
+                # Touch file and write with restrictive perms
+                config_file_path.touch(mode=0o600, exist_ok=True)
+                with open(config_file_path, "w") as _f:
+                    _json.dump(cfg, _f, indent=2)
+                print(f"💾 Saved institution proxy URL to {config_file_path}")
+            except Exception as e:
+                print(f"[Warning] Failed to save proxy URL: {e}")
+
+    # Apply access open mode
+    if access_open in {"oa", "proxy"}:
+        import os as _os
+        _os.environ["ACCESS_OPEN_MODE"] = access_open
     
     # Set model if provided
     if model is not None:

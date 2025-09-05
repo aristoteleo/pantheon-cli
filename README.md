@@ -414,6 +414,38 @@ Quick example (Domain Research via agent):
 - Ask: "Research PBMC annotation best practices using live web and cite sources"
 - The agent can call `domain_research.run_research` under the hood.
 
+Date constraints and PubMed usage
+
+- You can include date constraints in your prompt that the agent will translate for web search backends:
+  - `date:>=YYYY` becomes an `after:YYYY` token for web queries and a PubMed date range when using `web:pubmed`.
+  - `date:<=YYYY[-MM[-DD]]` becomes a `before:YYYY[-MM[-DD]]` token.
+  - Example: "Research recent PBMC annotation best practices (date:>=2022 date:<=2024-06-01) using PubMed".
+- To prefer PubMed results, ask explicitly (e.g., "use PubMed") or start the Domain Research toolset with `backend="web:pubmed"`.
+
+Institution Access Flow
+
+- When Domain Research detects paywalled sources, the CLI lists them and offers to open links.
+- Set `INSTITUTION_PROXY_URL` to your library proxy (e.g., `https://libproxy.school.edu/login?url=`) and `ALLOW_BROWSER_OPEN=1` to enable opening links.
+- The prompt lets you open Open Access if available, otherwise via your institution proxy.
+
+Institution Access Automation
+
+- Flags:
+  - `--institution_proxy_url <template>`: Set your library proxy template, e.g. `https://libproxy.school.edu/login?url=` or `https://libproxy.school.edu/login?url={url}`.
+  - `--save_proxy_url True`: Save proxy template into `.pantheon_config.json` for reuse.
+  - `--access_open <mode>`: Auto-open access links: `oa` (open-access) or `proxy` (institution proxy). Default `none`.
+- Env:
+  - `ALLOW_BROWSER_OPEN=1` to enable opening links from the CLI.
+  - These flags set `INSTITUTION_PROXY_URL` and `ACCESS_OPEN_MODE` for the session.
+
+Example:
+
+```bash
+pantheon-cli --access_open oa \
+  --institution_proxy_url "https://libproxy.school.edu/login?url=" \
+  --save_proxy_url True
+```
+
 ## `7` [Configuration Files](#7-configuration-files)
 
 Pantheon CLI supports project-specific configuration files similar to Claude Code's `CLAUDE.md`:
