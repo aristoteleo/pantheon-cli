@@ -438,14 +438,6 @@ Institution Access Automation
   - `ALLOW_BROWSER_OPEN=1` to enable opening links from the CLI.
   - These flags set `INSTITUTION_PROXY_URL` and `ACCESS_OPEN_MODE` for the session.
 
-Example:
-
-```bash
-pantheon-cli --access_open oa \
-  --institution_proxy_url "https://libproxy.school.edu/login?url=" \
-  --save_proxy_url True
-```
-
 ## `7` [Configuration Files](#7-configuration-files)
 
 Pantheon CLI supports project-specific configuration files similar to Claude Code's `CLAUDE.md`:
