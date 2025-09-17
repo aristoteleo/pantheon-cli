@@ -522,7 +522,13 @@ class APIKeyManager:
             
             if self.save_api_key(provider_key, api_key, save_global=save_global):
                 location = "globally" if save_global else "locally"
-                return f"✅ {PROVIDER_NAMES[provider_key]} API key saved {location} and set successfully!"
+                message = f"✅ {PROVIDER_NAMES[provider_key]} API key saved {location} and set successfully!"
+                if provider_key == "OPENAI_API_KEY":
+                    message += (
+                        "\n🧠 Planning to use GPT-5 or OpenAI o-series reasoning models? "
+                        "Choose the effort level with `/reasoning effort <minimal|low|medium|high>` before your next task."
+                    )
+                return message
             else:
                 return f"❌ Failed to save {PROVIDER_NAMES[provider_key]} API key. Check file permissions."
         else:
