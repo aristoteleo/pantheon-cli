@@ -523,6 +523,9 @@ async def main(
     access_open: str = "none",  # one of: none, oa, proxy
     institution_proxy_url: Optional[str] = None,
     save_proxy_url: bool = False,
+    mode: Optional[str] = None,
+    dev_goal: Optional[str] = None,
+    max_iters: int = 10,
 ):
     """
     Start the Pantheon CLI assistant.
@@ -797,7 +800,25 @@ async def main(
     
     if bio_toolset:
         agent.toolset(bio_toolset)
-    
+
+    if isinstance(mode, str) and mode.lower() in {"devloop", "dev-loop", "plan-code-review"}:
+        from .modes.dev_loop import run_devloop
+
+        if not dev_goal:
+            print("❌ devloop mode requires --dev_goal '<your goal>'")
+            return
+
+        result = await run_devloop(
+            agent=agent,
+            console=console,
+            workspace_path=workspace_path,
+            goal=dev_goal,
+            max_iters=int(max_iters or 10),
+        )
+        status = "✅ Success" if result.success else "⚠️ Incomplete"
+        print(f"\n{status} after {result.iterations} iterations: {result.final_message}")
+        return
+
     if not disable_ext:
         # Register external toolsets if available
         if ext_loader:
