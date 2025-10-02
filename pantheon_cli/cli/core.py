@@ -597,16 +597,12 @@ async def main(
         return
     
     console = Console()
-    class LoguruRichHandler(RichHandler):
-        def emit(self, record):
-            extra = getattr(record, "extra", {})
-            if "rich" in extra:
-                console.print(extra["rich"])
-            else:
-                console.print(record.msg)
 
-    logger.configure(handlers=[{"sink":LoguruRichHandler(), "format":"{message}", "level":"INFO"}])
-    logger.disable("executor.engine")
+    # Disable executor.engine logging if the logger supports it
+    try:
+        logger.disable("executor.engine")
+    except (AttributeError, TypeError):
+        pass
 
     # Initialize managers locally
     
