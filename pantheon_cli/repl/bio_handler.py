@@ -56,6 +56,8 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio dock run_dock            # Interactive molecular docking workflow[/dim]")
         self.console.print("[dim]  /bio dock run ./data          # Run batch molecular docking on folder[/dim]")
         self.console.print("[dim]  /bio GeneAgent TP53,BRCA1,EGFR # Gene set analysis with AI[/dim]")
+        self.console.print("[dim]  /bio fm list                  # List foundation models (scGPT, Geneformer, UCE)[/dim]")
+        self.console.print("[dim]  /bio fm embed <data.h5ad>     # Generate embeddings with auto-selected model[/dim]")
         self.console.print("")
     
     def _handle_bio_manager_command(self, parts) -> str:
@@ -114,6 +116,10 @@ class BioCommandHandler:
         
         if tool_name == "spatial":
             return self._handle_spatial_command(parts)
+
+        # Handle foundation model commands
+        if tool_name == "fm":
+            return self._handle_fm_command(parts)
 
         # Generic handler for other tools
         if len(parts) > 2:
@@ -1082,7 +1088,168 @@ Response format (single line):
                 return f"bio_hic_{command} {params}"
             else:
                 return f"bio_hic_{command}"
-    
+
+    def _handle_fm_command(self, parts) -> str:
+        """Handle foundation model commands (/bio fm ...)"""
+
+        if len(parts) == 2:
+            # Just /bio fm - show FM help
+            self.console.print("\n[bold]🧬 Single-Cell Foundation Models[/bold]")
+            self.console.print("[dim]Unified API for scGPT, Geneformer, UCE, and more[/dim]\n")
+            self.console.print("[bold cyan]Discovery & Selection[/bold cyan]")
+            self.console.print("[dim]/bio fm list[/dim] - List available foundation models")
+            self.console.print("[dim]/bio fm describe <model>[/dim] - Get model I/O contract and requirements")
+            self.console.print("[dim]/bio fm profile <data.h5ad>[/dim] - Profile data (species, gene scheme, modality)")
+            self.console.print("[dim]/bio fm select <data.h5ad> <task>[/dim] - Auto-select best model for task")
+            self.console.print("\n[bold cyan]Validation & Execution[/bold cyan]")
+            self.console.print("[dim]/bio fm validate <data.h5ad> <model> <task>[/dim] - Check compatibility")
+            self.console.print("[dim]/bio fm embed <data.h5ad> [--model X][/dim] - Generate embeddings")
+            self.console.print("[dim]/bio fm annotate <data.h5ad> [--model X][/dim] - Cell type annotation")
+            self.console.print("[dim]/bio fm integrate <data.h5ad> [--model X][/dim] - Batch integration")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio fm list                           # Show all models[/dim]")
+            self.console.print("[dim]  /bio fm describe uce                   # UCE model details[/dim]")
+            self.console.print("[dim]  /bio fm profile pbmc3k.h5ad            # Analyze data characteristics[/dim]")
+            self.console.print("[dim]  /bio fm select pbmc3k.h5ad embed       # Find best model for embedding[/dim]")
+            self.console.print("[dim]  /bio fm embed pbmc3k.h5ad              # Auto-select model & embed[/dim]")
+            self.console.print("[dim]  /bio fm embed pbmc3k.h5ad --model uce  # Use specific model[/dim]")
+            self.console.print()
+            return None
+
+        command = parts[2]
+
+        if command == "list":
+            # List available models
+            self.console.print("\n[bold cyan]🧬 Listing Foundation Models[/bold cyan]")
+            return "scfm_list_models"
+
+        elif command == "describe":
+            # Describe a specific model
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a model name[/red]")
+                self.console.print("[dim]Usage: /bio fm describe <model>[/dim]")
+                self.console.print("[dim]Available models: scgpt, geneformer, uce, scfoundation[/dim]")
+                return None
+
+            model_name = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Describing model: {model_name}[/bold cyan]")
+            return f"scfm_describe_model {model_name}"
+
+        elif command == "profile":
+            # Profile data
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio fm profile <data.h5ad>[/dim]")
+                return None
+
+            adata_path = parts[3]
+            self.console.print(f"\n[bold cyan]🧬 Profiling data: {adata_path}[/bold cyan]")
+            return f"scfm_profile_data {adata_path}"
+
+        elif command == "select":
+            # Select best model for task
+            if len(parts) < 5:
+                self.console.print("[red]Error: Please specify data path and task[/red]")
+                self.console.print("[dim]Usage: /bio fm select <data.h5ad> <task>[/dim]")
+                self.console.print("[dim]Tasks: embed, annotate, integrate[/dim]")
+                return None
+
+            adata_path = parts[3]
+            task = parts[4]
+            self.console.print(f"\n[bold cyan]🧬 Selecting model for {task} task[/bold cyan]")
+            return f"scfm_select_model {adata_path} {task}"
+
+        elif command == "validate":
+            # Validate data compatibility
+            if len(parts) < 6:
+                self.console.print("[red]Error: Please specify data path, model, and task[/red]")
+                self.console.print("[dim]Usage: /bio fm validate <data.h5ad> <model> <task>[/dim]")
+                return None
+
+            adata_path = parts[3]
+            model_name = parts[4]
+            task = parts[5]
+            self.console.print(f"\n[bold cyan]🧬 Validating {adata_path} for {model_name} ({task})[/bold cyan]")
+            return f"scfm_preprocess_validate {adata_path} {model_name} {task}"
+
+        elif command == "embed":
+            # Generate embeddings
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio fm embed <data.h5ad> [--model X][/dim]")
+                return None
+
+            adata_path = parts[3]
+            model_name = None
+
+            # Parse --model flag
+            if "--model" in parts:
+                try:
+                    model_idx = parts.index("--model")
+                    model_name = parts[model_idx + 1]
+                except (IndexError, ValueError):
+                    pass
+
+            self.console.print(f"\n[bold cyan]🧬 Generating embeddings for {adata_path}[/bold cyan]")
+            if model_name:
+                self.console.print(f"[dim]Using model: {model_name}[/dim]")
+                return f"scfm_run embed {model_name} {adata_path}"
+            else:
+                self.console.print("[dim]Auto-selecting best model...[/dim]")
+                # First select model, then run
+                return f"scfm_select_model {adata_path} embed"
+
+        elif command == "annotate":
+            # Cell type annotation
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio fm annotate <data.h5ad> [--model X][/dim]")
+                return None
+
+            adata_path = parts[3]
+            model_name = None
+
+            if "--model" in parts:
+                try:
+                    model_idx = parts.index("--model")
+                    model_name = parts[model_idx + 1]
+                except (IndexError, ValueError):
+                    pass
+
+            self.console.print(f"\n[bold cyan]🧬 Annotating cell types in {adata_path}[/bold cyan]")
+            if model_name:
+                return f"scfm_run annotate {model_name} {adata_path}"
+            else:
+                return f"scfm_select_model {adata_path} annotate"
+
+        elif command == "integrate":
+            # Batch integration
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a data file path[/red]")
+                self.console.print("[dim]Usage: /bio fm integrate <data.h5ad> [--model X][/dim]")
+                return None
+
+            adata_path = parts[3]
+            model_name = None
+
+            if "--model" in parts:
+                try:
+                    model_idx = parts.index("--model")
+                    model_name = parts[model_idx + 1]
+                except (IndexError, ValueError):
+                    pass
+
+            self.console.print(f"\n[bold cyan]🧬 Integrating batches in {adata_path}[/bold cyan]")
+            if model_name:
+                return f"scfm_run integrate {model_name} {adata_path}"
+            else:
+                return f"scfm_select_model {adata_path} integrate"
+
+        else:
+            self.console.print(f"[red]Unknown FM command: {command}[/red]")
+            self.console.print("[dim]Use /bio fm for help[/dim]")
+            return None
+
     async def handle_deprecated_atac_command(self, command: str) -> str:
         """
         Handle deprecated /atac commands with migration and auto-conversion
@@ -1175,6 +1342,16 @@ BIO_COMMAND_MAP = {
     'chipseq_init': 'bio_chipseq_init',
     'chipseq_call_peaks': 'bio_chipseq_call_peaks',
     'chipseq_find_motifs': 'bio_chipseq_find_motifs',
+
+    # Foundation model commands
+    'fm_list': 'scfm_list_models',
+    'fm_describe': 'scfm_describe_model',
+    'fm_profile': 'scfm_profile_data',
+    'fm_select': 'scfm_select_model',
+    'fm_validate': 'scfm_preprocess_validate',
+    'fm_embed': 'scfm_run embed',
+    'fm_annotate': 'scfm_run annotate',
+    'fm_integrate': 'scfm_run integrate',
 }
 
 # Deprecated command conversions
@@ -1205,5 +1382,16 @@ def get_bio_command_suggestions() -> list:
         '/bio GeneAgent',
         '/bio GeneAgent TP53,BRCA1,EGFR',
         '/bio chipseq init',  # Future
+        # Foundation model commands
+        '/bio fm',
+        '/bio fm list',
+        '/bio fm describe scgpt',
+        '/bio fm describe geneformer',
+        '/bio fm describe uce',
+        '/bio fm profile',
+        '/bio fm select',
+        '/bio fm embed',
+        '/bio fm annotate',
+        '/bio fm integrate',
     ]
     return suggestions
