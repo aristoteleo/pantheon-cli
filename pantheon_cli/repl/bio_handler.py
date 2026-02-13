@@ -56,6 +56,8 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio dock run_dock            # Interactive molecular docking workflow[/dim]")
         self.console.print("[dim]  /bio dock run ./data          # Run batch molecular docking on folder[/dim]")
         self.console.print("[dim]  /bio GeneAgent TP53,BRCA1,EGFR # Gene set analysis with AI[/dim]")
+        self.console.print("[dim]  /bio scfm init                 # Initialize SCFM project[/dim]")
+        self.console.print("[dim]  /bio scfm run ./data.h5ad      # Run SCFM analysis[/dim]")
         self.console.print("")
     
     def _handle_bio_manager_command(self, parts) -> str:
@@ -114,6 +116,10 @@ class BioCommandHandler:
         
         if tool_name == "spatial":
             return self._handle_spatial_command(parts)
+
+        # Handle SCFM (Single Cell Foundation Model) commands
+        if tool_name == "scfm":
+            return self._handle_scfm_command(parts)
 
         # Generic handler for other tools
         if len(parts) > 2:
@@ -284,6 +290,129 @@ Response format (single line):
             return spatial_message
             
     
+    def _handle_scfm_command(self, parts) -> str:
+        """Handle SCFM (Single Cell Foundation Model) commands"""
+
+        if len(parts) == 2:
+            # Just /bio scfm - show SCFM help
+            self.console.print("\n[bold]🧬 Single Cell Foundation Model (SCFM) Analysis Helper[/bold]")
+            self.console.print("[dim]/bio scfm init[/dim] - Initialize SCFM analysis project")
+            self.console.print("[dim]/bio scfm run <dataset.h5ad> [--model <model_name>][/dim] - Run SCFM workflow")
+            self.console.print("[dim]/bio scfm list_models[/dim] - List available foundation models")
+            self.console.print("\n[dim]Supported Models:[/dim]")
+            self.console.print("[dim]  scgpt       - scGPT: single-cell Gene-level Pre-Trained model[/dim]")
+            self.console.print("[dim]  scbert      - scBERT: single-cell BERT for cell type annotation[/dim]")
+            self.console.print("[dim]  geneformer  - Geneformer: transfer learning for single-cell data[/dim]")
+            self.console.print("[dim]  scfoundation - scFoundation: large-scale foundation model[/dim]")
+            self.console.print("[dim]  uce         - UCE: Universal Cell Embedding[/dim]")
+            self.console.print("\n[dim]Examples:[/dim]")
+            self.console.print("[dim]  /bio scfm init                                    # Initialize SCFM project[/dim]")
+            self.console.print("[dim]  /bio scfm run ./data.h5ad                         # Run with auto model selection[/dim]")
+            self.console.print("[dim]  /bio scfm run ./data.h5ad --model scgpt           # Run with scGPT[/dim]")
+            self.console.print("[dim]  /bio scfm list_models                             # Show available models[/dim]")
+            self.console.print()
+            return None
+
+        command = parts[2]
+
+        if command == "init":
+            # Enter SCFM mode - strict init mode
+            self.console.print("\n[bold cyan]🧬 Initializing SCFM Analysis Project[/bold cyan]")
+
+            clear_message = """
+SCFM INIT MODE — STRICT
+
+Goal: ONLY clear TodoList and report the new status. Do NOT create or execute anything.
+
+Allowed tools (whitelist):
+  - clear_all_todos()
+  - show_todos()
+
+Hard bans (do NOT call under any circumstance in init):
+  - add_todo(), mark_task_done(), execute_current_task()
+  - any scfm.* analysis tools
+
+Steps:
+  1) clear_all_todos()
+  2) todos = show_todos()
+
+Response format (single line):
+  SCFM init ready • todos={len(todos)}
+"""
+
+            self.console.print("[dim]Clearing existing todos and preparing SCFM environment...[/dim]")
+            self.console.print("[dim]Ready for Single Cell Foundation Model analysis...[/dim]")
+            self.console.print("[dim]SCFM mode activated. You can now use SCFM tools directly.[/dim]")
+            self.console.print()
+            self.console.print("[dim]The command structure is now clean:[/dim]")
+            self.console.print("[dim]  - /bio scfm init - Enter SCFM mode (simple prompt loading)[/dim]")
+            self.console.print("[dim]  - /bio scfm run <dataset.h5ad> [--model <model>] - Run SCFM workflow[/dim]")
+            self.console.print("[dim]  - /bio scfm list_models - List available foundation models[/dim]")
+            self.console.print()
+
+            return clear_message
+
+        elif command == "list_models":
+            # List available foundation models
+            self.console.print("\n[bold cyan]🧬 Available Single Cell Foundation Models[/bold cyan]")
+            self.console.print()
+            self.console.print("[bold]Model Name       Description[/bold]")
+            self.console.print("[dim]─────────────────────────────────────────────────────────────[/dim]")
+            self.console.print("scgpt            scGPT - Generative pre-trained transformer for single-cell")
+            self.console.print("scbert           scBERT - BERT-based cell type annotation")
+            self.console.print("geneformer       Geneformer - Transfer learning for single-cell genomics")
+            self.console.print("scfoundation     scFoundation - Large-scale foundation model")
+            self.console.print("uce              UCE - Universal Cell Embedding")
+            self.console.print()
+            return None
+
+        elif command == "run":
+            # Handle SCFM run workflow
+            if len(parts) < 4:
+                self.console.print("[red]Error: Please specify a dataset path (.h5ad)[/red]")
+                self.console.print("[dim]Usage: /bio scfm run <dataset.h5ad> [--model <model_name>][/dim]")
+                self.console.print("[dim]Example: /bio scfm run ./data.h5ad --model scgpt[/dim]")
+                return None
+
+            dataset = parts[3]
+
+            # Parse optional flags
+            extra = parts[4:] if len(parts) > 4 else []
+            model = "auto"
+            if "--model" in extra:
+                try:
+                    model = extra[extra.index("--model") + 1]
+                except (IndexError, ValueError):
+                    model = "auto"
+
+            self.console.print(f"\n[bold cyan]🧬 Starting SCFM Analysis[/bold cyan]")
+            self.console.print(f"[dim]Dataset: {dataset}[/dim]")
+            self.console.print(f"[dim]Model: {model}[/dim]")
+            self.console.print("[dim]Preparing Single Cell Foundation Model pipeline...[/dim]\n")
+
+            try:
+                from ..cli.prompt.scfm_workflow import generate_scfm_workflow_message
+                message = generate_scfm_workflow_message(
+                    dataset_path=dataset,
+                    model_name=model,
+                )
+                self.console.print("[dim]Sending SCFM workflow request...[/dim]\n")
+                return message
+            except ImportError as e:
+                self.console.print(f"[red]Error: SCFM module not available: {e}[/red]")
+                return None
+            except Exception as e:
+                self.console.print(f"[red]Error preparing SCFM workflow: {str(e)}[/red]")
+                return None
+
+        else:
+            # Handle other SCFM commands generically
+            params = " ".join(parts[3:]) if len(parts) > 3 else ""
+            if params:
+                return f"bio_scfm_{command} {params}"
+            else:
+                return f"bio_scfm_{command}"
+
     def _handle_atac_command(self, parts) -> str:
         """Handle ATAC-specific commands with special logic like the original _handle_atac_command"""
         
@@ -1171,6 +1300,11 @@ BIO_COMMAND_MAP = {
     'rna_align_star': 'bio_rna_align_star',
     'rna_differential_expression': 'bio_rna_differential_expression',
     
+    # SCFM (Single Cell Foundation Model) commands
+    'scfm_init': 'bio_scfm_init',
+    'scfm_run': 'bio_scfm_run',
+    'scfm_list_models': 'bio_scfm_list_models',
+
     # ChIP-seq commands (for future use)
     'chipseq_init': 'bio_chipseq_init',
     'chipseq_call_peaks': 'bio_chipseq_call_peaks',
@@ -1204,6 +1338,9 @@ def get_bio_command_suggestions() -> list:
         '/bio rna upstream',
         '/bio GeneAgent',
         '/bio GeneAgent TP53,BRCA1,EGFR',
+        '/bio scfm init',
+        '/bio scfm run',
+        '/bio scfm list_models',
         '/bio chipseq init',  # Future
     ]
     return suggestions
