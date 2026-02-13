@@ -58,6 +58,7 @@ class BioCommandHandler:
         self.console.print("[dim]  /bio GeneAgent TP53,BRCA1,EGFR # Gene set analysis with AI[/dim]")
         self.console.print("[dim]  /bio scfm init                 # Initialize SCFM project[/dim]")
         self.console.print("[dim]  /bio scfm run ./data.h5ad      # Run SCFM analysis[/dim]")
+        self.console.print("[dim]  /bio scfm run ./data.h5ad --question 'annotate cell types'  # With user prompt[/dim]")
         self.console.print("")
     
     def _handle_bio_manager_command(self, parts) -> str:
@@ -297,7 +298,7 @@ Response format (single line):
             # Just /bio scfm - show SCFM help
             self.console.print("\n[bold]🧬 Single Cell Foundation Model (SCFM) Analysis Helper[/bold]")
             self.console.print("[dim]/bio scfm init[/dim] - Initialize SCFM analysis project")
-            self.console.print("[dim]/bio scfm run <dataset.h5ad> [--model <model_name>][/dim] - Run SCFM workflow")
+            self.console.print("[dim]/bio scfm run <dataset.h5ad> [--model <model_name>] [--question <question>][/dim] - Run SCFM workflow")
             self.console.print("[dim]/bio scfm list_models[/dim] - List available foundation models")
             self.console.print("\n[dim]Supported Models:[/dim]")
             self.console.print("[dim]  scgpt       - scGPT: single-cell Gene-level Pre-Trained model[/dim]")
@@ -309,6 +310,7 @@ Response format (single line):
             self.console.print("[dim]  /bio scfm init                                    # Initialize SCFM project[/dim]")
             self.console.print("[dim]  /bio scfm run ./data.h5ad                         # Run with auto model selection[/dim]")
             self.console.print("[dim]  /bio scfm run ./data.h5ad --model scgpt           # Run with scGPT[/dim]")
+            self.console.print("[dim]  /bio scfm run ./data.h5ad --question 'annotate T cell subtypes'  # With user prompt[/dim]")
             self.console.print("[dim]  /bio scfm list_models                             # Show available models[/dim]")
             self.console.print()
             return None
@@ -379,15 +381,23 @@ Response format (single line):
             # Parse optional flags
             extra = parts[4:] if len(parts) > 4 else []
             model = "auto"
+            question = None
             if "--model" in extra:
                 try:
                     model = extra[extra.index("--model") + 1]
                 except (IndexError, ValueError):
                     model = "auto"
+            if "--question" in extra:
+                try:
+                    question = extra[extra.index("--question") + 1]
+                except (IndexError, ValueError):
+                    question = None
 
             self.console.print(f"\n[bold cyan]🧬 Starting SCFM Analysis[/bold cyan]")
             self.console.print(f"[dim]Dataset: {dataset}[/dim]")
             self.console.print(f"[dim]Model: {model}[/dim]")
+            if question:
+                self.console.print(f"[dim]Question: {question}[/dim]")
             self.console.print("[dim]Preparing Single Cell Foundation Model pipeline...[/dim]\n")
 
             try:
@@ -395,6 +405,7 @@ Response format (single line):
                 message = generate_scfm_workflow_message(
                     dataset_path=dataset,
                     model_name=model,
+                    question=question,
                 )
                 self.console.print("[dim]Sending SCFM workflow request...[/dim]\n")
                 return message

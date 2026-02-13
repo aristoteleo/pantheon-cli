@@ -19,12 +19,14 @@ SUPPORTED_MODELS = {
 def generate_scfm_workflow_message(
     dataset_path: str,
     model_name: str = "auto",
+    question: str | None = None,
 ) -> str:
     """Create an instruction message for the LLM to run an SCFM workflow.
 
     Args:
         dataset_path: Path to .h5ad dataset.
         model_name: Foundation model to use (auto|scgpt|scbert|geneformer|scfoundation|uce).
+        question: Optional user-specified analysis question or goal.
 
     Returns:
         A multi-section prompt for the LLM to execute autonomously.
@@ -36,12 +38,21 @@ def generate_scfm_workflow_message(
         else "Model: auto (LLM will select the best model based on data characteristics)"
     )
 
+    question_block = ""
+    if question:
+        question_block = f"""
+        USER ANALYSIS GOAL:
+        {question}
+        (Tailor the entire workflow — model selection, preprocessing, and evaluation — to address this goal.)
+        """
+
     return dedent(
         f"""\
         🧬 Single Cell Foundation Model (SCFM) Analysis Pipeline
 
         Dataset: {dataset_path}
         {model_line}
+        {question_block}
 
         ⚠️ CRITICAL PYTHON ENVIRONMENT RULES:
         - PERSISTENT STATE: Python interpreter keeps variables across calls.

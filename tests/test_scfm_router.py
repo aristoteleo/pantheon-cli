@@ -127,6 +127,53 @@ class TestScfmRouting:
         result = await handler.handle_bio_command("/bio scfm unknown foo bar")
         assert result == "bio_scfm_unknown foo bar"
 
+    @pytest.mark.asyncio
+    async def test_bio_scfm_run_with_question_flag(self, handler):
+        """'/bio scfm run ./data.h5ad --question ...' should pass question to prompt."""
+        scfm_mod = _import_scfm_workflow()
+        cli_mock = MagicMock()
+        prompt_mock = MagicMock()
+        prompt_mock.scfm_workflow = scfm_mod
+        cli_mock.prompt = prompt_mock
+        with patch.dict(
+            sys.modules,
+            {
+                "pantheon_cli.cli": cli_mock,
+                "pantheon_cli.cli.prompt": prompt_mock,
+                "pantheon_cli.cli.prompt.scfm_workflow": scfm_mod,
+            },
+        ):
+            result = await handler.handle_bio_command(
+                "/bio scfm run ./data.h5ad --question identify_T_cells"
+            )
+        assert result is not None
+        assert "identify_T_cells" in result
+        assert "USER ANALYSIS GOAL" in result
+
+    @pytest.mark.asyncio
+    async def test_bio_scfm_run_with_model_and_question(self, handler):
+        """'/bio scfm run ./d.h5ad --model scgpt --question ...' passes both."""
+        scfm_mod = _import_scfm_workflow()
+        cli_mock = MagicMock()
+        prompt_mock = MagicMock()
+        prompt_mock.scfm_workflow = scfm_mod
+        cli_mock.prompt = prompt_mock
+        with patch.dict(
+            sys.modules,
+            {
+                "pantheon_cli.cli": cli_mock,
+                "pantheon_cli.cli.prompt": prompt_mock,
+                "pantheon_cli.cli.prompt.scfm_workflow": scfm_mod,
+            },
+        ):
+            result = await handler.handle_bio_command(
+                "/bio scfm run ./d.h5ad --model scgpt --question find_markers"
+            )
+        assert result is not None
+        assert "scgpt" in result
+        assert "find_markers" in result
+        assert "USER ANALYSIS GOAL" in result
+
 
 # ── Prompt template tests ────────────────────────────────────────────────
 
@@ -151,6 +198,21 @@ class TestScfmWorkflowPrompt:
         )
         assert "my_data.h5ad" in msg
         assert "geneformer" in msg
+
+    def test_generate_with_question(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(
+            dataset_path="cells.h5ad",
+            question="annotate T cell subtypes",
+        )
+        assert "cells.h5ad" in msg
+        assert "annotate T cell subtypes" in msg
+        assert "USER ANALYSIS GOAL" in msg
+
+    def test_generate_without_question(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(dataset_path="cells.h5ad")
+        assert "USER ANALYSIS GOAL" not in msg
 
     def test_supported_models_dict(self):
         mod = _import_scfm_workflow()
