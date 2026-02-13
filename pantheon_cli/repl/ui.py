@@ -6,6 +6,8 @@ from rich.markdown import Markdown
 from rich.live import Live
 from typing import List
 import json
+import os
+import webbrowser
 
 import asyncio
 import sys
@@ -1152,6 +1154,79 @@ class ReplUI:
                 self.console.print(f"Output")
                 self.console.print(f"  ⎿  {truncated_output}")
                 self.console.print()  # Add space after output
+
+        # Detect Domain Research access requests and prompt user
+        try:
+            if isinstance(result, dict) and result.get("access_requests"):
+                self._prompt_access_requests(result["access_requests"])
+        except Exception:
+            # Non-fatal UI enhancement; ignore failures
+            pass
+
+    def _prompt_access_requests(self, access_requests: list[dict]):
+        from rich.table import Table
+        from rich.prompt import Prompt
+
+        if not access_requests:
+            return
+        self.console.print("[yellow]\nSome sources may require institutional access or offer open access alternatives.[/yellow]")
+
+        table = Table(show_header=True, header_style="bold")
+        table.add_column("#", style="dim", width=3)
+        table.add_column("Title/URL", overflow="fold")
+        table.add_column("OA", style="green")
+        table.add_column("Proxy", style="cyan")
+        for i, a in enumerate(access_requests, start=1):
+            title = a.get("title") or a.get("url") or "(no title)"
+            oa = a.get("open_access_url") or ""
+            proxy = a.get("proxy_url") or ""
+            table.add_row(str(i), str(title), str(oa) if oa else "", str(proxy) if proxy else "")
+        self.console.print(table)
+
+        allow_open = bool(int(os.getenv("ALLOW_BROWSER_OPEN", "0")))
+        if not allow_open:
+            self.console.print("[dim]Set ALLOW_BROWSER_OPEN=1 to enable opening links from the CLI.[/dim]")
+            return
+
+        # Auto-open mode
+        mode = os.getenv("ACCESS_OPEN_MODE", "none").lower()
+        auto_opened = 0
+        if mode in {"oa", "proxy"}:
+            for a in list(access_requests):
+                target = a.get("open_access_url") if mode == "oa" else a.get("proxy_url")
+                if target:
+                    try:
+                        webbrowser.open(target)
+                        auto_opened += 1
+                    except Exception:
+                        pass
+            if auto_opened:
+                self.console.print(f"[green]Auto-opened {auto_opened} link(s) via '{mode}'.[/green]")
+
+        # Interactive per-item prompt for remaining
+        self.console.print("Choose actions per item: [green]o[/green]=Open OA, [cyan]p[/cyan]=Open via Proxy, [dim]s[/dim]=Skip.")
+        for idx, a in enumerate(access_requests, start=1):
+            title = a.get("title") or a.get("url") or f"Item {idx}"
+            opts = []
+            if a.get("open_access_url"):
+                opts.append("o")
+            if a.get("proxy_url"):
+                opts.append("p")
+            if not opts:
+                continue
+            default = "s"
+            choice = Prompt.ask(f"[{idx}] {title}", choices=opts + ["s"], default=default)
+            target = None
+            if choice == "o":
+                target = a.get("open_access_url")
+            elif choice == "p":
+                target = a.get("proxy_url")
+            if target:
+                try:
+                    webbrowser.open(target)
+                    self.console.print(f"[green]Opened:[/green] {target}")
+                except Exception as e:
+                    self.console.print(f"[red]Failed to open:[/red] {e}")
 
     async def print_message(self):
         """Enhanced message handler with Claude Code style formatting"""

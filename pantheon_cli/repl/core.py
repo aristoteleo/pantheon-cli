@@ -668,6 +668,10 @@ class Repl(ReplUI):
                 self._handle_model_command(current_message.strip())
                 current_message = None  # Reset to get new input
                 continue
+            elif current_message.strip().startswith("/reasoning"):
+                self._handle_reasoning_command(current_message.strip())
+                current_message = None
+                continue
             elif current_message.strip().startswith("/api-key"):
                 self._handle_api_key_command(current_message.strip())
                 current_message = None  # Reset to get new input
@@ -882,6 +886,18 @@ class Repl(ReplUI):
         except Exception as e:
             self.console.print(f"[red]Error handling model command: {str(e)}[/red]")
         self.console.print()  # Add spacing
+
+    def _handle_reasoning_command(self, command: str):
+        """Handle /reasoning commands in REPL"""
+        try:
+            if hasattr(self.agent, '_model_manager') and self.agent._model_manager:
+                result = self.agent._model_manager.handle_reasoning_command(command)
+                self.console.print(result)
+            else:
+                self.console.print("[red]Reasoning manager not available. Please restart with the CLI.[/red]")
+        except Exception as e:
+            self.console.print(f"[red]Error handling reasoning command: {str(e)}[/red]")
+        self.console.print()
 
     def _handle_api_key_command(self, command: str):
         """Handle /api-key commands in REPL"""

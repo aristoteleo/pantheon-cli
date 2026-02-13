@@ -82,11 +82,17 @@ PROVIDER_API_KEYS = {
     # Kimi/Moonshot Models - Latest K2 Series
     "kimi-k2-0711-preview": "MOONSHOT_API_KEY",
     "kimi-k2-turbo-preview": "MOONSHOT_API_KEY",
+    "moonshot/kimi-k2-0711-preview": "MOONSHOT_API_KEY",
+    "moonshot/kimi-k2-turbo-preview": "MOONSHOT_API_KEY",
     # Kimi/Moonshot Models - Latest Series
     "kimi-latest": "MOONSHOT_API_KEY",
     "kimi-latest-8k": "MOONSHOT_API_KEY",
     "kimi-latest-32k": "MOONSHOT_API_KEY",
     "kimi-latest-128k": "MOONSHOT_API_KEY",
+    "moonshot/kimi-latest": "MOONSHOT_API_KEY",
+    "moonshot/kimi-latest-8k": "MOONSHOT_API_KEY",
+    "moonshot/kimi-latest-32k": "MOONSHOT_API_KEY",
+    "moonshot/kimi-latest-128k": "MOONSHOT_API_KEY",
     # Kimi/Moonshot Models - Moonshot V1 Series
     "moonshot-v1-8k": "MOONSHOT_API_KEY",
     "moonshot-v1-32k": "MOONSHOT_API_KEY",
@@ -96,6 +102,7 @@ PROVIDER_API_KEYS = {
     "moonshot-v1-128k-vision-preview": "MOONSHOT_API_KEY",
     # Kimi/Moonshot Models - Thinking Series
     "kimi-thinking-preview": "MOONSHOT_API_KEY",
+    "moonshot/kimi-thinking-preview": "MOONSHOT_API_KEY",
     # Kimi/Moonshot Models - Legacy
     "moonshot/moonshot-v1-8k": "MOONSHOT_API_KEY",
     "moonshot/moonshot-v1-32k": "MOONSHOT_API_KEY",
@@ -248,10 +255,23 @@ class APIKeyManager:
     
     def sync_environment_variables(self):
         """Sync cached API keys and endpoints to environment variables"""
+        # Default API base URLs for providers
+        default_api_bases = {
+            "MOONSHOT_API_KEY": "https://api.moonshot.cn/v1",
+            "DEEPSEEK_API_KEY": "https://api.deepseek.com/v1",
+            "QWEN_API_KEY": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "ZAI_API_KEY": "https://open.bigmodel.cn/api/paas/v4",
+        }
+
         for provider, api_key in self.api_keys_cache.items():
             if api_key:  # Only set non-empty keys
                 os.environ[provider] = api_key
-        
+
+                # Set default API base if not already configured
+                base_env_var = provider.replace("_API_KEY", "_API_BASE")
+                if provider in default_api_bases and base_env_var not in os.environ:
+                    os.environ[base_env_var] = default_api_bases[provider]
+
         for provider, endpoint in self.endpoints_cache.items():
             if endpoint:  # Only set non-empty endpoints
                 env_var = f"{provider.upper()}_API_BASE"
@@ -522,7 +542,13 @@ class APIKeyManager:
             
             if self.save_api_key(provider_key, api_key, save_global=save_global):
                 location = "globally" if save_global else "locally"
-                return f"✅ {PROVIDER_NAMES[provider_key]} API key saved {location} and set successfully!"
+                message = f"✅ {PROVIDER_NAMES[provider_key]} API key saved {location} and set successfully!"
+                if provider_key == "OPENAI_API_KEY":
+                    message += (
+                        "\n🧠 Planning to use GPT-5 or OpenAI o-series reasoning models? "
+                        "Choose the effort level with `/reasoning effort <minimal|low|medium|high>` before your next task."
+                    )
+                return message
             else:
                 return f"❌ Failed to save {PROVIDER_NAMES[provider_key]} API key. Check file permissions."
         else:

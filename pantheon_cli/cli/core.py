@@ -518,7 +518,14 @@ async def main(
     ext_dir: str = "./ext_toolsets",
     version: bool = False,
     build_rag: Optional[str] = None,
-    rag_config: Optional[str] = None
+    rag_config: Optional[str] = None,
+    # Access & institution options
+    access_open: str = "none",  # one of: none, oa, proxy
+    institution_proxy_url: Optional[str] = None,
+    save_proxy_url: bool = False,
+    mode: Optional[str] = None,
+    dev_goal: Optional[str] = None,
+    max_iters: int = 10,
 ):
     """
     Start the Pantheon CLI assistant.
@@ -590,16 +597,12 @@ async def main(
         return
     
     console = Console()
-    class LoguruRichHandler(RichHandler):
-        def emit(self, record):
-            extra = getattr(record, "extra", {})
-            if "rich" in extra:
-                console.print(extra["rich"])
-            else:
-                console.print(record.msg)
 
-    logger.configure(handlers=[{"sink":LoguruRichHandler(), "format":"{message}", "level":"INFO"}])
-    logger.disable("executor.engine")
+    # Disable executor.engine logging if the logger supports it
+    try:
+        logger.disable("executor.engine")
+    except (AttributeError, TypeError):
+        pass
 
     # Initialize managers locally
     
@@ -625,6 +628,44 @@ async def main(
     
     # Ensure API keys are synced to environment variables
     api_key_manager.sync_environment_variables()
+
+    # Load and apply user preferences (proxy URL, access open mode)
+    import json as _json
+    prefs = {}
+    if config_file_path.exists():
+        try:
+            with open(config_file_path, "r") as _f:
+                cfg = _json.load(_f) or {}
+                prefs = cfg.get("prefs", {}) or {}
+        except Exception:
+            prefs = {}
+
+    # Determine institution proxy URL
+    proxy_url_effective = institution_proxy_url or prefs.get("institution_proxy_url")
+    if proxy_url_effective:
+        import os as _os
+        _os.environ["INSTITUTION_PROXY_URL"] = proxy_url_effective
+        # Persist if requested
+        if institution_proxy_url and save_proxy_url:
+            try:
+                cfg = {}
+                if config_file_path.exists():
+                    with open(config_file_path, "r") as _f:
+                        cfg = _json.load(_f) or {}
+                cfg.setdefault("prefs", {})
+                cfg["prefs"]["institution_proxy_url"] = institution_proxy_url
+                # Touch file and write with restrictive perms
+                config_file_path.touch(mode=0o600, exist_ok=True)
+                with open(config_file_path, "w") as _f:
+                    _json.dump(cfg, _f, indent=2)
+                print(f"💾 Saved institution proxy URL to {config_file_path}")
+            except Exception as e:
+                print(f"[Warning] Failed to save proxy URL: {e}")
+
+    # Apply access open mode
+    if access_open in {"oa", "proxy"}:
+        import os as _os
+        _os.environ["ACCESS_OPEN_MODE"] = access_open
     
     # Set model if provided
     if model is not None:
@@ -755,7 +796,25 @@ async def main(
     
     if bio_toolset:
         agent.toolset(bio_toolset)
-    
+
+    if isinstance(mode, str) and mode.lower() in {"devloop", "dev-loop", "plan-code-review"}:
+        from .modes.dev_loop import run_devloop
+
+        if not dev_goal:
+            print("❌ devloop mode requires --dev_goal '<your goal>'")
+            return
+
+        result = await run_devloop(
+            agent=agent,
+            console=console,
+            workspace_path=workspace_path,
+            goal=dev_goal,
+            max_iters=int(max_iters or 10),
+        )
+        status = "✅ Success" if result.success else "⚠️ Incomplete"
+        print(f"\n{status} after {result.iterations} iterations: {result.final_message}")
+        return
+
     if not disable_ext:
         # Register external toolsets if available
         if ext_loader:

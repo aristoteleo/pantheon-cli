@@ -2,7 +2,7 @@
 
 import json
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Tuple
 
 from .api_key_manager import APIKeyManager
 
@@ -111,6 +111,8 @@ AVAILABLE_MODELS = {
     "ollama/llama3.2": "Llama 3.2 (Local)",
 }
 
+REASONING_EFFORT_LEVELS = {"minimal", "low", "medium", "high"}
+
 
 class ModelManager:
     """Manages model selection and switching for Pantheon CLI"""
@@ -120,8 +122,9 @@ class ModelManager:
         self.api_key_manager = api_key_manager
         self.current_model = "gpt-5"
         self.current_agent = None
+        self.reasoning_effort: Optional[str] = None
         self._load_model_config()
-    
+
     def _load_model_config(self) -> str:
         """Load saved model configuration"""
         if self.config_file_path and self.config_file_path.exists():
@@ -129,10 +132,13 @@ class ModelManager:
                 with open(self.config_file_path, 'r') as f:
                     config = json.load(f)
                     self.current_model = config.get('model', 'gpt-4.1')
+                    effort = config.get('reasoning_effort')
+                    if isinstance(effort, str) and effort.lower() in REASONING_EFFORT_LEVELS:
+                        self.reasoning_effort = effort.lower()
             except Exception:
                 pass
         return self.current_model
-    
+
     def save_model_config(self, model: str):
         """Save current model configuration"""
         if not self.config_file_path:
@@ -147,18 +153,26 @@ class ModelManager:
                     config['model'] = model
             except Exception:
                 pass
-        
+
+        if self.reasoning_effort:
+            config['reasoning_effort'] = self.reasoning_effort
+        else:
+            config.pop('reasoning_effort', None)
+
         try:
             with open(self.config_file_path, 'w') as f:
                 json.dump(config, f, indent=2)
         except Exception as e:
             print(f"Warning: Could not save model config: {e}")
-    
+
     def set_agent(self, agent):
         """Set the current agent reference for model updates"""
         self.current_agent = agent
-    
-    
+        if hasattr(self.current_agent, "set_reasoning_effort"):
+            applied_effort, _ = self._resolve_reasoning_effort_for_model(self.current_model)
+            self.current_agent.set_reasoning_effort(applied_effort)
+
+
     def switch_model(self, new_model: str) -> str:
         """Switch to a new model"""
         if new_model not in AVAILABLE_MODELS:
@@ -172,7 +186,7 @@ class ModelManager:
         
         old_model = self.current_model
         self.current_model = new_model
-        
+
         # Update agent's model
         if self.current_agent:
             if isinstance(new_model, str):
@@ -181,16 +195,50 @@ class ModelManager:
                     self.current_agent.models.append("gpt-5-mini")
             else:
                 self.current_agent.models = new_model
-        
+
+            if hasattr(self.current_agent, "set_reasoning_effort"):
+                applied_effort, inactive_preference = self._resolve_reasoning_effort_for_model(new_model)
+                self.current_agent.set_reasoning_effort(applied_effort)
+
         # Save configuration
         self.save_model_config(new_model)
-        
-        return f"✅ Switched from {AVAILABLE_MODELS.get(old_model, old_model)} to {AVAILABLE_MODELS[new_model]} ({new_model})\nℹ️ {key_message}"
-    
+
+        extra_hint = ""
+        allowed_levels = self._get_allowed_reasoning_levels(new_model)
+        if allowed_levels:
+            levels_str = "/".join(sorted(allowed_levels))
+            applied_effort, inactive_preference = self._resolve_reasoning_effort_for_model(new_model)
+            if inactive_preference and applied_effort:
+                extra_hint = (
+                    "\n🧠 This model supports reasoning effort"
+                    f" (levels: {levels_str})."
+                    f"\n   Requested '{inactive_preference}' isn't supported; currently using {applied_effort}."
+                    "\n   Adjust with `/reasoning effort <minimal|low|medium|high>` before your next request."
+                )
+            else:
+                display_effort = self.reasoning_effort or applied_effort or "medium"
+                descriptor = "default" if self.reasoning_effort is None else "active"
+                extra_hint = (
+                    "\n🧠 This model supports reasoning effort"
+                    f" (levels: {levels_str})."
+                    f"\n   Current {descriptor} setting: {display_effort}."
+                    "\n   Adjust with `/reasoning effort <minimal|low|medium|high>` before your next request."
+                )
+        elif self.reasoning_effort:
+            extra_hint = (
+                f"\n⚠️ Reasoning effort '{self.reasoning_effort}' is stored but this model does not"
+                " support custom effort levels."
+            )
+
+        return (
+            f"✅ Switched from {AVAILABLE_MODELS.get(old_model, old_model)} to {AVAILABLE_MODELS[new_model]} ({new_model})"
+            f"\nℹ️ {key_message}{extra_hint}"
+        )
+
     def list_models(self) -> str:
         """List all available models with API key status"""
         result = "🤖 Available Models (Top 3 per provider):\n\n"
-        
+
         # Group models by provider with correct categorization
         providers = {}
         for model_id, description in AVAILABLE_MODELS.items():
@@ -234,8 +282,26 @@ class ModelManager:
                     key_status = " ✅"  # Checkmark for available key
                 else:
                     key_status = " ❌"  # X for missing key
-                
-                result += f"  • {model_id}: {description}{key_status}{current_indicator}\n"
+
+                reasoning_hint = ""
+                allowed_levels = self._get_allowed_reasoning_levels(model_id)
+                if allowed_levels:
+                    levels_str = "/".join(sorted(allowed_levels))
+                    if model_id == self.current_model:
+                        applied_effort, inactive_preference = self._resolve_reasoning_effort_for_model(model_id)
+                        if inactive_preference and applied_effort:
+                            reasoning_hint = (
+                                f" (effort: {self.reasoning_effort} inactive; using {applied_effort}; levels: {levels_str})"
+                            )
+                        else:
+                            display_effort = self.reasoning_effort or applied_effort or "medium"
+                            reasoning_hint = f" (effort: {display_effort}; levels: {levels_str})"
+                    else:
+                        reasoning_hint = f" (supports effort levels: {levels_str})"
+
+                result += (
+                    f"  • {model_id}: {description}{key_status}{current_indicator}{reasoning_hint}\n"
+                )
             
             # Show count if there are more models
             if len(models) > 3:
@@ -247,13 +313,130 @@ class ModelManager:
         result += f"📝 Current: {AVAILABLE_MODELS.get(self.current_model, self.current_model)} ({self.current_model})"
         
         return result
-    
+
     def get_current_model_status(self) -> str:
         """Get current model with API key status"""
         key_available, key_message = self.api_key_manager.check_api_key_for_model(self.current_model)
         key_status = "✅" if key_available else "❌"
-        return f"📱 Current Model: {AVAILABLE_MODELS.get(self.current_model, self.current_model)} ({self.current_model})\n{key_status} {key_message}"
-    
+        allowed_levels = self._get_allowed_reasoning_levels()
+        reasoning_info = ""
+        if allowed_levels:
+            applied_effort, inactive_preference = self._resolve_reasoning_effort_for_model()
+            levels_str = "/".join(sorted(allowed_levels))
+            if inactive_preference and applied_effort:
+                reasoning_line = (
+                    f"🧠 Reasoning effort: {inactive_preference} (inactive; using {applied_effort})."
+                )
+            else:
+                if self.reasoning_effort:
+                    reasoning_line = f"🧠 Reasoning effort: {self.reasoning_effort}."
+                else:
+                    reasoning_line = f"🧠 Reasoning effort: {applied_effort} (default)."
+            reasoning_info = (
+                f"\n{reasoning_line}\n   Supported levels: {levels_str}."
+                "\n   Adjust with `/reasoning effort <minimal|low|medium|high>`."
+            )
+        elif self.reasoning_effort:
+            reasoning_info = (
+                f"\n⚠️ Stored reasoning effort '{self.reasoning_effort}' is inactive"
+                " for this model (no custom effort support)."
+            )
+
+        return (
+            f"📱 Current Model: {AVAILABLE_MODELS.get(self.current_model, self.current_model)} ({self.current_model})"
+            f"\n{key_status} {key_message}{reasoning_info}"
+        )
+
+    def _flatten_model_ids(self, model: Optional[str]) -> list[str]:
+        if model is None:
+            return []
+        if isinstance(model, str):
+            return [model]
+        if isinstance(model, (list, tuple)):
+            result: list[str] = []
+            for item in model:
+                result.extend(self._flatten_model_ids(item))
+            return result
+        return [str(model)]
+
+    @staticmethod
+    def _normalize_model_name(model_id: str) -> str:
+        normalized = str(model_id)
+        if "/" in normalized:
+            parts = normalized.split("/", 1)
+            if len(parts) == 2:
+                normalized = parts[1]
+        return normalized
+
+    def _allowed_levels_for_model_id(self, model_id: str) -> set[str]:
+        normalized = self._normalize_model_name(model_id)
+        if normalized.startswith("gpt-5"):
+            return {"minimal", "low", "medium", "high"}
+        if normalized.startswith(("o1", "o3", "o4")):
+            return {"low", "medium", "high"}
+        return set()
+
+    def _get_allowed_reasoning_levels(self, model: Optional[str] = None) -> set[str]:
+        allowed: set[str] = set()
+        for model_id in self._flatten_model_ids(model if model is not None else self.current_model):
+            allowed |= self._allowed_levels_for_model_id(model_id)
+        return allowed
+
+    def _resolve_reasoning_effort_for_model(self, model: Optional[str] = None) -> Tuple[Optional[str], Optional[str]]:
+        allowed_levels = self._get_allowed_reasoning_levels(model)
+        if not allowed_levels:
+            return None, None
+        preferred = self.reasoning_effort.lower() if isinstance(self.reasoning_effort, str) else None
+        if preferred and preferred in allowed_levels:
+            return preferred, None
+        fallback = "medium" if "medium" in allowed_levels else sorted(allowed_levels)[0]
+        return fallback, preferred
+
+    def supports_reasoning_effort(self, model: Optional[str] = None) -> bool:
+        """Check if reasoning effort is supported for the given model"""
+        return bool(self._get_allowed_reasoning_levels(model))
+
+    def set_reasoning_effort(self, effort: Optional[str]) -> str:
+        """Update reasoning effort and sync to agent/config"""
+        allowed_levels = self._get_allowed_reasoning_levels()
+
+        if effort is None:
+            self.reasoning_effort = None
+        else:
+            effort_lower = effort.lower()
+            if effort_lower not in REASONING_EFFORT_LEVELS:
+                allowed = ", ".join(sorted(REASONING_EFFORT_LEVELS))
+                return f"❌ Invalid effort '{effort}'. Choose from: {allowed}."
+            if not allowed_levels:
+                return "⚠️ Current model does not support reasoning effort adjustments."
+            if effort_lower not in allowed_levels:
+                allowed = "/".join(sorted(allowed_levels))
+                return (
+                    f"⚠️ Effort '{effort_lower}' not supported by {self.current_model}."
+                    f" Available levels: {allowed}."
+                )
+            self.reasoning_effort = effort_lower
+
+        if self.current_agent and hasattr(self.current_agent, "set_reasoning_effort"):
+            applied_effort, _ = self._resolve_reasoning_effort_for_model()
+            self.current_agent.set_reasoning_effort(applied_effort)
+
+        # Persist new value alongside model configuration
+        self.save_model_config(self.current_model)
+
+        allowed_levels = self._get_allowed_reasoning_levels()
+        if self.reasoning_effort:
+            return (
+                f"✅ Reasoning effort set to {self.reasoning_effort}."
+                f" Supported levels: {'/'.join(sorted(allowed_levels))}."
+            )
+        if allowed_levels:
+            return (
+                "✅ Reasoning effort cleared. Using default level "
+                f"{self._resolve_reasoning_effort_for_model()[0]} for current model."
+            )
+        return "✅ Reasoning effort cleared (current model does not support custom effort)."
+
     def handle_model_command(self, command: str) -> str:
         """Handle /model commands"""
         parts = command.strip().split()
@@ -279,3 +462,58 @@ class ModelManager:
                 return f"🔍 **Multiple matches found:**\n{match_list}\n\n💡 Use the full model ID: `/model <model_id>`"
             else:
                 return f"❌ Model '{subcommand}' not found. Use `/model list` to see available models."
+
+    def handle_reasoning_command(self, command: str) -> str:
+        """Handle /reasoning commands"""
+        parts = command.strip().split()
+
+        if len(parts) == 1 or parts[1].lower() in {"help", "?"}:
+            return (
+                "🧠 Reasoning Effort Control:\n"
+                "  /reasoning status       - Show current effort and levels\n"
+                "  /reasoning effort high  - Set effort to high\n"
+                "  /reasoning minimal      - Shortcut to minimal (GPT-5 only)\n"
+                "  /reasoning clear        - Remove custom setting\n"
+                "\n💡 Supported models: GPT-5 reasoning models (minimal/low/medium/high)"
+                " and OpenAI o-series (low/medium/high)."
+            )
+
+        subcommand = parts[1].lower()
+
+        if subcommand == "status" or subcommand == "current":
+            allowed_levels = self._get_allowed_reasoning_levels()
+            applied_effort, inactive_preference = self._resolve_reasoning_effort_for_model()
+            if allowed_levels:
+                levels_str = "/".join(sorted(allowed_levels))
+                if inactive_preference and applied_effort:
+                    current_desc = f"{inactive_preference} (inactive; using {applied_effort})"
+                elif self.reasoning_effort:
+                    current_desc = self.reasoning_effort
+                elif applied_effort:
+                    current_desc = f"{applied_effort} (default)"
+                else:
+                    current_desc = "default"
+                return (
+                    f"🧠 Reasoning effort: {current_desc}."
+                    f" Supported levels: {levels_str}."
+                )
+            return "🧠 Reasoning effort: not supported by current model."
+
+        if subcommand == "clear":
+            return self.set_reasoning_effort(None)
+
+        if subcommand in REASONING_EFFORT_LEVELS:
+            if not self.supports_reasoning_effort():
+                return "⚠️ Current model does not support reasoning effort adjustments."
+            return self.set_reasoning_effort(subcommand)
+
+        if subcommand in {"effort", "set"} and len(parts) > 2:
+            level = parts[2].lower()
+            if level not in REASONING_EFFORT_LEVELS:
+                allowed = ", ".join(sorted(REASONING_EFFORT_LEVELS))
+                return f"❌ Invalid effort '{level}'. Choose from: {allowed}."
+            if not self.supports_reasoning_effort():
+                return "⚠️ Current model does not support reasoning effort adjustments."
+            return self.set_reasoning_effort(level)
+
+        return "❌ Unknown /reasoning command. Use `/reasoning help` for options."
