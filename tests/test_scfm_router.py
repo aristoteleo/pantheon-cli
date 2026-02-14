@@ -222,6 +222,29 @@ class TestScfmWorkflowPrompt:
         assert "scfoundation" in mod.SUPPORTED_MODELS
         assert "uce" in mod.SUPPORTED_MODELS
 
+    def test_analysis_types_dict(self):
+        mod = _import_scfm_workflow()
+        assert hasattr(mod, "ANALYSIS_TYPES")
+        assert "comprehensive" in mod.ANALYSIS_TYPES
+        assert "annotation" in mod.ANALYSIS_TYPES
+        assert "trajectory" in mod.ANALYSIS_TYPES
+
+    def test_generate_with_analysis_type(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(
+            dataset_path="cells.h5ad",
+            analysis_type="annotation",
+        )
+        assert "REQUESTED ANALYSIS TYPE" in msg
+        assert "annotation" in msg
+
+    def test_prompt_has_two_tier_strategy(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(dataset_path="cells.h5ad")
+        assert "TIER 1" in msg
+        assert "TIER 2" in msg
+        assert "SingleCellAgent" in msg
+
 
 # ── Integration with existing routing ────────────────────────────────────
 
@@ -278,6 +301,7 @@ class TestScfmCommandMap:
         assert "scfm_init" in BIO_COMMAND_MAP
         assert "scfm_run" in BIO_COMMAND_MAP
         assert "scfm_list_models" in BIO_COMMAND_MAP
+        assert "scfm_list_analysis_types" in BIO_COMMAND_MAP
 
     def test_scfm_in_suggestions(self):
         from pantheon_cli.repl.bio_handler import get_bio_command_suggestions
@@ -286,3 +310,4 @@ class TestScfmCommandMap:
         assert "/bio scfm init" in suggestions
         assert "/bio scfm run" in suggestions
         assert "/bio scfm list_models" in suggestions
+        assert "/bio scfm list_analysis_types" in suggestions

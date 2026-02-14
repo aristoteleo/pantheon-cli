@@ -118,6 +118,51 @@ class TestScfmPromptTemplate:
         expected = {"scgpt", "scbert", "geneformer", "scfoundation", "uce"}
         assert set(mod.SUPPORTED_MODELS.keys()) == expected
 
+    def test_analysis_types_dict_exists(self):
+        mod = _import_scfm_workflow()
+        assert hasattr(mod, "ANALYSIS_TYPES")
+        expected_types = {
+            "comprehensive", "annotation", "trajectory", "differential",
+            "visualization", "qc", "clustering", "batch_integration",
+            "communication", "grn", "drug", "metacell", "custom",
+        }
+        assert set(mod.ANALYSIS_TYPES.keys()) == expected_types
+
+    def test_analysis_type_embedded_in_prompt(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(
+            dataset_path="x.h5ad", analysis_type="annotation"
+        )
+        assert "REQUESTED ANALYSIS TYPE" in msg
+        assert "annotation" in msg
+
+    def test_analysis_type_absent_when_none(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
+        assert "REQUESTED ANALYSIS TYPE" not in msg
+
+    def test_analysis_type_invalid_not_embedded(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(
+            dataset_path="x.h5ad", analysis_type="nonexistent_type"
+        )
+        assert "REQUESTED ANALYSIS TYPE" not in msg
+
+    def test_prompt_mentions_singlecellagent_tool(self):
+        """Prompt should reference the SingleCellAgent tool for TIER 1 strategy."""
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
+        assert "SingleCellAgent" in msg
+        assert "TIER 1" in msg
+        assert "TIER 2" in msg
+
+    def test_prompt_mentions_omicverse_methods(self):
+        """Prompt should reference OmicVerse annotation methods."""
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
+        assert "OmicVerse" in msg
+        assert "pySCSA" in msg
+
 
 # ===========================================================================
 # 2. BioCommandHandler – SCFM Routing
@@ -203,6 +248,53 @@ class TestScfmCommandRouting:
         assert "auto" in result.lower()
 
     @pytest.mark.asyncio
+    async def test_scfm_run_analysis_type_flag_forwarded(self, handler):
+        with _patch_scfm_modules():
+            result = await handler.handle_bio_command(
+                "/bio scfm run ./d.h5ad --analysis_type annotation"
+            )
+        assert "REQUESTED ANALYSIS TYPE" in result
+        assert "annotation" in result
+
+    @pytest.mark.asyncio
+    async def test_scfm_run_all_three_flags(self, handler):
+        with _patch_scfm_modules():
+            result = await handler.handle_bio_command(
+                "/bio scfm run ./d.h5ad --model scgpt --question find_DEGs --analysis_type differential"
+            )
+        assert "scgpt" in result
+        assert "find_DEGs" in result
+        assert "REQUESTED ANALYSIS TYPE" in result
+        assert "differential" in result
+
+    @pytest.mark.asyncio
+    async def test_scfm_list_analysis_types_returns_none(self, handler):
+        with _patch_scfm_modules():
+            result = await handler.handle_bio_command("/bio scfm list_analysis_types")
+        assert result is None
+        printed = " ".join(str(c) for c in handler.console.print.call_args_list)
+        assert "comprehensive" in printed
+        assert "annotation" in printed
+        assert "trajectory" in printed
+
+    @pytest.mark.asyncio
+    async def test_scfm_help_mentions_analysis_type(self, handler):
+        result = await handler.handle_bio_command("/bio scfm")
+        assert result is None
+        printed = " ".join(str(c) for c in handler.console.print.call_args_list)
+        assert "analysis_type" in printed
+
+    @pytest.mark.asyncio
+    async def test_scfm_list_models_shows_omicverse_methods(self, handler):
+        result = await handler.handle_bio_command("/bio scfm list_models")
+        assert result is None
+        printed = " ".join(str(c) for c in handler.console.print.call_args_list)
+        assert "pySCSA" in printed
+        assert "gptcelltype" in printed
+        assert "CellVote" in printed
+        assert "OmicVerse" in printed
+
+    @pytest.mark.asyncio
     async def test_scfm_unknown_subcommand_falls_through(self, handler):
         result = await handler.handle_bio_command("/bio scfm foobar")
         assert result is not None
@@ -285,7 +377,7 @@ class TestScfmCommandMapCompleteness:
     """Ensure BIO_COMMAND_MAP and suggestions include all SCFM entries."""
 
     def test_command_map_has_all_scfm_keys(self):
-        expected_keys = {"scfm_init", "scfm_run", "scfm_list_models"}
+        expected_keys = {"scfm_init", "scfm_run", "scfm_list_models", "scfm_list_analysis_types"}
         assert expected_keys.issubset(set(BIO_COMMAND_MAP.keys()))
 
     def test_suggestions_contain_scfm_commands(self):
@@ -293,6 +385,7 @@ class TestScfmCommandMapCompleteness:
         assert "/bio scfm init" in suggestions
         assert "/bio scfm run" in suggestions
         assert "/bio scfm list_models" in suggestions
+        assert "/bio scfm list_analysis_types" in suggestions
 
     def test_suggestions_list_is_not_empty(self):
         suggestions = get_bio_command_suggestions()
@@ -497,3 +590,26 @@ class TestScfmEndToEnd:
 
         # Agent needs environment rules
         assert "PERSISTENT STATE" in prompt
+
+        # Agent needs two-tier tool selection strategy
+        assert "TIER 1" in prompt
+        assert "TIER 2" in prompt
+        assert "SingleCellAgent" in prompt
+
+    @pytest.mark.asyncio
+    async def test_full_workflow_with_analysis_type(self, handler):
+        """Simulate user using --analysis_type for OmicVerse-based analysis."""
+        with _patch_scfm_modules():
+            prompt = await handler.handle_bio_command(
+                "/bio scfm run ./pbmc3k.h5ad --analysis_type trajectory --question pseudotime"
+            )
+        assert prompt is not None
+        assert "REQUESTED ANALYSIS TYPE" in prompt
+        assert "trajectory" in prompt
+        assert "pseudotime" in prompt
+        assert "SingleCellAgent" in prompt
+
+        mock_agent = MagicMock()
+        mock_agent.run = AsyncMock(return_value="Trajectory analysis complete.")
+        response = await mock_agent.run(prompt)
+        assert "complete" in response.lower()
