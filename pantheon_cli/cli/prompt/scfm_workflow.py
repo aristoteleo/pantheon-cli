@@ -1,12 +1,16 @@
 """Prompt generator for SCFM (Single Cell Foundation Model) workflows.
 
-Generates concise user-intent messages that let the Agent's LLM
-autonomously discover and call the registered SingleCellAgent tool
-(backed by OmicVerse) or use run_python_code for direct foundation-model
-operations (scGPT, Geneformer, etc.).
+The CLI accepts free-form natural language from the user and passes it
+directly to the Pantheon Agent.  The Agent's LLM router inspects its
+registered tools (SingleCellAgent, run_python_code, etc.) and
+autonomously selects the right scFM and analysis parameters.
+
+This module only adds minimal scFM context so the router knows the
+request is in the single-cell foundation model domain.
 """
 
 
+# Reference catalogues — kept for /bio scfm list_models and list_analysis_types
 SUPPORTED_MODELS = {
     "scgpt": "scGPT - Generative pre-trained transformer for single-cell",
     "scbert": "scBERT - BERT-based cell type annotation",
@@ -33,46 +37,25 @@ ANALYSIS_TYPES = {
 }
 
 
-def generate_scfm_workflow_message(
-    dataset_path: str,
-    model_name: str = "auto",
-    question: str | None = None,
-    analysis_type: str | None = None,
-) -> str:
-    """Create a concise user-intent message for scFM analysis.
+def generate_scfm_workflow_message(user_query: str) -> str:
+    """Wrap the user's natural-language request with scFM context.
 
-    The message expresses what the user wants and lets the Agent's LLM
-    autonomously select the appropriate tools (SingleCellAgent,
-    run_python_code, etc.) based on its registered tool descriptions.
+    The Pantheon Agent's LLM router will read this message, recognise
+    the scFM intent, and autonomously select the appropriate tool
+    (SingleCellAgent, run_python_code, etc.) and parameters.
 
     Args:
-        dataset_path: Path to .h5ad dataset.
-        model_name: Foundation model preference
-            (auto|scgpt|scbert|geneformer|scfoundation|uce).
-        question: Optional user-specified analysis question or goal.
-        analysis_type: Optional analysis type
-            (e.g. annotation, trajectory, comprehensive).
+        user_query: The user's free-form natural-language request,
+            e.g. "annotate cell types in pbmc3k.h5ad using scGPT".
 
     Returns:
-        A concise intent message for the LLM.
+        A message for the Agent that preserves the user's intent and
+        adds minimal scFM context for the router.
     """
-    parts = [
-        f"Run a Single Cell Foundation Model (SCFM) analysis on dataset: {dataset_path}"
-    ]
-
-    if model_name != "auto":
-        parts.append(f"Model: {model_name}")
-    else:
-        parts.append(
-            "Model: auto — select the best foundation model based on data characteristics."
-        )
-
-    if analysis_type and analysis_type in ANALYSIS_TYPES:
-        parts.append(
-            f"Analysis type: {analysis_type} — {ANALYSIS_TYPES[analysis_type]}"
-        )
-
-    if question:
-        parts.append(f"User analysis goal: {question}")
-
-    return "\n".join(parts)
+    return (
+        f"[scFM request] {user_query}\n"
+        "\n"
+        "Use the registered SingleCellAgent tool or run_python_code to "
+        "handle this single-cell foundation model request. Select the "
+        "appropriate scFM model and analysis type based on the user's intent."
+    )
