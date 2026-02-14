@@ -4,6 +4,10 @@ Validates the full path: user command -> REPL -> BioCommandHandler -> scfm_workf
 prompt generation -> agent message dispatch.  All external dependencies (pantheon
 Agent, heavy toolsets) are mocked so the tests run without installing the full
 pantheon stack.
+
+The prompt is now a concise user-intent message (not a multi-phase instruction
+manual).  The Agent's LLM is expected to recognise the request and call the
+registered SingleCellAgent tool autonomously.
 """
 
 import importlib
@@ -67,15 +71,12 @@ def handler():
 
 
 class TestScfmPromptTemplate:
-    """Verify generate_scfm_workflow_message produces correct, complete prompts."""
+    """Verify generate_scfm_workflow_message produces correct, concise prompts."""
 
-    def test_auto_model_includes_all_phases(self):
+    def test_auto_model_contains_dataset_and_auto(self):
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(dataset_path="pbmc3k.h5ad")
         assert "pbmc3k.h5ad" in msg
-        assert "PHASE 0" in msg
-        assert "PHASE 1" in msg
-        assert "PHASE 2" in msg
         assert "auto" in msg.lower()
 
     def test_specific_model_embedded(self):
@@ -85,33 +86,38 @@ class TestScfmPromptTemplate:
                 dataset_path="cells.h5ad", model_name=model
             )
             assert model in msg
-            # 'auto' should NOT appear when a specific model is given
-            assert "auto" not in msg.split("Model:")[1].split("\n")[0].lower()
 
     def test_question_block_present_when_provided(self):
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(
             dataset_path="x.h5ad", question="annotate T cells"
         )
-        assert "USER ANALYSIS GOAL" in msg
+        assert "User analysis goal" in msg
         assert "annotate T cells" in msg
 
     def test_question_block_absent_when_none(self):
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "USER ANALYSIS GOAL" not in msg
+        assert "User analysis goal" not in msg
 
-    def test_prompt_contains_environment_rules(self):
+    def test_prompt_is_concise(self):
+        """The generated prompt should be concise, not a verbose instruction manual."""
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "PERSISTENT STATE" in msg
-        assert "MEMORY OPTIMIZATION" in msg
+        # Should NOT contain verbose instruction phases
+        assert "PHASE 0" not in msg
+        assert "PHASE 1" not in msg
+        assert "PHASE 2" not in msg
+        assert "TIER 1" not in msg
+        assert "TIER 2" not in msg
+        assert "PERSISTENT STATE" not in msg
+        # Should be short
+        assert len(msg) < 500
 
-    def test_prompt_contains_todo_instructions(self):
+    def test_prompt_mentions_scfm(self):
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "show_todos()" in msg
-        assert "mark_task_done" in msg
+        assert "SCFM" in msg or "Foundation Model" in msg
 
     def test_supported_models_completeness(self):
         mod = _import_scfm_workflow()
@@ -133,35 +139,33 @@ class TestScfmPromptTemplate:
         msg = mod.generate_scfm_workflow_message(
             dataset_path="x.h5ad", analysis_type="annotation"
         )
-        assert "REQUESTED ANALYSIS TYPE" in msg
+        assert "Analysis type" in msg
         assert "annotation" in msg
 
     def test_analysis_type_absent_when_none(self):
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "REQUESTED ANALYSIS TYPE" not in msg
+        assert "Analysis type" not in msg
 
     def test_analysis_type_invalid_not_embedded(self):
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(
             dataset_path="x.h5ad", analysis_type="nonexistent_type"
         )
-        assert "REQUESTED ANALYSIS TYPE" not in msg
+        assert "Analysis type" not in msg
 
-    def test_prompt_mentions_singlecellagent_tool(self):
-        """Prompt should reference the SingleCellAgent tool for TIER 1 strategy."""
+    def test_all_params_combined(self):
         mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "SingleCellAgent" in msg
-        assert "TIER 1" in msg
-        assert "TIER 2" in msg
-
-    def test_prompt_mentions_omicverse_methods(self):
-        """Prompt should reference OmicVerse annotation methods."""
-        mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "OmicVerse" in msg
-        assert "pySCSA" in msg
+        msg = mod.generate_scfm_workflow_message(
+            dataset_path="data.h5ad",
+            model_name="scgpt",
+            question="find DEGs",
+            analysis_type="differential",
+        )
+        assert "data.h5ad" in msg
+        assert "scgpt" in msg
+        assert "find DEGs" in msg
+        assert "differential" in msg
 
 
 # ===========================================================================
@@ -211,7 +215,6 @@ class TestScfmCommandRouting:
             result = await handler.handle_bio_command("/bio scfm run ./data.h5ad")
         assert result is not None
         assert "./data.h5ad" in result
-        assert "PHASE 0" in result
 
     @pytest.mark.asyncio
     async def test_scfm_run_model_flag_forwarded(self, handler):
@@ -228,7 +231,7 @@ class TestScfmCommandRouting:
                 "/bio scfm run ./d.h5ad --question find_markers"
             )
         assert "find_markers" in result
-        assert "USER ANALYSIS GOAL" in result
+        assert "User analysis goal" in result
 
     @pytest.mark.asyncio
     async def test_scfm_run_model_and_question_combined(self, handler):
@@ -238,7 +241,7 @@ class TestScfmCommandRouting:
             )
         assert "scgpt" in result
         assert "batch_correction" in result
-        assert "USER ANALYSIS GOAL" in result
+        assert "User analysis goal" in result
 
     @pytest.mark.asyncio
     async def test_scfm_run_default_model_is_auto(self, handler):
@@ -253,7 +256,7 @@ class TestScfmCommandRouting:
             result = await handler.handle_bio_command(
                 "/bio scfm run ./d.h5ad --analysis_type annotation"
             )
-        assert "REQUESTED ANALYSIS TYPE" in result
+        assert "Analysis type" in result
         assert "annotation" in result
 
     @pytest.mark.asyncio
@@ -264,7 +267,7 @@ class TestScfmCommandRouting:
             )
         assert "scgpt" in result
         assert "find_DEGs" in result
-        assert "REQUESTED ANALYSIS TYPE" in result
+        assert "Analysis type" in result
         assert "differential" in result
 
     @pytest.mark.asyncio
@@ -319,7 +322,7 @@ class TestCliToAgentIntegration:
         """The prompt returned by the handler would be sent to agent.run().
 
         We verify the handler returns a non-empty string that an agent could
-        process, containing the essential SCFM workflow instructions.
+        process, containing the essential dataset and model information.
         """
         with _patch_scfm_modules():
             prompt = await handler.handle_bio_command(
@@ -330,9 +333,8 @@ class TestCliToAgentIntegration:
         mock_agent = MagicMock()
         mock_agent.run = AsyncMock(return_value="SCFM analysis complete.")
 
-        # The REPL sets current_message = prompt, then calls agent.run(prompt)
         assert prompt is not None
-        assert len(prompt) > 100  # substantial prompt
+        assert len(prompt) > 20  # concise but non-trivial
 
         # Fire mock agent — verifies prompt is agent-compatible
         response = await mock_agent.run(prompt)
@@ -347,8 +349,7 @@ class TestCliToAgentIntegration:
 
         assert prompt is not None
         assert "auto" in prompt.lower()
-        assert "PHASE 0" in prompt
-        assert "PHASE 2" in prompt
+        assert "./big.h5ad" in prompt
 
         mock_agent = MagicMock()
         mock_agent.run = AsyncMock(return_value="Done.")
@@ -461,9 +462,7 @@ class TestScfmEdgeCases:
     async def test_scfm_run_import_error_handled(self, handler):
         """If scfm_workflow import fails, handler should return None gracefully."""
         with patch.dict(sys.modules, {"pantheon_cli.cli": None}):
-            # Force an ImportError by not providing module mocks
             result = await handler.handle_bio_command("/bio scfm run ./d.h5ad")
-        # Should return None (error printed) rather than raise
         assert result is None
 
     @pytest.mark.asyncio
@@ -487,7 +486,7 @@ class TestScfmEdgeCases:
                 "/bio scfm run ./d.h5ad --model uce"
             )
         assert "uce" in result
-        assert "USER ANALYSIS GOAL" not in result
+        assert "User analysis goal" not in result
 
     @pytest.mark.asyncio
     async def test_scfm_run_question_only_no_model(self, handler):
@@ -496,7 +495,7 @@ class TestScfmEdgeCases:
                 "/bio scfm run ./d.h5ad --question cluster_analysis"
             )
         assert "cluster_analysis" in result
-        assert "USER ANALYSIS GOAL" in result
+        assert "User analysis goal" in result
         assert "auto" in result.lower()
 
     @pytest.mark.asyncio
@@ -523,7 +522,7 @@ class TestScfmEdgeCases:
         # run
         with _patch_scfm_modules():
             r3 = await handler.handle_bio_command("/bio scfm run ./d.h5ad")
-        assert "PHASE 0" in r3
+        assert "./d.h5ad" in r3
 
 
 # ===========================================================================
@@ -556,9 +555,7 @@ class TestScfmEndToEnd:
         assert run_prompt is not None
         assert "scgpt" in run_prompt
         assert "annotate_T_cells" in run_prompt
-        assert "PHASE 0" in run_prompt
-        assert "PHASE 1" in run_prompt
-        assert "PHASE 2" in run_prompt
+        assert "./pbmc3k.h5ad" in run_prompt
 
         # Step 4: Mock agent processes run
         mock_agent.run = AsyncMock(
@@ -569,32 +566,21 @@ class TestScfmEndToEnd:
 
     @pytest.mark.asyncio
     async def test_prompt_structure_for_agent_consumption(self, handler):
-        """The generated prompt should have the structure the agent expects."""
+        """The generated prompt should be concise — dataset, model, and intent."""
         with _patch_scfm_modules():
             prompt = await handler.handle_bio_command(
                 "/bio scfm run ./data.h5ad --model scgpt"
             )
 
-        # Agent expects these sections for autonomous execution
-        assert "PHASE 0" in prompt  # Setup & Validation
-        assert "PHASE 1" in prompt  # TODO Creation
-        assert "PHASE 2" in prompt  # Intelligent Execution
-        assert "AUTOMATIC WORKFLOW MODE" in prompt
-        assert "SMART DECISION MAKING" in prompt
-
-        # Agent needs dataset path
+        # Agent needs dataset path and model
         assert "./data.h5ad" in prompt
-
-        # Agent needs model specification
         assert "scgpt" in prompt
-
-        # Agent needs environment rules
-        assert "PERSISTENT STATE" in prompt
-
-        # Agent needs two-tier tool selection strategy
-        assert "TIER 1" in prompt
-        assert "TIER 2" in prompt
-        assert "SingleCellAgent" in prompt
+        # Should mention SCFM or Foundation Model
+        assert "SCFM" in prompt or "Foundation Model" in prompt
+        # Should NOT contain verbose instruction phases
+        assert "PHASE 0" not in prompt
+        assert "PHASE 1" not in prompt
+        assert "PHASE 2" not in prompt
 
     @pytest.mark.asyncio
     async def test_full_workflow_with_analysis_type(self, handler):
@@ -604,10 +590,9 @@ class TestScfmEndToEnd:
                 "/bio scfm run ./pbmc3k.h5ad --analysis_type trajectory --question pseudotime"
             )
         assert prompt is not None
-        assert "REQUESTED ANALYSIS TYPE" in prompt
+        assert "Analysis type" in prompt
         assert "trajectory" in prompt
         assert "pseudotime" in prompt
-        assert "SingleCellAgent" in prompt
 
         mock_agent = MagicMock()
         mock_agent.run = AsyncMock(return_value="Trajectory analysis complete.")
