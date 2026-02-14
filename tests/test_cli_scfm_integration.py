@@ -1,13 +1,14 @@
 """Integration tests for CLI -> Pantheon Agent -> scFM call chain.
 
-Validates the full path: user command -> REPL -> BioCommandHandler -> scfm_workflow
-prompt generation -> agent message dispatch.  All external dependencies (pantheon
-Agent, heavy toolsets) are mocked so the tests run without installing the full
-pantheon stack.
+Validates the full path: user command -> REPL -> BioCommandHandler ->
+natural language pass-through -> agent message dispatch.
 
-The prompt is now a concise user-intent message (not a multi-phase instruction
-manual).  The Agent's LLM is expected to recognise the request and call the
-registered SingleCellAgent tool autonomously.
+The scFM design follows the pantheon-agents architecture: the user provides
+natural language after `/bio scfm`, and the Pantheon Agent's LLM router
+reads its registered tool descriptions (SingleCellAgent, run_python_code,
+etc.) and autonomously selects the right scFM model and analysis parameters.
+
+The CLI does NOT parse --model / --analysis_type flags.
 """
 
 import importlib
@@ -66,58 +67,40 @@ def handler():
 
 
 # ===========================================================================
-# 1. scFM Workflow Prompt – Template Correctness
+# 1. scFM Workflow Prompt – Natural Language Pass-Through
 # ===========================================================================
 
 
 class TestScfmPromptTemplate:
-    """Verify generate_scfm_workflow_message produces correct, concise prompts."""
+    """Verify generate_scfm_workflow_message wraps natural language correctly."""
 
-    def test_auto_model_contains_dataset_and_auto(self):
-        mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(dataset_path="pbmc3k.h5ad")
-        assert "pbmc3k.h5ad" in msg
-        assert "auto" in msg.lower()
-
-    def test_specific_model_embedded(self):
-        mod = _import_scfm_workflow()
-        for model in ("scgpt", "scbert", "geneformer", "scfoundation", "uce"):
-            msg = mod.generate_scfm_workflow_message(
-                dataset_path="cells.h5ad", model_name=model
-            )
-            assert model in msg
-
-    def test_question_block_present_when_provided(self):
+    def test_user_query_preserved_in_output(self):
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(
-            dataset_path="x.h5ad", question="annotate T cells"
+            "annotate cell types in pbmc3k.h5ad"
         )
-        assert "User analysis goal" in msg
-        assert "annotate T cells" in msg
+        assert "annotate cell types in pbmc3k.h5ad" in msg
 
-    def test_question_block_absent_when_none(self):
+    def test_scfm_context_tag_present(self):
         mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "User analysis goal" not in msg
+        msg = mod.generate_scfm_workflow_message("analyze my data")
+        assert "scFM" in msg
+
+    def test_routing_hint_mentions_tools(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message("find DEGs between clusters")
+        assert "SingleCellAgent" in msg
 
     def test_prompt_is_concise(self):
         """The generated prompt should be concise, not a verbose instruction manual."""
         mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        # Should NOT contain verbose instruction phases
+        msg = mod.generate_scfm_workflow_message("analyze x.h5ad")
         assert "PHASE 0" not in msg
         assert "PHASE 1" not in msg
         assert "PHASE 2" not in msg
         assert "TIER 1" not in msg
-        assert "TIER 2" not in msg
         assert "PERSISTENT STATE" not in msg
-        # Should be short
         assert len(msg) < 500
-
-    def test_prompt_mentions_scfm(self):
-        mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "SCFM" in msg or "Foundation Model" in msg
 
     def test_supported_models_completeness(self):
         mod = _import_scfm_workflow()
@@ -134,38 +117,20 @@ class TestScfmPromptTemplate:
         }
         assert set(mod.ANALYSIS_TYPES.keys()) == expected_types
 
-    def test_analysis_type_embedded_in_prompt(self):
+    def test_various_natural_language_queries(self):
+        """Various natural-language queries should all be preserved."""
         mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(
-            dataset_path="x.h5ad", analysis_type="annotation"
-        )
-        assert "Analysis type" in msg
-        assert "annotation" in msg
-
-    def test_analysis_type_absent_when_none(self):
-        mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(dataset_path="x.h5ad")
-        assert "Analysis type" not in msg
-
-    def test_analysis_type_invalid_not_embedded(self):
-        mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(
-            dataset_path="x.h5ad", analysis_type="nonexistent_type"
-        )
-        assert "Analysis type" not in msg
-
-    def test_all_params_combined(self):
-        mod = _import_scfm_workflow()
-        msg = mod.generate_scfm_workflow_message(
-            dataset_path="data.h5ad",
-            model_name="scgpt",
-            question="find DEGs",
-            analysis_type="differential",
-        )
-        assert "data.h5ad" in msg
-        assert "scgpt" in msg
-        assert "find DEGs" in msg
-        assert "differential" in msg
+        queries = [
+            "annotate cell types in pbmc3k.h5ad using scGPT",
+            "run trajectory analysis on my_data.h5ad",
+            "find DEGs between clusters in ./data.h5ad",
+            "comprehensive analysis of single_cell.h5ad with geneformer",
+            "cluster and visualize neurons.h5ad",
+        ]
+        for q in queries:
+            msg = mod.generate_scfm_workflow_message(q)
+            assert q in msg, f"Query not preserved: {q}"
+            assert "scFM" in msg
 
 
 # ===========================================================================
@@ -174,16 +139,15 @@ class TestScfmPromptTemplate:
 
 
 class TestScfmCommandRouting:
-    """Verify the bio_handler routes /bio scfm commands to the correct handlers."""
+    """Verify the bio_handler routes /bio scfm commands correctly."""
 
     @pytest.mark.asyncio
-    async def test_scfm_help_shows_all_subcommands(self, handler):
-        """'/bio scfm' should show help listing init, run, list_models."""
+    async def test_scfm_help_shows_natural_language_usage(self, handler):
+        """'/bio scfm' should show help mentioning natural language usage."""
         result = await handler.handle_bio_command("/bio scfm")
-        assert result is None  # help only prints, returns None
+        assert result is None
         printed = " ".join(str(c) for c in handler.console.print.call_args_list)
         assert "init" in printed
-        assert "run" in printed
         assert "list_models" in printed
 
     @pytest.mark.asyncio
@@ -203,72 +167,32 @@ class TestScfmCommandRouting:
             assert model in printed
 
     @pytest.mark.asyncio
-    async def test_scfm_run_no_dataset_errors(self, handler):
-        result = await handler.handle_bio_command("/bio scfm run")
-        assert result is None
-        printed = " ".join(str(c) for c in handler.console.print.call_args_list)
-        assert "Error" in printed
-
-    @pytest.mark.asyncio
-    async def test_scfm_run_with_dataset_returns_prompt(self, handler):
-        with _patch_scfm_modules():
-            result = await handler.handle_bio_command("/bio scfm run ./data.h5ad")
-        assert result is not None
-        assert "./data.h5ad" in result
-
-    @pytest.mark.asyncio
-    async def test_scfm_run_model_flag_forwarded(self, handler):
+    async def test_scfm_natural_language_returns_prompt(self, handler):
+        """Natural language after /bio scfm should return a prompt for agent."""
         with _patch_scfm_modules():
             result = await handler.handle_bio_command(
-                "/bio scfm run ./d.h5ad --model geneformer"
+                "/bio scfm annotate cell types in ./data.h5ad"
+            )
+        assert result is not None
+        assert "annotate cell types in ./data.h5ad" in result
+
+    @pytest.mark.asyncio
+    async def test_scfm_natural_language_model_mention_preserved(self, handler):
+        """Mentioning a model in natural language should be preserved."""
+        with _patch_scfm_modules():
+            result = await handler.handle_bio_command(
+                "/bio scfm use geneformer to analyze ./d.h5ad"
             )
         assert "geneformer" in result
 
     @pytest.mark.asyncio
-    async def test_scfm_run_question_flag_forwarded(self, handler):
+    async def test_scfm_natural_language_analysis_mention_preserved(self, handler):
+        """Mentioning an analysis type in natural language should be preserved."""
         with _patch_scfm_modules():
             result = await handler.handle_bio_command(
-                "/bio scfm run ./d.h5ad --question find_markers"
+                "/bio scfm trajectory analysis on ./d.h5ad"
             )
-        assert "find_markers" in result
-        assert "User analysis goal" in result
-
-    @pytest.mark.asyncio
-    async def test_scfm_run_model_and_question_combined(self, handler):
-        with _patch_scfm_modules():
-            result = await handler.handle_bio_command(
-                "/bio scfm run ./d.h5ad --model scgpt --question batch_correction"
-            )
-        assert "scgpt" in result
-        assert "batch_correction" in result
-        assert "User analysis goal" in result
-
-    @pytest.mark.asyncio
-    async def test_scfm_run_default_model_is_auto(self, handler):
-        """Without --model, the prompt should use auto model selection."""
-        with _patch_scfm_modules():
-            result = await handler.handle_bio_command("/bio scfm run ./d.h5ad")
-        assert "auto" in result.lower()
-
-    @pytest.mark.asyncio
-    async def test_scfm_run_analysis_type_flag_forwarded(self, handler):
-        with _patch_scfm_modules():
-            result = await handler.handle_bio_command(
-                "/bio scfm run ./d.h5ad --analysis_type annotation"
-            )
-        assert "Analysis type" in result
-        assert "annotation" in result
-
-    @pytest.mark.asyncio
-    async def test_scfm_run_all_three_flags(self, handler):
-        with _patch_scfm_modules():
-            result = await handler.handle_bio_command(
-                "/bio scfm run ./d.h5ad --model scgpt --question find_DEGs --analysis_type differential"
-            )
-        assert "scgpt" in result
-        assert "find_DEGs" in result
-        assert "Analysis type" in result
-        assert "differential" in result
+        assert "trajectory" in result
 
     @pytest.mark.asyncio
     async def test_scfm_list_analysis_types_returns_none(self, handler):
@@ -281,13 +205,6 @@ class TestScfmCommandRouting:
         assert "trajectory" in printed
 
     @pytest.mark.asyncio
-    async def test_scfm_help_mentions_analysis_type(self, handler):
-        result = await handler.handle_bio_command("/bio scfm")
-        assert result is None
-        printed = " ".join(str(c) for c in handler.console.print.call_args_list)
-        assert "analysis_type" in printed
-
-    @pytest.mark.asyncio
     async def test_scfm_list_models_shows_omicverse_methods(self, handler):
         result = await handler.handle_bio_command("/bio scfm list_models")
         assert result is None
@@ -296,17 +213,6 @@ class TestScfmCommandRouting:
         assert "gptcelltype" in printed
         assert "CellVote" in printed
         assert "OmicVerse" in printed
-
-    @pytest.mark.asyncio
-    async def test_scfm_unknown_subcommand_falls_through(self, handler):
-        result = await handler.handle_bio_command("/bio scfm foobar")
-        assert result is not None
-        assert "bio_scfm_foobar" in result
-
-    @pytest.mark.asyncio
-    async def test_scfm_unknown_subcommand_with_params(self, handler):
-        result = await handler.handle_bio_command("/bio scfm custom x y z")
-        assert result == "bio_scfm_custom x y z"
 
 
 # ===========================================================================
@@ -318,43 +224,34 @@ class TestCliToAgentIntegration:
     """Simulate the full REPL dispatch: /bio scfm -> handler -> agent.run()."""
 
     @pytest.mark.asyncio
-    async def test_scfm_prompt_reaches_agent(self, handler):
-        """The prompt returned by the handler would be sent to agent.run().
-
-        We verify the handler returns a non-empty string that an agent could
-        process, containing the essential dataset and model information.
-        """
+    async def test_natural_language_prompt_reaches_agent(self, handler):
+        """The natural-language prompt should be sent to agent.run()."""
         with _patch_scfm_modules():
             prompt = await handler.handle_bio_command(
-                "/bio scfm run ./pbmc3k.h5ad --model scgpt --question annotate_cells"
+                "/bio scfm annotate cell types in ./pbmc3k.h5ad using scGPT"
             )
 
-        # Simulate what REPL does: send prompt to agent
         mock_agent = MagicMock()
         mock_agent.run = AsyncMock(return_value="SCFM analysis complete.")
 
         assert prompt is not None
-        assert len(prompt) > 20  # concise but non-trivial
+        assert len(prompt) > 20
 
-        # Fire mock agent — verifies prompt is agent-compatible
         response = await mock_agent.run(prompt)
         mock_agent.run.assert_called_once_with(prompt)
         assert response == "SCFM analysis complete."
 
     @pytest.mark.asyncio
-    async def test_scfm_auto_model_prompt_reaches_agent(self, handler):
-        """Auto model selection prompt should also be agent-compatible."""
+    async def test_prompt_contains_user_intent(self, handler):
+        """The prompt sent to agent should contain the user's original intent."""
         with _patch_scfm_modules():
-            prompt = await handler.handle_bio_command("/bio scfm run ./big.h5ad")
+            prompt = await handler.handle_bio_command(
+                "/bio scfm find DEGs in ./big.h5ad"
+            )
 
         assert prompt is not None
-        assert "auto" in prompt.lower()
-        assert "./big.h5ad" in prompt
-
-        mock_agent = MagicMock()
-        mock_agent.run = AsyncMock(return_value="Done.")
-        await mock_agent.run(prompt)
-        mock_agent.run.assert_called_once()
+        assert "find DEGs in ./big.h5ad" in prompt
+        assert "scFM" in prompt
 
     @pytest.mark.asyncio
     async def test_scfm_init_prompt_reaches_agent(self, handler):
@@ -375,22 +272,21 @@ class TestCliToAgentIntegration:
 
 
 class TestScfmCommandMapCompleteness:
-    """Ensure BIO_COMMAND_MAP and suggestions include all SCFM entries."""
+    """Ensure BIO_COMMAND_MAP and suggestions include SCFM entries."""
 
-    def test_command_map_has_all_scfm_keys(self):
-        expected_keys = {"scfm_init", "scfm_run", "scfm_list_models", "scfm_list_analysis_types"}
+    def test_command_map_has_scfm_keys(self):
+        expected_keys = {"scfm_init", "scfm_list_models", "scfm_list_analysis_types"}
         assert expected_keys.issubset(set(BIO_COMMAND_MAP.keys()))
 
     def test_suggestions_contain_scfm_commands(self):
         suggestions = get_bio_command_suggestions()
         assert "/bio scfm init" in suggestions
-        assert "/bio scfm run" in suggestions
         assert "/bio scfm list_models" in suggestions
         assert "/bio scfm list_analysis_types" in suggestions
 
     def test_suggestions_list_is_not_empty(self):
         suggestions = get_bio_command_suggestions()
-        assert len(suggestions) > 10  # reasonable minimum
+        assert len(suggestions) > 10
 
 
 # ===========================================================================
@@ -459,15 +355,24 @@ class TestScfmEdgeCases:
     """Edge-case and error-handling tests for SCFM commands."""
 
     @pytest.mark.asyncio
-    async def test_scfm_run_import_error_handled(self, handler):
+    async def test_scfm_import_error_handled(self, handler):
         """If scfm_workflow import fails, handler should return None gracefully."""
-        with patch.dict(sys.modules, {"pantheon_cli.cli": None}):
-            result = await handler.handle_bio_command("/bio scfm run ./d.h5ad")
+        with patch.dict(
+            sys.modules,
+            {
+                "pantheon_cli.cli": None,
+                "pantheon_cli.cli.prompt": None,
+                "pantheon_cli.cli.prompt.scfm_workflow": None,
+            },
+        ):
+            result = await handler.handle_bio_command(
+                "/bio scfm analyze ./d.h5ad"
+            )
         assert result is None
 
     @pytest.mark.asyncio
-    async def test_scfm_run_with_h5ad_extension(self, handler):
-        """Various .h5ad file paths should be accepted."""
+    async def test_various_h5ad_paths_accepted(self, handler):
+        """Various .h5ad file paths in natural language should be accepted."""
         with _patch_scfm_modules():
             for path in (
                 "./data.h5ad",
@@ -475,41 +380,14 @@ class TestScfmEdgeCases:
                 "relative/pbmc3k.h5ad",
                 "../parent/data.h5ad",
             ):
-                result = await handler.handle_bio_command(f"/bio scfm run {path}")
+                result = await handler.handle_bio_command(
+                    f"/bio scfm analyze {path}"
+                )
                 assert result is not None, f"Failed for path: {path}"
                 assert path in result
 
     @pytest.mark.asyncio
-    async def test_scfm_run_model_only_no_question(self, handler):
-        with _patch_scfm_modules():
-            result = await handler.handle_bio_command(
-                "/bio scfm run ./d.h5ad --model uce"
-            )
-        assert "uce" in result
-        assert "User analysis goal" not in result
-
-    @pytest.mark.asyncio
-    async def test_scfm_run_question_only_no_model(self, handler):
-        with _patch_scfm_modules():
-            result = await handler.handle_bio_command(
-                "/bio scfm run ./d.h5ad --question cluster_analysis"
-            )
-        assert "cluster_analysis" in result
-        assert "User analysis goal" in result
-        assert "auto" in result.lower()
-
-    @pytest.mark.asyncio
-    async def test_scfm_run_flags_order_reversed(self, handler):
-        """--question before --model should still work."""
-        with _patch_scfm_modules():
-            result = await handler.handle_bio_command(
-                "/bio scfm run ./d.h5ad --question find_DEGs --model scbert"
-            )
-        assert "scbert" in result
-        assert "find_DEGs" in result
-
-    @pytest.mark.asyncio
-    async def test_scfm_multiple_consecutive_commands(self, handler):
+    async def test_multiple_consecutive_commands(self, handler):
         """Handler should work correctly for multiple sequential calls."""
         # init
         r1 = await handler.handle_bio_command("/bio scfm init")
@@ -519,10 +397,22 @@ class TestScfmEdgeCases:
         r2 = await handler.handle_bio_command("/bio scfm list_models")
         assert r2 is None
 
-        # run
+        # natural language query
         with _patch_scfm_modules():
-            r3 = await handler.handle_bio_command("/bio scfm run ./d.h5ad")
-        assert "./d.h5ad" in r3
+            r3 = await handler.handle_bio_command(
+                "/bio scfm annotate cell types in ./d.h5ad"
+            )
+        assert "annotate cell types in ./d.h5ad" in r3
+
+    @pytest.mark.asyncio
+    async def test_query_with_special_characters(self, handler):
+        """Queries with special characters should still work."""
+        with _patch_scfm_modules():
+            result = await handler.handle_bio_command(
+                "/bio scfm find T-cell subtypes (CD4+/CD8+) in data.h5ad"
+            )
+        assert result is not None
+        assert "T-cell" in result
 
 
 # ===========================================================================
@@ -531,11 +421,11 @@ class TestScfmEdgeCases:
 
 
 class TestScfmEndToEnd:
-    """Validate the complete expected workflow: init -> run -> agent receives prompt."""
+    """Validate the complete expected workflow: init -> query -> agent receives prompt."""
 
     @pytest.mark.asyncio
-    async def test_full_workflow_init_then_run(self, handler):
-        """Simulate user doing /bio scfm init, then /bio scfm run."""
+    async def test_full_workflow_init_then_query(self, handler):
+        """Simulate user doing /bio scfm init, then a natural language query."""
         # Step 1: init
         init_prompt = await handler.handle_bio_command("/bio scfm init")
         assert init_prompt is not None
@@ -543,21 +433,19 @@ class TestScfmEndToEnd:
 
         # Step 2: Mock agent processes init
         mock_agent = MagicMock()
-        mock_agent.run = AsyncMock(return_value="SCFM init ready • todos=0")
+        mock_agent.run = AsyncMock(return_value="SCFM init ready")
         init_response = await mock_agent.run(init_prompt)
-        assert "todos=0" in init_response
 
-        # Step 3: run
+        # Step 3: natural language query
         with _patch_scfm_modules():
             run_prompt = await handler.handle_bio_command(
-                "/bio scfm run ./pbmc3k.h5ad --model scgpt --question annotate_T_cells"
+                "/bio scfm annotate T cells in ./pbmc3k.h5ad using scGPT"
             )
         assert run_prompt is not None
-        assert "scgpt" in run_prompt
-        assert "annotate_T_cells" in run_prompt
-        assert "./pbmc3k.h5ad" in run_prompt
+        assert "annotate T cells in ./pbmc3k.h5ad using scGPT" in run_prompt
+        assert "scFM" in run_prompt
 
-        # Step 4: Mock agent processes run
+        # Step 4: Mock agent processes query
         mock_agent.run = AsyncMock(
             return_value="SCFM analysis complete. Results saved to ./results/"
         )
@@ -566,35 +454,29 @@ class TestScfmEndToEnd:
 
     @pytest.mark.asyncio
     async def test_prompt_structure_for_agent_consumption(self, handler):
-        """The generated prompt should be concise — dataset, model, and intent."""
+        """The generated prompt should contain user intent and scFM context."""
         with _patch_scfm_modules():
             prompt = await handler.handle_bio_command(
-                "/bio scfm run ./data.h5ad --model scgpt"
+                "/bio scfm comprehensive analysis of ./data.h5ad"
             )
 
-        # Agent needs dataset path and model
-        assert "./data.h5ad" in prompt
-        assert "scgpt" in prompt
-        # Should mention SCFM or Foundation Model
-        assert "SCFM" in prompt or "Foundation Model" in prompt
+        assert "comprehensive analysis of ./data.h5ad" in prompt
+        assert "scFM" in prompt
+        assert "SingleCellAgent" in prompt
         # Should NOT contain verbose instruction phases
         assert "PHASE 0" not in prompt
         assert "PHASE 1" not in prompt
         assert "PHASE 2" not in prompt
 
     @pytest.mark.asyncio
-    async def test_full_workflow_with_analysis_type(self, handler):
-        """Simulate user using --analysis_type for OmicVerse-based analysis."""
+    async def test_agent_receives_natural_language_not_structured_flags(self, handler):
+        """The agent should receive natural language, not parsed --model/--analysis_type."""
         with _patch_scfm_modules():
             prompt = await handler.handle_bio_command(
-                "/bio scfm run ./pbmc3k.h5ad --analysis_type trajectory --question pseudotime"
+                "/bio scfm use scBERT to annotate cell types in my_data.h5ad"
             )
-        assert prompt is not None
-        assert "Analysis type" in prompt
-        assert "trajectory" in prompt
-        assert "pseudotime" in prompt
-
-        mock_agent = MagicMock()
-        mock_agent.run = AsyncMock(return_value="Trajectory analysis complete.")
-        response = await mock_agent.run(prompt)
-        assert "complete" in response.lower()
+        # Natural language preserved
+        assert "use scBERT to annotate cell types in my_data.h5ad" in prompt
+        # No structured flag artifacts
+        assert "Model: auto" not in prompt
+        assert "Analysis type:" not in prompt
