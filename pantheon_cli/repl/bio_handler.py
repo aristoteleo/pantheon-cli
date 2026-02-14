@@ -292,26 +292,32 @@ Response format (single line):
             
     
     def _handle_scfm_command(self, parts) -> str:
-        """Handle SCFM (Single Cell Foundation Model) commands"""
+        """Handle SCFM (Single Cell Foundation Model) commands.
+
+        The scFM design follows the pantheon-agents architecture: the user
+        provides natural language, the Pantheon Agent's LLM router reads its
+        registered tool descriptions (SingleCellAgent, run_python_code, etc.)
+        and autonomously selects the right scFM model and analysis parameters.
+
+        The CLI therefore does NOT parse --model / --analysis_type flags.
+        Instead it passes the user's natural language directly to the agent.
+        """
 
         if len(parts) == 2:
             # Just /bio scfm - show SCFM help
-            self.console.print("\n[bold]🧬 Single Cell Foundation Model (SCFM) Analysis Helper[/bold]")
+            self.console.print("\n[bold]Single Cell Foundation Model (SCFM) Analysis[/bold]")
             self.console.print("[dim]/bio scfm init[/dim] - Initialize SCFM analysis project")
-            self.console.print("[dim]/bio scfm run <dataset.h5ad> [--model <model_name>] [--question <question>][/dim] - Run SCFM workflow")
+            self.console.print("[dim]/bio scfm <natural language query>[/dim] - Run scFM analysis (agent routes to the right model)")
             self.console.print("[dim]/bio scfm list_models[/dim] - List available foundation models")
-            self.console.print("\n[dim]Supported Models:[/dim]")
-            self.console.print("[dim]  scgpt       - scGPT: single-cell Gene-level Pre-Trained model[/dim]")
-            self.console.print("[dim]  scbert      - scBERT: single-cell BERT for cell type annotation[/dim]")
-            self.console.print("[dim]  geneformer  - Geneformer: transfer learning for single-cell data[/dim]")
-            self.console.print("[dim]  scfoundation - scFoundation: large-scale foundation model[/dim]")
-            self.console.print("[dim]  uce         - UCE: Universal Cell Embedding[/dim]")
+            self.console.print("[dim]/bio scfm list_analysis_types[/dim] - List supported analysis types")
             self.console.print("\n[dim]Examples:[/dim]")
-            self.console.print("[dim]  /bio scfm init                                    # Initialize SCFM project[/dim]")
-            self.console.print("[dim]  /bio scfm run ./data.h5ad                         # Run with auto model selection[/dim]")
-            self.console.print("[dim]  /bio scfm run ./data.h5ad --model scgpt           # Run with scGPT[/dim]")
-            self.console.print("[dim]  /bio scfm run ./data.h5ad --question 'annotate T cell subtypes'  # With user prompt[/dim]")
-            self.console.print("[dim]  /bio scfm list_models                             # Show available models[/dim]")
+            self.console.print("[dim]  /bio scfm annotate cell types in pbmc3k.h5ad using scGPT[/dim]")
+            self.console.print("[dim]  /bio scfm run trajectory analysis on my_data.h5ad[/dim]")
+            self.console.print("[dim]  /bio scfm find DEGs between clusters in ./data.h5ad[/dim]")
+            self.console.print("[dim]  /bio scfm comprehensive analysis of single_cell.h5ad with geneformer[/dim]")
+            self.console.print()
+            self.console.print("[dim]The Agent's LLM router will automatically select the appropriate[/dim]")
+            self.console.print("[dim]scFM model and analysis type based on your request.[/dim]")
             self.console.print()
             return None
 
@@ -319,7 +325,7 @@ Response format (single line):
 
         if command == "init":
             # Enter SCFM mode - strict init mode
-            self.console.print("\n[bold cyan]🧬 Initializing SCFM Analysis Project[/bold cyan]")
+            self.console.print("\n[bold cyan]Initializing SCFM Analysis Project[/bold cyan]")
 
             clear_message = """
 SCFM INIT MODE — STRICT
@@ -343,22 +349,16 @@ Response format (single line):
 """
 
             self.console.print("[dim]Clearing existing todos and preparing SCFM environment...[/dim]")
-            self.console.print("[dim]Ready for Single Cell Foundation Model analysis...[/dim]")
-            self.console.print("[dim]SCFM mode activated. You can now use SCFM tools directly.[/dim]")
-            self.console.print()
-            self.console.print("[dim]The command structure is now clean:[/dim]")
-            self.console.print("[dim]  - /bio scfm init - Enter SCFM mode (simple prompt loading)[/dim]")
-            self.console.print("[dim]  - /bio scfm run <dataset.h5ad> [--model <model>] - Run SCFM workflow[/dim]")
-            self.console.print("[dim]  - /bio scfm list_models - List available foundation models[/dim]")
+            self.console.print("[dim]SCFM mode activated. Enter natural language queries to run scFM analysis.[/dim]")
             self.console.print()
 
             return clear_message
 
         elif command == "list_models":
-            # List available foundation models
-            self.console.print("\n[bold cyan]🧬 Available Single Cell Foundation Models[/bold cyan]")
+            # List available foundation models AND OmicVerse annotation methods
+            self.console.print("\n[bold cyan]Available Single Cell Foundation Models[/bold cyan]")
             self.console.print()
-            self.console.print("[bold]Model Name       Description[/bold]")
+            self.console.print("[bold]Foundation Models (via run_python_code):[/bold]")
             self.console.print("[dim]─────────────────────────────────────────────────────────────[/dim]")
             self.console.print("scgpt            scGPT - Generative pre-trained transformer for single-cell")
             self.console.print("scbert           scBERT - BERT-based cell type annotation")
@@ -366,63 +366,50 @@ Response format (single line):
             self.console.print("scfoundation     scFoundation - Large-scale foundation model")
             self.console.print("uce              UCE - Universal Cell Embedding")
             self.console.print()
+            self.console.print("[bold]OmicVerse Annotation Methods (via SingleCellAgent tool):[/bold]")
+            self.console.print("[dim]─────────────────────────────────────────────────────────────[/dim]")
+            self.console.print("pySCSA           Automated cell type annotation (default)")
+            self.console.print("gptcelltype      LLM-assisted cell type annotation")
+            self.console.print("CellVote         Consensus voting across multiple methods")
+            self.console.print()
             return None
 
-        elif command == "run":
-            # Handle SCFM run workflow
-            if len(parts) < 4:
-                self.console.print("[red]Error: Please specify a dataset path (.h5ad)[/red]")
-                self.console.print("[dim]Usage: /bio scfm run <dataset.h5ad> [--model <model_name>][/dim]")
-                self.console.print("[dim]Example: /bio scfm run ./data.h5ad --model scgpt[/dim]")
-                return None
+        elif command == "list_analysis_types":
+            # List supported analysis types from SingleCellAgent
+            self.console.print("\n[bold cyan]Supported SCFM Analysis Types[/bold cyan]")
+            self.console.print()
+            self.console.print("[bold]Type              Description[/bold]")
+            self.console.print("[dim]─────────────────────────────────────────────────────────────[/dim]")
+            try:
+                from ..cli.prompt.scfm_workflow import ANALYSIS_TYPES
+                for atype, desc in ANALYSIS_TYPES.items():
+                    self.console.print(f"{atype:<18}{desc}")
+            except ImportError:
+                self.console.print("comprehensive     Full analysis pipeline")
+                self.console.print("annotation        Cell type identification")
+                self.console.print("trajectory        Pseudotime and trajectory")
+                self.console.print("differential      Differential expression")
+                self.console.print("visualization     Embedding and expression plots")
+            self.console.print()
+            self.console.print("[dim]Usage: /bio scfm annotate cell types in my_data.h5ad[/dim]")
+            self.console.print()
+            return None
 
-            dataset = parts[3]
-
-            # Parse optional flags
-            extra = parts[4:] if len(parts) > 4 else []
-            model = "auto"
-            question = None
-            if "--model" in extra:
-                try:
-                    model = extra[extra.index("--model") + 1]
-                except (IndexError, ValueError):
-                    model = "auto"
-            if "--question" in extra:
-                try:
-                    question = extra[extra.index("--question") + 1]
-                except (IndexError, ValueError):
-                    question = None
-
-            self.console.print(f"\n[bold cyan]🧬 Starting SCFM Analysis[/bold cyan]")
-            self.console.print(f"[dim]Dataset: {dataset}[/dim]")
-            self.console.print(f"[dim]Model: {model}[/dim]")
-            if question:
-                self.console.print(f"[dim]Question: {question}[/dim]")
-            self.console.print("[dim]Preparing Single Cell Foundation Model pipeline...[/dim]\n")
+        else:
+            # Everything after "/bio scfm" is natural language — pass to agent
+            user_query = " ".join(parts[2:])
+            self.console.print(f"\n[bold cyan]scFM[/bold cyan] [dim]{user_query}[/dim]")
+            self.console.print("[dim]Routing to Pantheon Agent for scFM model selection...[/dim]\n")
 
             try:
                 from ..cli.prompt.scfm_workflow import generate_scfm_workflow_message
-                message = generate_scfm_workflow_message(
-                    dataset_path=dataset,
-                    model_name=model,
-                    question=question,
-                )
-                self.console.print("[dim]Sending SCFM workflow request...[/dim]\n")
-                return message
+                return generate_scfm_workflow_message(user_query)
             except ImportError as e:
                 self.console.print(f"[red]Error: SCFM module not available: {e}[/red]")
                 return None
             except Exception as e:
-                self.console.print(f"[red]Error preparing SCFM workflow: {str(e)}[/red]")
+                self.console.print(f"[red]Error preparing SCFM request: {str(e)}[/red]")
                 return None
-
-        else:
-            # Handle other SCFM commands generically
-            params = " ".join(parts[3:]) if len(parts) > 3 else ""
-            if params:
-                return f"bio_scfm_{command} {params}"
-            else:
-                return f"bio_scfm_{command}"
 
     def _handle_atac_command(self, parts) -> str:
         """Handle ATAC-specific commands with special logic like the original _handle_atac_command"""
@@ -1313,8 +1300,8 @@ BIO_COMMAND_MAP = {
     
     # SCFM (Single Cell Foundation Model) commands
     'scfm_init': 'bio_scfm_init',
-    'scfm_run': 'bio_scfm_run',
     'scfm_list_models': 'bio_scfm_list_models',
+    'scfm_list_analysis_types': 'bio_scfm_list_analysis_types',
 
     # ChIP-seq commands (for future use)
     'chipseq_init': 'bio_chipseq_init',
@@ -1350,8 +1337,8 @@ def get_bio_command_suggestions() -> list:
         '/bio GeneAgent',
         '/bio GeneAgent TP53,BRCA1,EGFR',
         '/bio scfm init',
-        '/bio scfm run',
         '/bio scfm list_models',
+        '/bio scfm list_analysis_types',
         '/bio chipseq init',  # Future
     ]
     return suggestions

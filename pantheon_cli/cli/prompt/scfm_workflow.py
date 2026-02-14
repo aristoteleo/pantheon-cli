@@ -1,12 +1,16 @@
 """Prompt generator for SCFM (Single Cell Foundation Model) workflows.
 
-Supports foundation model-based single-cell analysis using models such as
-scGPT, scBERT, Geneformer, scFoundation, and UCE.
+The CLI accepts free-form natural language from the user and passes it
+directly to the Pantheon Agent.  The Agent's LLM router inspects its
+registered tools (SingleCellAgent, run_python_code, etc.) and
+autonomously selects the right scFM and analysis parameters.
+
+This module only adds minimal scFM context so the router knows the
+request is in the single-cell foundation model domain.
 """
 
-from textwrap import dedent
 
-
+# Reference catalogues — kept for /bio scfm list_models and list_analysis_types
 SUPPORTED_MODELS = {
     "scgpt": "scGPT - Generative pre-trained transformer for single-cell",
     "scbert": "scBERT - BERT-based cell type annotation",
@@ -15,91 +19,43 @@ SUPPORTED_MODELS = {
     "uce": "UCE - Universal Cell Embedding",
 }
 
+# Analysis types provided by the SingleCellAgent toolset in pantheon-agents
+ANALYSIS_TYPES = {
+    "comprehensive": "Full analysis: annotation, trajectory, DE, pathways, visualization",
+    "annotation": "Cell type identification (pySCSA / gptcelltype / CellVote via OmicVerse)",
+    "trajectory": "Pseudotime and developmental trajectory (TrajInfer via OmicVerse)",
+    "differential": "Differential expression analysis (DCT via OmicVerse)",
+    "visualization": "UMAP/t-SNE embedding and gene expression plots",
+    "qc": "Quality control and preprocessing summary",
+    "clustering": "Leiden/Louvain clustering",
+    "batch_integration": "Batch effect correction (Harmony/Combat via OmicVerse)",
+    "communication": "Cell-cell communication (CellPhoneDB via OmicVerse)",
+    "grn": "Gene regulatory network / TF activity (SCENIC/AUCell)",
+    "drug": "Drug response prediction (scDrug)",
+    "metacell": "Metacell construction and summary",
+    "custom": "Free-form analysis guided by user research question",
+}
 
-def generate_scfm_workflow_message(
-    dataset_path: str,
-    model_name: str = "auto",
-    question: str | None = None,
-) -> str:
-    """Create an instruction message for the LLM to run an SCFM workflow.
+
+def generate_scfm_workflow_message(user_query: str) -> str:
+    """Wrap the user's natural-language request with scFM context.
+
+    The Pantheon Agent's LLM router will read this message, recognise
+    the scFM intent, and autonomously select the appropriate tool
+    (SingleCellAgent, run_python_code, etc.) and parameters.
 
     Args:
-        dataset_path: Path to .h5ad dataset.
-        model_name: Foundation model to use (auto|scgpt|scbert|geneformer|scfoundation|uce).
-        question: Optional user-specified analysis question or goal.
+        user_query: The user's free-form natural-language request,
+            e.g. "annotate cell types in pbmc3k.h5ad using scGPT".
 
     Returns:
-        A multi-section prompt for the LLM to execute autonomously.
+        A message for the Agent that preserves the user's intent and
+        adds minimal scFM context for the router.
     """
-
-    model_line = (
-        f"Model: {model_name}"
-        if model_name != "auto"
-        else "Model: auto (LLM will select the best model based on data characteristics)"
-    )
-
-    question_block = ""
-    if question:
-        question_block = f"""
-        USER ANALYSIS GOAL:
-        {question}
-        (Tailor the entire workflow — model selection, preprocessing, and evaluation — to address this goal.)
-        """
-
-    return dedent(
-        f"""\
-        🧬 Single Cell Foundation Model (SCFM) Analysis Pipeline
-
-        Dataset: {dataset_path}
-        {model_line}
-        {question_block}
-
-        ⚠️ CRITICAL PYTHON ENVIRONMENT RULES:
-        - PERSISTENT STATE: Python interpreter keeps variables across calls.
-        - MEMORY OPTIMIZATION: NEVER re-read or re-import if already in memory.
-        - SMART CHECKS: Use try/except or `'var' in globals()` to avoid redundant I/O.
-        - ERROR RECOVERY: Fix errors in-place; do not restart from scratch.
-        - INCREMENTAL PROGRESS: Reuse computed embeddings/annotations if present.
-
-        PHASE 0 — SETUP & VALIDATION
-        1) Verify dataset exists and is readable.
-        2) Inspect dataset: number of cells, genes, obs keys, batch information.
-        3) Probe environment: check if foundation model libraries are available
-           (scgpt, geneformer, transformers, torch, scanpy, anndata).
-
-        PHASE 1 — TODO CREATION (ONCE ONLY)
-        Execute: current = show_todos()
-        IF empty, create todos ONCE in this order:
-        1. "Load and inspect dataset"
-        2. "Preprocess data for foundation model input"
-        3. "Run foundation model embedding/annotation"
-        4. "Evaluate and visualize results"
-        5. "Save results and generate report"
-
-        ⚡ AUTOMATIC WORKFLOW MODE:
-        - Execute each todo task automatically without asking for confirmation
-        - After successful completion, call mark_task_done("description") and proceed
-        - Continue until all tasks complete or user intervenes
-
-        PHASE 2 — INTELLIGENT EXECUTION STRATEGY
-        🧠 SMART DECISION MAKING:
-
-        **ASSESS CURRENT SITUATION FIRST:**
-        - What data do you have loaded?
-        - What preprocessing steps are completed?
-        - What model is selected and available?
-
-        **MODEL SELECTION (if auto):**
-        - For cell type annotation → prefer scGPT or scBERT
-        - For general embeddings → prefer scGPT or Geneformer
-        - For large datasets (>100k cells) → prefer scFoundation or UCE
-        - Fall back to available model if preferred is not installed
-
-        **EXECUTION:**
-        - Load data with scanpy/anndata
-        - Preprocess following model-specific requirements
-        - Generate embeddings or annotations using the foundation model
-        - Visualize with UMAP colored by predictions
-        - Save annotated h5ad and summary figures
-        """
+    return (
+        f"[scFM request] {user_query}\n"
+        "\n"
+        "Use the registered SingleCellAgent tool or run_python_code to "
+        "handle this single-cell foundation model request. Select the "
+        "appropriate scFM model and analysis type based on the user's intent."
     )
