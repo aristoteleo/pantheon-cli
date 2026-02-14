@@ -70,10 +70,7 @@ class TestScfmRouting:
 
     @pytest.mark.asyncio
     async def test_bio_scfm_run_with_dataset(self, handler):
-        """'/bio scfm run ./data.h5ad' should return a workflow prompt."""
-        # The relative import in the handler resolves through pantheon_cli.cli
-        # whose __init__ needs the pantheon package.  Pre-populate sys.modules
-        # for the entire chain so the relative import succeeds.
+        """'/bio scfm run ./data.h5ad' should return a concise intent message."""
         scfm_mod = _import_scfm_workflow()
         cli_mock = MagicMock()
         prompt_mock = MagicMock()
@@ -148,7 +145,7 @@ class TestScfmRouting:
             )
         assert result is not None
         assert "identify_T_cells" in result
-        assert "USER ANALYSIS GOAL" in result
+        assert "User analysis goal" in result
 
     @pytest.mark.asyncio
     async def test_bio_scfm_run_with_model_and_question(self, handler):
@@ -172,7 +169,7 @@ class TestScfmRouting:
         assert result is not None
         assert "scgpt" in result
         assert "find_markers" in result
-        assert "USER ANALYSIS GOAL" in result
+        assert "User analysis goal" in result
 
 
 # ── Prompt template tests ────────────────────────────────────────────────
@@ -186,9 +183,6 @@ class TestScfmWorkflowPrompt:
         msg = mod.generate_scfm_workflow_message(dataset_path="test.h5ad")
         assert "test.h5ad" in msg
         assert "auto" in msg.lower()
-        assert "PHASE 0" in msg
-        assert "PHASE 1" in msg
-        assert "PHASE 2" in msg
 
     def test_generate_specific_model(self):
         mod = _import_scfm_workflow()
@@ -207,12 +201,12 @@ class TestScfmWorkflowPrompt:
         )
         assert "cells.h5ad" in msg
         assert "annotate T cell subtypes" in msg
-        assert "USER ANALYSIS GOAL" in msg
+        assert "User analysis goal" in msg
 
     def test_generate_without_question(self):
         mod = _import_scfm_workflow()
         msg = mod.generate_scfm_workflow_message(dataset_path="cells.h5ad")
-        assert "USER ANALYSIS GOAL" not in msg
+        assert "User analysis goal" not in msg
 
     def test_supported_models_dict(self):
         mod = _import_scfm_workflow()
@@ -221,6 +215,34 @@ class TestScfmWorkflowPrompt:
         assert "geneformer" in mod.SUPPORTED_MODELS
         assert "scfoundation" in mod.SUPPORTED_MODELS
         assert "uce" in mod.SUPPORTED_MODELS
+
+    def test_analysis_types_dict(self):
+        mod = _import_scfm_workflow()
+        assert hasattr(mod, "ANALYSIS_TYPES")
+        assert "comprehensive" in mod.ANALYSIS_TYPES
+        assert "annotation" in mod.ANALYSIS_TYPES
+        assert "trajectory" in mod.ANALYSIS_TYPES
+
+    def test_generate_with_analysis_type(self):
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(
+            dataset_path="cells.h5ad",
+            analysis_type="annotation",
+        )
+        assert "Analysis type" in msg
+        assert "annotation" in msg
+
+    def test_prompt_is_concise(self):
+        """The prompt should be concise, not a multi-phase instruction manual."""
+        mod = _import_scfm_workflow()
+        msg = mod.generate_scfm_workflow_message(dataset_path="cells.h5ad")
+        assert "SCFM" in msg or "Foundation Model" in msg
+        # Should NOT contain verbose instruction phases
+        assert "PHASE 0" not in msg
+        assert "PHASE 1" not in msg
+        assert "PHASE 2" not in msg
+        # Should be short (under 500 chars for a simple request)
+        assert len(msg) < 500
 
 
 # ── Integration with existing routing ────────────────────────────────────
@@ -278,6 +300,7 @@ class TestScfmCommandMap:
         assert "scfm_init" in BIO_COMMAND_MAP
         assert "scfm_run" in BIO_COMMAND_MAP
         assert "scfm_list_models" in BIO_COMMAND_MAP
+        assert "scfm_list_analysis_types" in BIO_COMMAND_MAP
 
     def test_scfm_in_suggestions(self):
         from pantheon_cli.repl.bio_handler import get_bio_command_suggestions
@@ -286,3 +309,4 @@ class TestScfmCommandMap:
         assert "/bio scfm init" in suggestions
         assert "/bio scfm run" in suggestions
         assert "/bio scfm list_models" in suggestions
+        assert "/bio scfm list_analysis_types" in suggestions

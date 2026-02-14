@@ -1,10 +1,10 @@
 """Prompt generator for SCFM (Single Cell Foundation Model) workflows.
 
-Supports foundation model-based single-cell analysis using models such as
-scGPT, scBERT, Geneformer, scFoundation, and UCE.
+Generates concise user-intent messages that let the Agent's LLM
+autonomously discover and call the registered SingleCellAgent tool
+(backed by OmicVerse) or use run_python_code for direct foundation-model
+operations (scGPT, Geneformer, etc.).
 """
-
-from textwrap import dedent
 
 
 SUPPORTED_MODELS = {
@@ -15,91 +15,64 @@ SUPPORTED_MODELS = {
     "uce": "UCE - Universal Cell Embedding",
 }
 
+# Analysis types provided by the SingleCellAgent toolset in pantheon-agents
+ANALYSIS_TYPES = {
+    "comprehensive": "Full analysis: annotation, trajectory, DE, pathways, visualization",
+    "annotation": "Cell type identification (pySCSA / gptcelltype / CellVote via OmicVerse)",
+    "trajectory": "Pseudotime and developmental trajectory (TrajInfer via OmicVerse)",
+    "differential": "Differential expression analysis (DCT via OmicVerse)",
+    "visualization": "UMAP/t-SNE embedding and gene expression plots",
+    "qc": "Quality control and preprocessing summary",
+    "clustering": "Leiden/Louvain clustering",
+    "batch_integration": "Batch effect correction (Harmony/Combat via OmicVerse)",
+    "communication": "Cell-cell communication (CellPhoneDB via OmicVerse)",
+    "grn": "Gene regulatory network / TF activity (SCENIC/AUCell)",
+    "drug": "Drug response prediction (scDrug)",
+    "metacell": "Metacell construction and summary",
+    "custom": "Free-form analysis guided by user research question",
+}
+
 
 def generate_scfm_workflow_message(
     dataset_path: str,
     model_name: str = "auto",
     question: str | None = None,
+    analysis_type: str | None = None,
 ) -> str:
-    """Create an instruction message for the LLM to run an SCFM workflow.
+    """Create a concise user-intent message for scFM analysis.
+
+    The message expresses what the user wants and lets the Agent's LLM
+    autonomously select the appropriate tools (SingleCellAgent,
+    run_python_code, etc.) based on its registered tool descriptions.
 
     Args:
         dataset_path: Path to .h5ad dataset.
-        model_name: Foundation model to use (auto|scgpt|scbert|geneformer|scfoundation|uce).
+        model_name: Foundation model preference
+            (auto|scgpt|scbert|geneformer|scfoundation|uce).
         question: Optional user-specified analysis question or goal.
+        analysis_type: Optional analysis type
+            (e.g. annotation, trajectory, comprehensive).
 
     Returns:
-        A multi-section prompt for the LLM to execute autonomously.
+        A concise intent message for the LLM.
     """
+    parts = [
+        f"Run a Single Cell Foundation Model (SCFM) analysis on dataset: {dataset_path}"
+    ]
 
-    model_line = (
-        f"Model: {model_name}"
-        if model_name != "auto"
-        else "Model: auto (LLM will select the best model based on data characteristics)"
-    )
+    if model_name != "auto":
+        parts.append(f"Model: {model_name}")
+    else:
+        parts.append(
+            "Model: auto — select the best foundation model based on data characteristics."
+        )
 
-    question_block = ""
+    if analysis_type and analysis_type in ANALYSIS_TYPES:
+        parts.append(
+            f"Analysis type: {analysis_type} — {ANALYSIS_TYPES[analysis_type]}"
+        )
+
     if question:
-        question_block = f"""
-        USER ANALYSIS GOAL:
-        {question}
-        (Tailor the entire workflow — model selection, preprocessing, and evaluation — to address this goal.)
-        """
+        parts.append(f"User analysis goal: {question}")
 
-    return dedent(
-        f"""\
-        🧬 Single Cell Foundation Model (SCFM) Analysis Pipeline
-
-        Dataset: {dataset_path}
-        {model_line}
-        {question_block}
-
-        ⚠️ CRITICAL PYTHON ENVIRONMENT RULES:
-        - PERSISTENT STATE: Python interpreter keeps variables across calls.
-        - MEMORY OPTIMIZATION: NEVER re-read or re-import if already in memory.
-        - SMART CHECKS: Use try/except or `'var' in globals()` to avoid redundant I/O.
-        - ERROR RECOVERY: Fix errors in-place; do not restart from scratch.
-        - INCREMENTAL PROGRESS: Reuse computed embeddings/annotations if present.
-
-        PHASE 0 — SETUP & VALIDATION
-        1) Verify dataset exists and is readable.
-        2) Inspect dataset: number of cells, genes, obs keys, batch information.
-        3) Probe environment: check if foundation model libraries are available
-           (scgpt, geneformer, transformers, torch, scanpy, anndata).
-
-        PHASE 1 — TODO CREATION (ONCE ONLY)
-        Execute: current = show_todos()
-        IF empty, create todos ONCE in this order:
-        1. "Load and inspect dataset"
-        2. "Preprocess data for foundation model input"
-        3. "Run foundation model embedding/annotation"
-        4. "Evaluate and visualize results"
-        5. "Save results and generate report"
-
-        ⚡ AUTOMATIC WORKFLOW MODE:
-        - Execute each todo task automatically without asking for confirmation
-        - After successful completion, call mark_task_done("description") and proceed
-        - Continue until all tasks complete or user intervenes
-
-        PHASE 2 — INTELLIGENT EXECUTION STRATEGY
-        🧠 SMART DECISION MAKING:
-
-        **ASSESS CURRENT SITUATION FIRST:**
-        - What data do you have loaded?
-        - What preprocessing steps are completed?
-        - What model is selected and available?
-
-        **MODEL SELECTION (if auto):**
-        - For cell type annotation → prefer scGPT or scBERT
-        - For general embeddings → prefer scGPT or Geneformer
-        - For large datasets (>100k cells) → prefer scFoundation or UCE
-        - Fall back to available model if preferred is not installed
-
-        **EXECUTION:**
-        - Load data with scanpy/anndata
-        - Preprocess following model-specific requirements
-        - Generate embeddings or annotations using the foundation model
-        - Visualize with UMAP colored by predictions
-        - Save annotated h5ad and summary figures
-        """
-    )
+    return "\n".join(parts)

@@ -298,18 +298,23 @@ Response format (single line):
             # Just /bio scfm - show SCFM help
             self.console.print("\n[bold]🧬 Single Cell Foundation Model (SCFM) Analysis Helper[/bold]")
             self.console.print("[dim]/bio scfm init[/dim] - Initialize SCFM analysis project")
-            self.console.print("[dim]/bio scfm run <dataset.h5ad> [--model <model_name>] [--question <question>][/dim] - Run SCFM workflow")
+            self.console.print("[dim]/bio scfm run <dataset.h5ad> [--model <model_name>] [--question <question>] [--analysis_type <type>][/dim] - Run SCFM workflow")
             self.console.print("[dim]/bio scfm list_models[/dim] - List available foundation models")
+            self.console.print("[dim]/bio scfm list_analysis_types[/dim] - List supported analysis types")
             self.console.print("\n[dim]Supported Models:[/dim]")
-            self.console.print("[dim]  scgpt       - scGPT: single-cell Gene-level Pre-Trained model[/dim]")
-            self.console.print("[dim]  scbert      - scBERT: single-cell BERT for cell type annotation[/dim]")
-            self.console.print("[dim]  geneformer  - Geneformer: transfer learning for single-cell data[/dim]")
+            self.console.print("[dim]  scgpt        - scGPT: single-cell Gene-level Pre-Trained model[/dim]")
+            self.console.print("[dim]  scbert       - scBERT: single-cell BERT for cell type annotation[/dim]")
+            self.console.print("[dim]  geneformer   - Geneformer: transfer learning for single-cell data[/dim]")
             self.console.print("[dim]  scfoundation - scFoundation: large-scale foundation model[/dim]")
-            self.console.print("[dim]  uce         - UCE: Universal Cell Embedding[/dim]")
+            self.console.print("[dim]  uce          - UCE: Universal Cell Embedding[/dim]")
+            self.console.print("\n[dim]Analysis Types (via SingleCellAgent / OmicVerse):[/dim]")
+            self.console.print("[dim]  comprehensive, annotation, trajectory, differential, visualization,[/dim]")
+            self.console.print("[dim]  qc, clustering, batch_integration, communication, grn, drug, metacell, custom[/dim]")
             self.console.print("\n[dim]Examples:[/dim]")
             self.console.print("[dim]  /bio scfm init                                    # Initialize SCFM project[/dim]")
             self.console.print("[dim]  /bio scfm run ./data.h5ad                         # Run with auto model selection[/dim]")
             self.console.print("[dim]  /bio scfm run ./data.h5ad --model scgpt           # Run with scGPT[/dim]")
+            self.console.print("[dim]  /bio scfm run ./data.h5ad --analysis_type annotation  # Cell type annotation via OmicVerse[/dim]")
             self.console.print("[dim]  /bio scfm run ./data.h5ad --question 'annotate T cell subtypes'  # With user prompt[/dim]")
             self.console.print("[dim]  /bio scfm list_models                             # Show available models[/dim]")
             self.console.print()
@@ -355,10 +360,10 @@ Response format (single line):
             return clear_message
 
         elif command == "list_models":
-            # List available foundation models
+            # List available foundation models AND OmicVerse annotation methods
             self.console.print("\n[bold cyan]🧬 Available Single Cell Foundation Models[/bold cyan]")
             self.console.print()
-            self.console.print("[bold]Model Name       Description[/bold]")
+            self.console.print("[bold]Foundation Models (via run_python_code):[/bold]")
             self.console.print("[dim]─────────────────────────────────────────────────────────────[/dim]")
             self.console.print("scgpt            scGPT - Generative pre-trained transformer for single-cell")
             self.console.print("scbert           scBERT - BERT-based cell type annotation")
@@ -366,14 +371,42 @@ Response format (single line):
             self.console.print("scfoundation     scFoundation - Large-scale foundation model")
             self.console.print("uce              UCE - Universal Cell Embedding")
             self.console.print()
+            self.console.print("[bold]OmicVerse Annotation Methods (via SingleCellAgent tool):[/bold]")
+            self.console.print("[dim]─────────────────────────────────────────────────────────────[/dim]")
+            self.console.print("pySCSA           Automated cell type annotation (default)")
+            self.console.print("gptcelltype      LLM-assisted cell type annotation")
+            self.console.print("CellVote         Consensus voting across multiple methods")
+            self.console.print()
+            return None
+
+        elif command == "list_analysis_types":
+            # List supported analysis types from SingleCellAgent
+            self.console.print("\n[bold cyan]🧬 Supported SCFM Analysis Types[/bold cyan]")
+            self.console.print()
+            self.console.print("[bold]Type              Description[/bold]")
+            self.console.print("[dim]─────────────────────────────────────────────────────────────[/dim]")
+            try:
+                from ..cli.prompt.scfm_workflow import ANALYSIS_TYPES
+                for atype, desc in ANALYSIS_TYPES.items():
+                    self.console.print(f"{atype:<18}{desc}")
+            except ImportError:
+                self.console.print("comprehensive     Full analysis pipeline")
+                self.console.print("annotation        Cell type identification")
+                self.console.print("trajectory        Pseudotime and trajectory")
+                self.console.print("differential      Differential expression")
+                self.console.print("visualization     Embedding and expression plots")
+            self.console.print()
+            self.console.print("[dim]Usage: /bio scfm run ./data.h5ad --analysis_type annotation[/dim]")
+            self.console.print()
             return None
 
         elif command == "run":
             # Handle SCFM run workflow
             if len(parts) < 4:
                 self.console.print("[red]Error: Please specify a dataset path (.h5ad)[/red]")
-                self.console.print("[dim]Usage: /bio scfm run <dataset.h5ad> [--model <model_name>][/dim]")
+                self.console.print("[dim]Usage: /bio scfm run <dataset.h5ad> [--model <model_name>] [--analysis_type <type>][/dim]")
                 self.console.print("[dim]Example: /bio scfm run ./data.h5ad --model scgpt[/dim]")
+                self.console.print("[dim]Example: /bio scfm run ./data.h5ad --analysis_type annotation[/dim]")
                 return None
 
             dataset = parts[3]
@@ -382,6 +415,7 @@ Response format (single line):
             extra = parts[4:] if len(parts) > 4 else []
             model = "auto"
             question = None
+            analysis_type = None
             if "--model" in extra:
                 try:
                     model = extra[extra.index("--model") + 1]
@@ -392,10 +426,17 @@ Response format (single line):
                     question = extra[extra.index("--question") + 1]
                 except (IndexError, ValueError):
                     question = None
+            if "--analysis_type" in extra:
+                try:
+                    analysis_type = extra[extra.index("--analysis_type") + 1]
+                except (IndexError, ValueError):
+                    analysis_type = None
 
             self.console.print(f"\n[bold cyan]🧬 Starting SCFM Analysis[/bold cyan]")
             self.console.print(f"[dim]Dataset: {dataset}[/dim]")
             self.console.print(f"[dim]Model: {model}[/dim]")
+            if analysis_type:
+                self.console.print(f"[dim]Analysis Type: {analysis_type}[/dim]")
             if question:
                 self.console.print(f"[dim]Question: {question}[/dim]")
             self.console.print("[dim]Preparing Single Cell Foundation Model pipeline...[/dim]\n")
@@ -406,6 +447,7 @@ Response format (single line):
                     dataset_path=dataset,
                     model_name=model,
                     question=question,
+                    analysis_type=analysis_type,
                 )
                 self.console.print("[dim]Sending SCFM workflow request...[/dim]\n")
                 return message
@@ -1315,6 +1357,7 @@ BIO_COMMAND_MAP = {
     'scfm_init': 'bio_scfm_init',
     'scfm_run': 'bio_scfm_run',
     'scfm_list_models': 'bio_scfm_list_models',
+    'scfm_list_analysis_types': 'bio_scfm_list_analysis_types',
 
     # ChIP-seq commands (for future use)
     'chipseq_init': 'bio_chipseq_init',
@@ -1352,6 +1395,7 @@ def get_bio_command_suggestions() -> list:
         '/bio scfm init',
         '/bio scfm run',
         '/bio scfm list_models',
+        '/bio scfm list_analysis_types',
         '/bio chipseq init',  # Future
     ]
     return suggestions
